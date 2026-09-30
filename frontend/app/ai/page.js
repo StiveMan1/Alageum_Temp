@@ -1,0 +1,5 @@
+"use client";
+import { useState } from "react";
+import { sendMessage } from "@/lib/api/ai";
+export default function AIPage() { const [conversationId, setConversationId] = useState(); const [text, setText] = useState(""); const [messages, setMessages] = useState([]); const [error, setError] = useState(""); async function submit(e) { e.preventDefault(); setError(""); const input = text; setText(""); try { const result = await sendMessage({ conversation_id: conversationId, message: input }); setConversationId(result.conversation_id); setMessages((old) => [...old, ["Вы", input], ["AI", result.message]]); } catch (reason) { setError(reason.message); } } return <><h1>AI-помощник</h1><p className="muted">DEV работает через MockAIProvider. Инструменты проходят backend permission gate.</p><div className="stack">{messages.map(([role, value], i) => <div className="card" key={i}><strong>{role}</strong><p>{value}</p></div>)}</div><form className="form" onSubmit={submit}><label>Сообщение<textarea value={text} onChange={(e) => setText(e.target.value)} required /></label>{error && <p className="error">{error}</p>}<button className="button">Отправить</button></form></>; }
+
