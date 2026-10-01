@@ -62,14 +62,20 @@ test('regional contact search handles Russian casing, empty states and reset', a
 });
 test('contact actions have correct destinations and FAQ can open and close repeatedly', async ({ page }) => {
   await page.goto('/contacts');
-  await expect(page.locator('.corp-contact-phone')).toHaveAttribute('href','tel:+77710052222');
-  await expect(page.locator('.corp-contact-email')).toHaveAttribute('href','mailto:sales@alageum.com');
-  await expect(page.locator('.corp-contact-prepare')).toContainText('не отправляет заявку на сервер');
+  // Check the accessible link while Next replaces any hidden streamed copy.
+  const phone = page.getByRole('link', { name: '+7 771 005 22 22', exact: true });
+  await expect(phone).toHaveCount(1);
+  await expect(phone).toHaveAttribute('href','tel:+77710052222');
+  await expect(page.getByRole('link', { name: 'sales@alageum.com', exact: true })).toHaveAttribute('href','mailto:sales@alageum.com');
+  const prepare = page.getByRole('complementary');
+  await expect(prepare).toContainText('не отправляет заявку на сервер');
   const summary = page.getByText('Можно ли приехать на предприятие?', { exact: true });
   await summary.click(); await expect(page.getByText('Сначала уточните адрес, часы приёма', { exact: false })).toBeVisible();
   await summary.click(); await expect(page.getByText('Сначала уточните адрес, часы приёма', { exact: false })).not.toBeVisible();
   await summary.click();
-  await page.locator('.corp-contact-prepare').getByRole('link', { name: /Подготовить запрос/ }).click();
+  // The final DOM must also contain only one canonical sales link.
+  await expect(page.locator('.corp-contact-phone')).toHaveCount(1);
+  await prepare.getByRole('link', { name: /Подготовить запрос/ }).click();
   await expect(page).toHaveURL(/\/inquiry/); await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
 });
 test('keyboard selection works and reduced motion avoids animated page transitions', async ({ page }) => {
