@@ -10,7 +10,12 @@ for (const [label,width,height] of [['desktop',1440,1000],['tablet',768,1024],['
   for (const [name,path] of [['home','/'],['company','/company'],['geography','/manufacturers'],['contacts','/contacts']]) {
     const errors = []; const listener = error => errors.push(error.message); page.on('pageerror',listener);
     await page.goto(base+path,{waitUntil:'networkidle'});
-    const audit = await page.evaluate(() => ({width:window.innerWidth,documentWidth:document.documentElement.scrollWidth,images:[...document.querySelectorAll('main img')].every(img=>img.complete&&img.naturalWidth>0),h1:document.querySelector('h1')?.textContent}));
+    // Full-page screenshots do not reliably trigger off-screen lazy images.
+    await page.locator('footer').scrollIntoViewIfNeeded();
+    await page.waitForFunction(() => [...document.images].every(img => img.complete && img.naturalWidth > 0));
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    await page.waitForFunction(() => window.scrollY === 0);
+    const audit = await page.evaluate(() => ({width:window.innerWidth,documentWidth:document.documentElement.scrollWidth,images:[...document.images].every(img=>img.complete&&img.naturalWidth>0),h1:document.querySelector('h1')?.textContent}));
     await page.screenshot({path:`${out}/${name}-${label}.png`,fullPage:true});
     result.push({page:name,viewport:label,...audit,errors}); page.off('pageerror',listener);
   }
