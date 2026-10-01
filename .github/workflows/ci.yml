@@ -88,5 +88,14 @@ jobs:
         working-directory: frontend
       - if: always()
         run: docker compose logs --no-color > compose-e2e.log
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-context-${{ github.run_id }}
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+            compose-e2e.log
+          retention-days: 7
       - if: always()
         run: docker compose down -v

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useLayoutEffect, useRef, useState } from "react";
 import SelectionNavigation from "@/components/catalog/SelectionNavigation";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -54,6 +54,7 @@ export default function SiteHeader({ selectionCount }) {
   const navRefs = useRef([]);
   const lastTrigger = useRef(null);
   const suppressFocusPreview = useRef(false);
+  const pendingSubmenuFocus = useRef(false);
   const [menu, setMenu] = useState({ pathname, preview: null, desktop: false, mobile: false, group: null });
   const navPath = ['/manufacturers', '/documents'].some((prefix) => pathname.startsWith(prefix)) ? '/company' : pathname.startsWith('/projects') ? '/solutions' : pathname.startsWith('/inquiry') || pathname.startsWith('/workspace') ? '/contacts' : pathname;
   const currentIndex = sections.findIndex((section) => navPath === section.href || navPath.startsWith(`${section.href}/`));
@@ -63,6 +64,14 @@ export default function SiteHeader({ selectionCount }) {
   const previewIndex = desktopOpen && menu.preview !== null ? menu.preview : currentIndex;
   const activeSection = sections[previewIndex];
   const anyOpen = desktopOpen || mobileOpen;
+
+  // Focus only after React has committed the submenu and removed its inert state.
+  useLayoutEffect(() => {
+    if (desktopOpen && pendingSubmenuFocus.current) {
+      pendingSubmenuFocus.current = false;
+      headerRef.current?.querySelector('.site-mega-link')?.focus();
+    }
+  }, [desktopOpen, menu]);
 
   function closeMenus(restoreFocus = false) {
     setMenu({ pathname, preview: null, desktop: false, mobile: false, group: null });
@@ -121,8 +130,8 @@ export default function SiteHeader({ selectionCount }) {
                 }} onKeyDown={(event) => {
                   if (event.key === "ArrowDown") {
                     event.preventDefault();
+                    pendingSubmenuFocus.current = true;
                     previewSection(index);
-                    requestAnimationFrame(() => headerRef.current?.querySelector(".site-mega-link")?.focus());
                   }
                 }} onNavigate={() => closeMenus()}>
                   {section.label}<Chevron />

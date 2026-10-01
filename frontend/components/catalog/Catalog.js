@@ -4,9 +4,10 @@ import { LiveCatalog } from './LiveCatalog';
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useUrlComparison } from './useUrlComparison';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { categories, products as allProducts, demoProducts, officialProducts, valueOrDash, recordKindLabel } from '@/lib/catalog/data';
-import { filterProducts, sortProducts, parseComparison, paginationWindow, PAGE_SIZE } from '@/lib/catalog/query';
+import { filterProducts, sortProducts, paginationWindow, PAGE_SIZE } from '@/lib/catalog/query';
 import { loadApiCatalog } from '@/lib/catalog/source';
 import { useSelection } from './SelectionProvider';
 import CatalogNotice from './CatalogNotice';
@@ -45,19 +46,23 @@ function StaticCatalog() {
   const pageCount = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
   const page = Math.min(pageCount, Math.max(1, Number.parseInt(params.page || '1', 10) || 1));
   const visible = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const selected = parseComparison(params.compare, allProducts);
+  const [selected, setSelected] = useUrlComparison(params.compare, allProducts);
   const activeFilters = ['q', 'category', 'recordKind', 'equipmentType', 'power', 'voltage', 'cooling', 'installation', 'current', 'subtype', 'function'].filter((key) => params[key]);
   function update(changes, replace = false) {
-    const next = new URLSearchParams(searchParams);
+    const next = new URLSearchParams(replace ? window.location.search : searchParams);
     next.delete('page');
     Object.entries(changes).forEach(([key, value]) => value ? next.set(key, value) : next.delete(key));
     const query = next.toString();
-    router[replace ? 'replace' : 'push'](`${pathname}${query ? `?${query}` : ''}`, { scroll: false });
+    const href = `${pathname}${query ? `?${query}` : ''}`;
+    if (replace) window.history.replaceState(null, '', href);
+    else router.push(href, { scroll: false });
   }
   function toggleCompare(id) {
     if (!selected.includes(id) && selected.length >= 4) { setNotice('Для сравнения можно выбрать до 4 позиций. Уберите одну, чтобы добавить другую.'); return; }
     setNotice('');
-    update({ compare: (selected.includes(id) ? selected.filter((value) => value !== id) : [...selected, id]).join(',') }, true);
+    const next = selected.includes(id) ? selected.filter(value => value !== id) : [...selected, id];
+    setSelected(next);
+    update({ compare: next.join(',') }, true);
   }
   function resetFilters() { update(Object.fromEntries(activeFilters.map((key) => [key, '']))); }
   function add(product) { selection.add(product.id); setNotice(`${product.sku} добавлен в подборку. Это локальный список, не заказ.`); }
@@ -82,9 +87,9 @@ function StaticCatalog() {
           {facets.map((facet) => {
             const options = [...new Set(filterProducts(products, params, facet.key).flatMap((product) => demoMode ? [product[facet.key]] : facetValues(product, facet.key)).filter((value) => value != null))].sort((a, b) => String(a).localeCompare(String(b), 'ru', { numeric: true }));
             if (params[facet.key] && !options.some((option) => String(option) === params[facet.key])) options.push(params[facet.key]);
-            return <label key={facet.key} className="catalog-field"><span>{facet.label}{!demoMode && facet.unit ? `, ${facet.unit}` : ''}</span><select value={params[facet.key] || ''} onChange={(event) => update({ [facet.key]: event.target.value })}><option value="">Все значения</option>{options.map((option) => <option value={option} key={option}>{option}</option>)}</select></label>;
+            return <label key={facet.key} className="catalog-field"><span id={`filter-${facet.key}-label`}>{facet.label}{!demoMode && facet.unit ? `, ${facet.unit}` : ''}</span><select aria-labelledby={`filter-${facet.key}-label`} value={params[facet.key] || ''} onChange={(event) => update({ [facet.key]: event.target.value })}><option value="">Все значения</option>{options.map((option) => <option value={option} key={option}>{option}</option>)}</select></label>;
           })}
-          {!demoMode && <label className="catalog-field"><span>Тип записи</span><select value={params.recordKind || ''} onChange={(event) => update({ recordKind: event.target.value })}><option value="">Серии и модели</option><option value="family">Только серии / семейства</option><option value="variant">Модели из таблиц</option></select></label>}<p className="filter-help">«—» означает: параметр не подтверждён.<br />Варианты напряжения уточняются по исполнению.</p></>}
+          {!demoMode && <label className="catalog-field"><span id="filter-record-kind-label">Тип записи</span><select aria-labelledby="filter-record-kind-label" value={params.recordKind || ''} onChange={(event) => update({ recordKind: event.target.value })}><option value="">Серии и модели</option><option value="family">Только серии / семейства</option><option value="variant">Модели из таблиц</option></select></label>}<p className="filter-help">«—» означает: параметр не подтверждён.<br />Варианты напряжения уточняются по исполнению.</p></>}
         <div className="source-note"><span className="catalog-meta">ИСТОЧНИК ДАННЫХ</span><strong>{apiMode ? 'Существующий API' : demoMode ? `Демо-набор · ${demoProducts.length} позиций` : `Официальный каталог · ${officialProducts.length} позиций`}</strong><Link href={demoMode || apiMode ? '/catalog' : '/documents'}>{demoMode || apiMode ? 'Открыть публичный каталог' : 'Источники и документы'} <span aria-hidden="true">↗</span></Link></div>
       </aside>
       <section className="catalog-results" aria-label="Результаты каталога">

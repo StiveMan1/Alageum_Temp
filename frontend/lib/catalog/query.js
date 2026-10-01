@@ -111,6 +111,12 @@ export function sortProducts(products, sort = 'name') {
     return a.name.localeCompare(b.name, 'ru', { numeric: true });
   });
 }
+// Keep optimistic UI while the URL is unchanged; an acknowledged URL/history move wins.
+export function reconcileComparisonDraft(value, previous) {
+  const query = value || '';
+  return previous?.query === query ? previous : { query, ids: query.split(',') };
+}
+
 export function parseComparison(value, products, max = 4) {
   const allowed = new Set(products.map((product) => product.id));
   return [...new Set(String(value || '').split(','))].filter((id) => allowed.has(id)).slice(0, max);

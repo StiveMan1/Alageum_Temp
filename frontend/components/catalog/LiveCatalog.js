@@ -10,6 +10,7 @@ import { categories } from '@/lib/catalog/data';
 import ProductIcon from './ProductIcon';
 import ProductVisual from './ProductVisual';
 import { useApiSelection } from './ApiSelectionProvider';
+import { useUrlComparison } from './useUrlComparison';
 
 function useLiveProducts() {
  const [data,setData]=useState({status:'loading',items:[],error:''});
@@ -18,7 +19,7 @@ function useLiveProducts() {
  return {...data,retry:()=>{setData({status:'loading',items:[],error:''});setAttempt(value=>value+1);}};
 }
 function LiveStatus({data}) {
- return data.status==='loading'?<p role="status">Загрузка актуальных данных…</p>:data.status==='error'?<div className="catalog-empty" role="alert"><h2>Сервер каталога недоступен</h2><p>Актуальные товары и цены не удалось получить. Статический каталог не подменяет данные сервера.</p><p>{data.error}</p><button className="catalog-button" onClick={data.retry}>Повторить</button>{process.env.NEXT_PUBLIC_CATALOG_SOURCE !== 'api' && <Link href="/catalog?source=static">Справочный статический каталог</Link>}</div>:null;
+ return data.status==='loading'?<p role="status">Загрузка актуальных данных…</p>:data.status==='error'?<div className="catalog-empty" role="alert" aria-label="Ошибка каталога"><h2>Сервер каталога недоступен</h2><p>Актуальные товары и цены не удалось получить. Статический каталог не подменяет данные сервера.</p><p>{data.error}</p><button className="catalog-button" onClick={data.retry}>Повторить</button>{process.env.NEXT_PUBLIC_CATALOG_SOURCE !== 'api' && <Link href="/catalog?source=static">Справочный статический каталог</Link>}</div>:null;
 }
 function LiveNotice(){return <p className="catalog-notice">Актуальный каталог из базы. Цены указаны в валюте каждой позиции; наличие и условия поставки уточняются. <Link href="/selection?source=api">Подборка →</Link></p>;}
 function AddButton({product,onAdded}) {const selection=useApiSelection();return <button className="catalog-button compact" onClick={()=>{selection.add(product.id);onAdded('Добавлено в подборку');}}>В подборку +</button>;}
@@ -28,12 +29,12 @@ export function LiveCatalog() {
  const [notice,setNotice]=useState('');
  const query=Object.fromEntries(params),filtered=sortProducts(filterProducts(data.items,query),query.sort);
  const page=Math.min(Math.max(1,parseInt(query.page||'1',10)||1),Math.max(1,Math.ceil(filtered.length/20)));
- const selected=parseComparison(query.compare,data.items.filter(product=>product.comparable));
+ const [selected,setSelected]=useUrlComparison(query.compare,data.items.filter(product=>product.comparable));
  function update(changes){const next=new URLSearchParams(params);next.set('source','api');next.delete('page');Object.entries(changes).forEach(([key,value])=>value?next.set(key,value):next.delete(key));router.push(`/catalog?${next}`,{scroll:false});}
- function toggle(id){if(!selected.includes(id)&&selected.length>=4){setNotice('Можно сравнить до четырёх товаров.');return;}update({compare:(selected.includes(id)?selected.filter(key=>key!==id):[...selected,id]).join(',')});}
+ function toggle(id){if(!selected.includes(id)&&selected.length>=4){setNotice('Можно сравнить до четырёх товаров.');return;}const next=selected.includes(id)?selected.filter(key=>key!==id):[...selected,id];setSelected(next);const url=new URLSearchParams(window.location.search);url.set('source','api');url.set('compare',next.join(','));window.history.replaceState(null,'',`/catalog?${url}`);}
  return <div className="catalog-page"><div className="catalog-heading compact-heading"><div><p className="catalog-kicker">АКТУАЛЬНЫЙ КАТАЛОГ</p><h1>Оборудование и цены</h1></div><Link className="catalog-button" href="/selection?source=api">Подборка ({selection.count})</Link></div><LiveNotice/>
   <form className="catalog-search" onSubmit={event=>{event.preventDefault();update({q:new FormData(event.currentTarget).get('q')});}}><input name="q" type="search" aria-label="Поиск оборудования" defaultValue={query.q||''} placeholder="Название, артикул, характеристика"/><button className="catalog-button primary">Найти</button></form>
-  <label className="catalog-field"><span>Категория</span><select value={query.category||''} onChange={event=>update({category:event.target.value})}><option value="">Все категории</option>{categories.map(category=><option key={category.id} value={category.id}>{category.name}</option>)}</select></label><LiveStatus data={data}/>
+  <label className="catalog-field"><span id="live-category-label">Категория</span><select aria-labelledby="live-category-label" value={query.category||''} onChange={event=>update({category:event.target.value})}><option value="">Все категории</option>{categories.map(category=><option key={category.id} value={category.id}>{category.name}</option>)}</select></label><LiveStatus data={data}/>
   {data.status==='ready'&&<><p role="status">Найдено: {filtered.length}</p><div className="catalog-table-wrap"><table className="catalog-table"><thead><tr><th>Сравнить</th><th>Оборудование</th><th>Цена</th><th>Действия</th></tr></thead><tbody>{filtered.slice((page-1)*20,page*20).map(product=><tr key={product.id}><td><input type="checkbox" aria-label={`Сравнить ${product.sku||product.name}`} checked={selected.includes(product.id)} disabled={!product.comparable} onChange={()=>toggle(product.id)}/></td><td><div className="product-cell"><ProductIcon product={product} size={52}/><div><Link className="product-name" href={liveHref(product.id)}>{product.name}</Link><span className="product-sku">{product.sku||'Артикул не указан'}</span></div></div></td><td>{catalogPrice(product)}</td><td><AddButton product={product} onAdded={setNotice}/></td></tr>)}</tbody></table></div>{!filtered.length&&<p>Опубликованные товары не найдены.</p>}<div className="catalog-pagination"><button className="catalog-button" disabled={page<=1} onClick={()=>update({page:String(page-1)})}>← Назад</button><span>Страница {page}</span><button className="catalog-button" disabled={page*20>=filtered.length} onClick={()=>update({page:String(page+1)})}>Далее →</button></div></>}
   <p role="status">{notice}</p>{selected.length>0&&<div className="comparison-tray"><span>Выбрано: {selected.length} из 4</span><button className="text-button" onClick={()=>update({compare:''})}>Очистить</button>{selected.length>=2&&<Link className="catalog-button primary" href={`/catalog/compare?source=api&ids=${selected.join(',')}`}>Сравнить →</Link>}</div>}
  </div>;

@@ -74,14 +74,16 @@ test('dirty cancel and stale-save conflict preserve local draft without overwrit
  const product=await created.json(); expect(created.status()).toBe(201);
  await signIn(page);
  await page.getByLabel('Поиск',{exact:true}).fill(key);await page.getByRole('button',{name:'Найти',exact:true}).click();
- await page.getByRole('button',{name:'Изменить',exact:true}).click();
+ const row=page.getByRole('row').filter({hasText:key});
+ await expect(row).toHaveCount(1);
+ await row.getByRole('button',{name:'Изменить',exact:true}).click();
  await page.getByLabel('Название',{exact:true}).fill('Local unsaved draft');
  page.once('dialog',dialog=>dialog.dismiss());
  await page.getByRole('button',{name:'Отмена',exact:true}).click();
  await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Local unsaved draft');
  const changed=await request.patch(`${api}/admin/catalog/products/${product.id}`,{headers,data:{version:1,translations:{ru:{name:'Server winner'}}}});expect(changed.ok()).toBeTruthy();
  await page.getByRole('button',{name:'Сохранить в базе'}).click();
- await expect(page.getByRole('alert')).toContainText('Товар уже изменён');
+ await expect(page.getByRole('alert',{name:'Ошибка редактора каталога'})).toContainText('Товар уже изменён');
  await expect(page.getByLabel('Название',{exact:true})).toHaveValue('Local unsaved draft');
  await expect(page.getByRole('button',{name:'Сохранить в базе'})).toBeDisabled();
  const saved=await (await request.get(`${api}/admin/catalog/products/${product.id}`,{headers})).json();expect(saved.translations.ru.name).toBe('Server winner');

@@ -133,6 +133,32 @@ test("comparison selection enforces four positions and supports a direct link", 
   await expect(page.getByRole("button", { name: "Убрать DEMO-005 из сравнения", exact: true })).toHaveCount(0);
 });
 
+test("comparison clear follows filter history and remains cleared after reload", async ({ page }) => {
+  await page.goto("/catalog?source=demo&category=transformers");
+  const checkbox = page.getByRole("checkbox", { name: "Сравнить DEMO-001", exact: true });
+  await checkbox.check();
+  await expect(checkbox).toBeChecked();
+  await page.getByLabel("Поиск по каталогу").fill("DEMO-001");
+  await page.getByRole("button", { name: /^Найти/ }).click();
+  await expect(page).toHaveURL(/q=DEMO-001/);
+  await expect(checkbox).toBeChecked();
+  await page.getByRole("button", { name: "Очистить", exact: true }).click();
+  await expect(checkbox).not.toBeChecked();
+  await expect(page).not.toHaveURL(/compare=/);
+  await page.goBack();
+  await expect(page).not.toHaveURL(/q=DEMO-001/);
+  await expect(checkbox).toBeChecked();
+  await page.goForward();
+  await expect(page).toHaveURL(/q=DEMO-001/);
+  await expect(checkbox).not.toBeChecked();
+  await page.reload();
+  await expect(checkbox).not.toBeChecked();
+  await checkbox.check();
+  await expect(checkbox).toBeChecked();
+  await page.getByRole("button", { name: "Очистить", exact: true }).click();
+  await expect(checkbox).not.toBeChecked();
+});
+
 test("local selection persists repeated adds, bounds quantities, exports and removes", async ({ page }) => {
   await page.goto("/selection");
   await expect(page.getByRole("heading", { name: "В подборке пока нет оборудования" })).toBeVisible();
@@ -202,11 +228,11 @@ test("explicit API errors never silently substitute demo products", async ({ pag
     await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: { message: "Catalog temporarily unavailable" } }) });
   });
   await page.goto("/catalog?source=api");
-  await expect(page.getByRole("alert")).toContainText("Сервер каталога недоступен");
+  await expect(page.getByRole("alert", { name: "Ошибка каталога" })).toContainText("Сервер каталога недоступен");
   await expect(page.getByRole("link", { name: "Demo Transformer A", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Повторить", exact: true }).click();
   await expect.poll(() => attempts).toBeGreaterThanOrEqual(2);
-  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(page.getByRole("alert", { name: "Ошибка каталога" })).toBeVisible();
   await page.getByRole("link", { name: "Справочный статический каталог", exact: true }).click();
   await expect(foundCount(page)).toHaveText("Найдено: 238");
 });
@@ -231,6 +257,7 @@ test("shared navigation closes after Escape and a route change", async ({ page, 
     await expect(catalog).toHaveAttribute("aria-expanded", "false");
     await expect(catalog).toBeFocused();
     await catalog.press("ArrowDown");
+    await expect(header.locator("#site-mega-navigation").getByRole("link", { name: /^Трансформаторы/ })).toBeFocused();
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/category=transformers/);
     await expect(catalog).toHaveAttribute("aria-expanded", "false");
@@ -252,7 +279,7 @@ test("imported model shows row-specific voltage and original page links", async 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("ЯТП-0.25-220-12У3");
   await expect(page.locator(".summary-specs")).toContainText("220 → 12 В");
   await page.getByRole("tab", { name: /^Документы/ }).click();
-  await page.getByRole("link", { name: "стр. 65", exact: true }).click();
+  await page.getByRole("tabpanel", { name: /^Документы/ }).getByRole("link", { name: "стр. 65", exact: true }).click();
   await expect(page).toHaveURL(/catalog\/source\/?\?page=65/);
   await expect(page.getByRole("img", { name: /страница 65$/ })).toBeVisible();
   await page.goBack();
