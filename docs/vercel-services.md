@@ -100,6 +100,10 @@ Alembic first, DEV seed only for disposable development data, then the reviewed
 catalog import described in [catalog administration](catalog-admin.md).
 Startup queries the integration-job table, so an empty database is not sufficient.
 `vercel dev -L --listen 3100` can use a different public port if 3000 is occupied.
+Open the server as `http://localhost:3100` (or the chosen port), not `127.0.0.1`.
+Next.js permits `localhost` for development resources by default; using the numeric
+host through the Vercel proxy blocks HMR and can prevent client hydration. The CI
+job uses `localhost` without expanding Next.js's development-origin allowlist.
 
 Check `/api/v1/health`, `/api/v1/readiness`, `/api/v1/catalog/products`, `/catalog`,
 `/login`, `/admin/catalog`, a static asset and an unknown API path. Run the existing
