@@ -12,7 +12,8 @@ from app.core.database import get_session
 from app.core.errors import AppError
 from app.core.pagination import Page, PageParams, paginate
 from app.core.schemas import APIRequest
-from app.identity.models import Membership, Role, User
+from app.identity.models import Membership, Organization, Role, User
+from app.identity.roles import PLATFORM_PERMISSIONS, is_tenant_assignable
 
 router = APIRouter(prefix="/organizations", tags=["Organizations", "Users"])
 
@@ -33,7 +34,11 @@ def membership_out(item: Membership) -> MembershipOut:
         organization_name=item.organization.name,
         role_id=item.role_id,
         role_name=item.role.name,
-        permissions=sorted(permission.code for permission in item.role.permissions),
+        permissions=sorted(
+            permission.code
+            for permission in item.role.permissions
+            if item.role.organization_id is None or permission.code not in PLATFORM_PERMISSIONS
+        ),
     )
 
 
@@ -53,7 +58,12 @@ async def my_organizations(
     items, total = await paginate(
         session,
         membership_query()
-        .where(Membership.user_id == user.id, Membership.is_active.is_(True))
+        .join(Organization)
+        .where(
+            Membership.user_id == user.id,
+            Membership.is_active.is_(True),
+            Organization.is_active.is_(True),
+        )
         .order_by(Membership.created_at, Membership.id),
         page,
     )
@@ -131,6 +141,12 @@ async def change_role(
     )
     if not membership or not role:
         raise AppError("membership_or_role_not_found", "Membership or role not found", 404)
+    if not is_tenant_assignable(role, context.organization_id):
+        raise AppError(
+            "permission_denied", "Platform roles cannot be assigned by tenant users", 403
+        )
+    if membership.role.organization_id is None:
+        raise AppError("permission_denied", "Platform memberships cannot be edited here", 403)
     previous_role = membership.role_id
     membership.role_id = role.id
     await record_audit(

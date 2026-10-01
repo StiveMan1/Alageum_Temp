@@ -1,4 +1,6 @@
 'use client';
+import { isApiCatalog } from '@/lib/catalog/apiData';
+import { LiveCatalog } from './LiveCatalog';
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -18,7 +20,7 @@ const demoFacets = [
   { key: 'cooling', label: 'Охлаждение' }, { key: 'installation', label: 'Установка' },
 ];
 
-export default function Catalog() {
+function StaticCatalog() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -98,4 +100,9 @@ export default function Catalog() {
     </div>
     {selected.length > 0 && !apiMode && <div className="comparison-tray"><div><span className="catalog-kicker">СРАВНЕНИЕ</span><strong>{selected.length} из 4 позиций</strong></div><div className="compare-skus">{selected.map((id) => <button key={id} onClick={() => toggleCompare(id)} aria-label={`Убрать ${allProducts.find((product) => product.id === id).sku} из сравнения`}>{allProducts.find((product) => product.id === id).sku} <span aria-hidden="true">×</span></button>)}</div><button className="text-button" onClick={() => update({ compare: '' }, true)}>Очистить</button>{selected.length >= 2 ? <Link className="catalog-button primary" href={`/catalog/compare?ids=${selected.join(',')}`}>Сравнить ({selected.length}) <span aria-hidden="true">→</span></Link> : <span className="compare-hint">Выберите ещё одну позицию</span>}</div>}
   </div>;
+}
+
+export default function Catalog() {
+ const params = useSearchParams();
+ return isApiCatalog(params) ? <LiveCatalog/> : <StaticCatalog/>;
 }

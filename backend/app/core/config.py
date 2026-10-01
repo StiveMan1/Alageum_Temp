@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     max_upload_bytes: int = 10 * 1024 * 1024
     max_request_bytes: int = 12 * 1024 * 1024
     ai_max_input_length: int = 10_000
+    catalog_allowed_currencies: list[str] = Field(default_factory=list)
     default_page_size: int = 50
     max_page_size: int = 100
     ai_confirmation_minutes: int = 10

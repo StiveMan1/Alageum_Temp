@@ -15,7 +15,8 @@ from app.auth.security import (
 )
 from app.core.config import get_settings
 from app.core.errors import AppError
-from app.identity.models import Membership, OneTimeToken, RefreshSession, User
+from app.identity.models import Membership, OneTimeToken, Organization, RefreshSession, Role, User
+from app.identity.roles import is_tenant_assignable
 
 
 class AuthService:
@@ -130,6 +131,17 @@ class AuthService:
         token = await self.consume_token(raw, "invitation")
         if token.organization_id is None or token.role_id is None:
             raise AppError("invalid_token", "Invitation is incomplete", 400)
+        organization = await self.session.get(Organization, token.organization_id)
+        role = await self.session.get(Role, token.role_id)
+        if (
+            not organization
+            or not organization.is_active
+            or not role
+            or not is_tenant_assignable(role, token.organization_id)
+        ):
+            raise AppError(
+                "invalid_token", "Invitation role or organization is no longer available", 400
+            )
         existing = await self.session.scalar(select(User).where(User.email == token.email))
         user = existing or User(
             email=token.email,

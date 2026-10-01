@@ -202,12 +202,12 @@ test("explicit API errors never silently substitute demo products", async ({ pag
     await route.fulfill({ status: 503, contentType: "application/json", body: JSON.stringify({ error: { message: "Catalog temporarily unavailable" } }) });
   });
   await page.goto("/catalog?source=api");
-  await expect(page.getByRole("alert")).toContainText("Не удалось загрузить каталог");
+  await expect(page.getByRole("alert")).toContainText("Сервер каталога недоступен");
   await expect(page.getByRole("link", { name: "Demo Transformer A", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Повторить", exact: true }).click();
   await expect.poll(() => attempts).toBeGreaterThanOrEqual(2);
   await expect(page.getByRole("alert")).toBeVisible();
-  await page.getByRole("link", { name: "Открыть публичный каталог", exact: true }).click();
+  await page.getByRole("link", { name: "Справочный статический каталог", exact: true }).click();
   await expect(foundCount(page)).toHaveText("Найдено: 238");
 });
 

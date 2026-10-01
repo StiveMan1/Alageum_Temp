@@ -39,7 +39,7 @@ function matchesSearch(product, words) {
   if (!words.length) return true;
   // Full original designations keep their identity even when they include unit-like suffixes.
   if (compactQuery(words.join(' ')) === compactQuery(product.sku)) return true;
-  const evidence = product.source === 'official' ? searchEvidence(product) : [];
+  const evidence = (product.source === 'official' || product.source === 'api') ? searchEvidence(product) : [];
   const haystack = normalizeQuery([
     product.id, product.name, product.sku, product.category, product.voltage, product.power,
     product.cooling, product.installation, product.subtype, product.manufacturer,
@@ -49,7 +49,7 @@ function matchesSearch(product, words) {
   ].join(' '));
   const compact = compactQuery(haystack);
   return words.every((word, index) => {
-    if (product.source === 'official') {
+    if ((product.source === 'official' || product.source === 'api')) {
       const attached = word.match(new RegExp(`^(\\d+(?:[.,]\\d+)?)(${electricalUnitPattern})$`, 'u'));
       if (attached) return hasQuantity(evidence, attached[1], attached[2]);
       if (electricalUnits.has(word)) {
@@ -66,7 +66,7 @@ export function filterProducts(products, params = {}, omit = '') {
   if (products.some((product) => product.isCatalogGroup)) return filterCatalogGroups(products, params, omit);
   const words = normalizeQuery(params.q).split(/\s+/).filter(Boolean);
   return products.filter((product) => matchesSearch(product, words) && filterKeys.every((key) => key === omit || !params[key]
-    || String(product[key]) === String(params[key]) || (product.source === 'official' && facetValues(product, key).includes(String(params[key])))));
+    || String(product[key]) === String(params[key]) || ((product.source === 'official' || product.source === 'api') && facetValues(product, key).includes(String(params[key])))));
 }
 
 /** Every active condition must match the same original member; a series is emitted once. */
@@ -122,10 +122,14 @@ export function normalizeSelection(value, products) {
   return value.filter((item) => item && allowed.has(item.id) && !seen.has(item.id) && seen.add(item.id)).map((item) => ({ id: item.id, quantity: Math.min(999, Math.max(1, Math.floor(Number(item.quantity)) || 1)) }));
 }
 export function selectionCsv(items, products) {
-  const cell = (value) => `"${String(value).replaceAll('"', '""')}"`;
+  const cell = (value) => {
+    const raw = String(value);
+    const safe = /^[=+@\-\t\r\n]/.test(raw) ? `'${raw}` : raw;
+    return `"${safe.replaceAll('"', '""')}"`;
+  };
   return '\uFEFF' + [['Подборка — не заказ', 'Обозначение', 'Наименование', 'Количество'], ...items.map((item) => {
     const product = products.find((entry) => entry.id === item.id);
-    return [product?.source === 'official' ? 'Официальный каталог; исполнение уточняется' : 'ДЕМО — не заказ; синтетические данные', product?.sku || '', product?.name || '', item.quantity];
+    return [product?.source === 'api' ? 'Актуальный каталог API; не заказ' : product?.source === 'official' ? 'Официальный каталог; исполнение уточняется' : 'ДЕМО — не заказ; синтетические данные', product?.sku || '', product?.name || '', item.quantity];
   })].map((row) => row.map(cell).join(';')).join('\r\n');
 }
 

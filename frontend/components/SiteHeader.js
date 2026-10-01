@@ -3,8 +3,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
-import { useSelection } from "@/components/catalog/SelectionProvider";
+import { Suspense, useEffect, useRef, useState } from "react";
+import SelectionNavigation from "@/components/catalog/SelectionNavigation";
+import { useAuth } from "@/components/AuthProvider";
 
 const sections = [
   {
@@ -47,8 +48,7 @@ function Chevron({ expanded = false }) {
 
 export default function SiteHeader({ selectionCount }) {
   const pathname = usePathname();
-  const selection = useSelection();
-  const itemCount = selectionCount ?? selection?.count;
+  const { hasPermission } = useAuth();
   const headerRef = useRef(null);
   const toggleRef = useRef(null);
   const navRefs = useRef([]);
@@ -142,7 +142,8 @@ export default function SiteHeader({ selectionCount }) {
           </nav>
           <div className="site-header-actions">
             <Link href="/workspace" className="site-language site-metadata" onNavigate={() => closeMenus()}>Демо-кабинет</Link>
-            <Link href="/selection" className="site-selection-link" onNavigate={() => closeMenus()}><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5V3h8v2M5 5h14v16H5zM9 10h6M9 14h6" /></svg><span>Подборка</span>{typeof itemCount === "number" && <span className="site-selection-count">{itemCount}</span>}</Link>
+            {hasPermission('catalog.manage') && <Link href="/admin/catalog" className="site-selection-link">Управление каталогом</Link>}
+            <Suspense fallback={<Link href="/selection" className="site-selection-link">Подборка</Link>}><SelectionNavigation selectionCount={selectionCount} onNavigate={() => closeMenus()} /></Suspense>
             <button ref={toggleRef} type="button" className="site-menu-toggle" aria-label={mobileOpen ? "Закрыть навигацию" : "Открыть навигацию"} aria-expanded={mobileOpen} aria-controls="site-mobile-navigation" onClick={() => {
               lastTrigger.current = toggleRef.current;
               setMenu({ pathname, preview: null, desktop: false, mobile: !mobileOpen, group: currentIndex >= 0 ? currentIndex : 0 });

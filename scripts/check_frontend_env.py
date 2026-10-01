@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-ALLOWED = {"NEXT_PUBLIC_API_URL"}
+ALLOWED = {"NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_CATALOG_SOURCE"}
 root = Path(__file__).resolve().parents[1]
 violations: list[str] = []
 for path in [root / ".env.example", *sorted((root / "frontend").glob(".env*"))]:

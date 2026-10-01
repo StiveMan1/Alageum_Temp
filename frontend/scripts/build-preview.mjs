@@ -11,7 +11,11 @@ await mkdir(stage, { recursive: true });
 for (const entry of ['app', 'components', 'lib', 'public', 'package.json', 'jsconfig.json']) {
  await cp(join(root, entry), join(stage, entry), { recursive: true });
 }
-for (const route of ['b2b', 'ai', 'login']) await rm(join(stage, 'app', route), { recursive: true, force: true });
+for (const route of ['b2b', 'ai', 'login', 'admin']) await rm(join(stage, 'app', route), { recursive: true, force: true });
+const layoutPath = join(stage, 'app/layout.js');
+await writeFile(layoutPath, (await readFile(layoutPath, 'utf8'))
+ .replace("import { AuthProvider } from '@/components/AuthProvider';\n", '')
+ .replace('<AuthProvider>', '').replace('</AuthProvider>', ''));
 const productPage = join(stage, 'app/catalog/[slug]/page.js');
 await writeFile(productPage, (await readFile(productPage, 'utf8')) + '\nexport const dynamicParams = false;\n');
 // Static preview cards have no API-only detail routes. Remove the query hook only
@@ -20,10 +24,10 @@ await writeFile(productPage, (await readFile(productPage, 'utf8')) + '\nexport c
 const detailsPath = join(stage, 'components/catalog/ProductDetails.js');
 const detailsSource = await readFile(detailsPath, 'utf8');
 if (!detailsSource.includes('const params = useSearchParams();')) throw new Error('Unexpected product-detail source: review static export adapter');
-await writeFile(detailsPath, detailsSource.replace("import { useSearchParams } from 'next/navigation';\n", '').replace('const params = useSearchParams();', 'const params = new URLSearchParams();'));
+await writeFile(detailsPath, detailsSource.replace("import { useSearchParams } from 'next/navigation';\n", '').replaceAll('const params = useSearchParams();', 'const params = new URLSearchParams();'));
 
 await writeFile(join(stage, 'next.config.mjs'), `export default { output: 'export', poweredByHeader: false, reactStrictMode: true, images: { unoptimized: true }, trailingSlash: true, turbopack: { root: ${JSON.stringify(root)} } };\n`);
-const result = spawnSync(process.execPath, [join(root, 'node_modules/next/dist/bin/next'), 'build', stage], { cwd: root, stdio: 'inherit', env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1' } });
+const result = spawnSync(process.execPath, [join(root, 'node_modules/next/dist/bin/next'), 'build', stage], { cwd: root, stdio: 'inherit', env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1', NEXT_PUBLIC_CATALOG_SOURCE: 'static' } });
 if (result.status !== 0) process.exit(result.status || 1);
 await rm(output, { recursive: true, force: true });
 await cp(join(stage, 'out'), output, { recursive: true });
