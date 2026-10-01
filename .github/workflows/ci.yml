@@ -123,7 +123,7 @@ jobs:
       APP_ENV: test
       APP_DATABASE_URL: postgresql+asyncpg://alageum:ci-password@localhost:5432/alageum_vercel_ci
       APP_SECRET_KEY: ci-only-vercel-services-secret-not-for-deployment
-      APP_LOCAL_STORAGE_PATH: ${{ runner.temp }}/alageum-vercel-storage
+      APP_LOCAL_STORAGE_PATH: /tmp/alageum-vercel-ci-storage
       APP_CORS_ORIGINS: '["http://127.0.0.1:3200"]'
       NEXT_PUBLIC_API_URL: /api/v1
       NEXT_PUBLIC_CATALOG_SOURCE: static
