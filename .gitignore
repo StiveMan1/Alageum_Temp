@@ -22,3 +22,7 @@ backups/
 *.dump.metadata
 test-storage/
 test.db
+
+# Disposable static public-preview build
+frontend/.preview-build/
+frontend/preview-dist/

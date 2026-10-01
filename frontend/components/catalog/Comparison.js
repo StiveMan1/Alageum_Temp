@@ -1,0 +1,25 @@
+'use client';
+import Link from 'next/link';
+import { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { products, categoryName, specRows, valueOrDash, specUnit } from '@/lib/catalog/data';
+import { parseComparison } from '@/lib/catalog/query';
+import { useSelection } from './SelectionProvider';
+import CatalogNotice from './CatalogNotice';
+import ProductIcon from './ProductIcon';
+export default function Comparison() {
+  const params = useSearchParams();
+  const router = useRouter();
+  const [differencesOnly, setDifferencesOnly] = useState(false);
+  const [notice, setNotice] = useState('');
+  const selection = useSelection();
+  const ids = parseComparison(params.get('ids'), products);
+  const selected = ids.map((id) => products.find((product) => product.id === id));
+  const detailRows = [...new Map(selected.flatMap(product => (product.technicalSpecs || []).map(spec => [`${spec.label}|${spec.unit}`, { key: `detail:${spec.label}|${spec.unit}`, label: spec.label, unit: spec.unit, technical: true }]))).values()];
+  const rows = [{ key: 'category', label: 'Категория' }, ...specRows, ...detailRows];
+  const values = (row) => selected.map((product) => row.technical ? valueOrDash(product.technicalSpecs?.find(spec => `detail:${spec.label}|${spec.unit}` === row.key)?.value, row.unit) : row.key === 'category' ? categoryName(product.category) : valueOrDash(product[row.key], specUnit(product, row)));
+  const shown = rows.filter((row) => !differencesOnly || new Set(values(row)).size > 1);
+  return <div className="catalog-page"><nav className="breadcrumbs" aria-label="Хлебные крошки"><Link href="/catalog">Каталог</Link><span>/</span><span>Сравнение</span></nav><div className="catalog-heading compact-heading"><div><p className="catalog-kicker">ТЕХНИЧЕСКИЙ КАТАЛОГ</p><h1>Сравнение оборудования</h1></div><Link className="catalog-button" href={`/catalog${ids.length ? `?compare=${ids.join(',')}` : ''}`}>Изменить выбор ↗</Link></div><CatalogNotice compact source={selected.some((product) => product.source === 'demo') ? 'demo' : 'official'} />
+    {selected.length < 2 ? <div className="catalog-empty"><h2>Выберите минимум две позиции</h2><p>Сравнивайте до четырёх позиций по техническим параметрам.</p><Link className="catalog-button primary" href={`/catalog${ids.length ? `?compare=${ids.join(',')}` : ''}`}>Выбрать в каталоге</Link></div> : <><div className="comparison-toolbar"><span className="catalog-meta">Выбрано: {selected.length} из 4</span><label className="inline-check"><input type="checkbox" checked={differencesOnly} onChange={(event) => setDifferencesOnly(event.target.checked)}/>Только различия</label></div><div className="comparison-table-wrap" role="region" aria-label="Сравнение параметров, прокрутка по горизонтали" tabIndex={0}><table className="comparison-table"><thead><tr><th scope="col">Параметр</th>{selected.map((product) => <th key={product.id} scope="col"><button className="remove-compare" aria-label={`Убрать ${product.sku} из сравнения`} onClick={() => router.replace(`/catalog/compare?ids=${ids.filter((id) => id !== product.id).join(',')}`)}>×</button><div className="comparison-product-icon"><ProductIcon product={product} size={52}/></div><span className="product-sku">{product.sku}</span><Link href={`/catalog/${product.id}`}>{product.name}</Link><button className="catalog-button compact" aria-label={`В подборку ${product.sku}`} onClick={() => { selection.add(product.id); setNotice(`${product.sku} добавлен в подборку`); }}>В подборку +</button></th>)}</tr></thead><tbody>{shown.map((row) => <tr key={row.key} className={new Set(values(row)).size > 1 ? 'has-difference' : ''}><th scope="row">{row.label}</th>{values(row).map((value, index) => <td key={ids[index]}>{value}</td>)}</tr>)}</tbody></table></div>{!shown.length && <p className="catalog-empty">В доступных параметрах различий нет.</p>}<p className="filter-help">Подсвечены строки с различающимися значениями. Отсутствие данных не подтверждает техническую совместимость.</p><p role="status" className="catalog-status">{notice}</p></>}
+  </div>;
+}

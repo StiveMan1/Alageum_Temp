@@ -1,0 +1,6 @@
+import Link from 'next/link';
+import PageIntro from '@/components/public/PageIntro';
+import ProjectCTA from '@/components/public/ProjectCTA';
+import { projects } from '@/lib/public/content';
+export const metadata = { title: 'Проекты', description: 'Энергетические проекты и поставки оборудования по официальным публикациям ALAGEUM Electric и Asia Trafo.' };
+export default function ProjectsPage(){return <div className="site-container site-info-page"><PageIntro label="Проекты" title={<>Энергия в работе.<br/>Факты в основе.</>} description="Выбранные проекты и поставки из официальных публикаций. Для каждой карточки указаны источник и границы подтверждённых сведений."/><section className="public-section"><div className="public-grid two">{projects.map(item=><article className="public-card" key={item.id}><p className="site-eyebrow">{item.label}</p><h2>{item.title}</h2><div className="public-tags"><span>{item.location}</span><span>{item.voltage}</span></div><p>{item.description}</p><Link className="site-text-link" href={`/projects/${item.id}`}>Факты и источник ↗</Link></article>)}</div></section><ProjectCTA title="У вашего проекта свои параметры" text="Используйте реализованные примеры как контекст, а техническое решение формируйте на основе ваших исходных данных."/></div>;}
