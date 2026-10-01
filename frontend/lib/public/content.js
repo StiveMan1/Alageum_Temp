@@ -23,6 +23,14 @@ export const documents = [
 ];
 export const offices = [
  { city:'Астана', address:'ул. Сарайшык, 11', phone:'+7 771 001 12 22', tel:'+77710011222', email:'astana@alageum.com' },
- { city:'Алматы', address:'ул. Абылай хана, 58', phone:'+7 771 001 14 11', tel:'+77710011411', email:'almaty@alageum.com' },
+ { city:'Алматы', address:'ул. Абылай хана, 58 · отдел продаж', phone:'+7 771 001 14 11', tel:'+77710011411', email:'almaty@alageum.com' },
+ { city:'Актау', address:'Промзона 6, база (офис) АСМУ АО «ЭЛМО»', phone:'+7 771 001 55 05', tel:'+77710015505', email:'aktau@alageum.com' },
+ { city:'Атырау', address:'ул. Атамбаева, 27, 2 этаж', phone:'+7 771 758 12 84', tel:'+77717581284', email:'atyrau@alageum.com' },
  { city:'Шымкент', address:'Каратауский р-н, ж. м. Тассай, зд. 142/2', phone:'+7 771 005 86 86', tel:'+77710058686', email:'info.shymkent@alageum.com' },
+ { city:'Туркестан', address:'Кызылординская трасса, стр. 7, тупик 1, д. б/н', phone:'+7 747 798 01 02', tel:'+77477980102', email:'a.onalbaev@alageum.com' },
+ { city:'Актобе', address:'пр. 312 Стрелковой дивизии, 44а', phone:'+7 771 001 77 79', tel:'+77710017779', email:'aktobe@alageum.com' },
+ { city:'Уральск', address:'ул. Есенжанова, 42/6 Н1', phone:'+7 771 758 13 50', tel:'+77717581350', email:'info.uralsk@alageum.com' },
+ { city:'Усть-Каменогорск', address:'ул. Горького, 50А, офис 206–207', phone:'+7 771 758 13 75', tel:'+77717581375', email:'oskemen@alageum.com' },
+ { city:'Караганда', address:'ул. Камская, 85, оф. 21, 22', phone:'+7 701 054 27 10', tel:'+77010542710', email:'karaganda@alageum.com' },
+ { city:'Павлодар', address:'Восточный промрайон, ул. Циолковского, 272', phone:'+7 771 758 78 74', tel:'+77717587874', email:'pavlodar@alageum.com' },
 ];

@@ -105,3 +105,16 @@ explicitly mapped to source pages. Tiny scanned thumbnails no longer substitute
 for listing icons. The same icon follows a product through its summary, variant
 card, comparison and selection. Original drawings and existing lazy 3D behavior
 remain unchanged. See `docs/catalog-import/icons-validation.md` for verification.
+
+## Корпоративные страницы · 2026-10-01
+
+Переработаны главная, компания, география предприятий и контакты. Сохранены все
+238 записей каталога, продуктовые иконки, админка и конфигурация Vercel. Карта
+показывает подтверждённые города (не проходные заводов), выбор сохраняется в URL.
+Контакты содержат 11 официальных региональных отделов и 6 контактов предприятий.
+
+`npm run test:e2e:company` проверяет desktop/mobile; `npm run audit:company`
+создаёт PNG и JSON-аудит в четырёх размерах экрана. Workflow
+`Company pages browser QA` сохраняет артефакты для визуального ревью.
+Источники и права фотографий: `docs/company-pages-sources.md`.
+Пределы проверки и вопросы: `docs/company-pages-review.md`.
