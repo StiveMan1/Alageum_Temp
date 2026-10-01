@@ -106,6 +106,14 @@ Check `/api/v1/health`, `/api/v1/readiness`, `/api/v1/catalog/products`, `/catal
 catalog/admin browser suites against the shared origin; set `E2E_API_URL` to that
 origin plus `/api/v1`. An API response alone is not a frontend/routing test.
 
+The `vercel-services` CI job uses disposable PostgreSQL, the frozen Python lock,
+Vercel CLI 62.1.0 and `vercel dev -L`. It runs the full browser suite plus explicit
+API/page ownership, OpenAPI, 404 and same-origin request checks. It uses no Vercel
+token or project link and performs no deployment. Startup and the job are bounded;
+the local server is cleaned up on exit. Run this suite with
+`E2E_VERCEL_SERVICES=1 npm run test:e2e:vercel` from `frontend/` after starting the
+shared-origin server and setting `E2E_BASE_URL` and `E2E_API_URL`.
+
 ## Required before any deployment
 
 1. Confirm the exact service names, public paths, OpenAPI/system-route exposure,
