@@ -33,6 +33,7 @@ jobs:
       - run: pip-audit -r requirements.lock
       - run: ruff check .
       - run: python ../scripts/test_backend_readiness.py
+      - run: python ../scripts/check_vercel_runtime_lock.py
       - run: pytest --cov=app --cov-report=term-missing
       - run: alembic upgrade head
       - run: alembic downgrade base
