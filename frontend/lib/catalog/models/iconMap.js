@@ -1,0 +1,51 @@
+import { equipmentVisualAudit, getEquipmentVisual } from './visualMap.js';
+import { sourceIconMapA, sourceIconVariantMapA } from './sourceIconMapA.js';
+import { sourceIconMapB, sourceIconVariantMapB } from './sourceIconMapB.js';
+
+/** Separate evidence for readable listing icons; the model audit stays unchanged. */
+export const equipmentIconAudit = Object.freeze({ ...sourceIconMapA, ...sourceIconMapB });
+export const equipmentIconVariantAudit = Object.freeze({ ...sourceIconVariantMapA, ...sourceIconVariantMapB });
+export const iconConfidenceLabel = icon => icon.confidence === 'source-based'
+  ? 'Иконка по иллюстрации серии; не точный чертёж исполнения'
+  : 'Условная схема типа; внешний вид исполнения не подтверждён';
+
+export function getEquipmentIcon(product = {}) {
+  const visual = getEquipmentVisual(product);
+  const familyId = product.familyId || product.id;
+  const imported = product.sourceKind === 'supplied-pdf';
+  const family = imported && Object.hasOwn(equipmentIconAudit, familyId) ? equipmentIconAudit[familyId] : null;
+  const override = imported && Object.hasOwn(equipmentIconVariantAudit, product.id) ? equipmentIconVariantAudit[product.id] : null;
+  if (family || override) {
+    const icon = override || family;
+    const inheritedApproximation = product.recordKind === 'variant' && !override && !family.inherit;
+    return {
+      type: icon.type,
+      confidence: inheritedApproximation ? 'typical' : icon.confidence,
+      reason: inheritedApproximation
+        ? `Условная иконка по общей иллюстрации семейства; конструкция этого обозначения отдельно не подтверждена. ${icon.reason}`
+        : icon.reason,
+      sourceFamilyId: familyId,
+      sourcePages: [...(icon.sourcePages || visual.sourcePages)],
+      sourceImage: visual.fallbackImage || product.image || null,
+    };
+  }
+  // Previously audited source-matched constructions retain their existing icons.
+  if (visual.type && visual.confidence === 'source-matched') {
+    return {
+      type: visual.type,
+      confidence: 'source-based',
+      reason: visual.reason,
+      sourceFamilyId: familyId,
+      sourcePages: [...visual.sourcePages],
+      sourceImage: visual.fallbackImage,
+    };
+  }
+  return {
+    type: visual.type || 'equipment',
+    confidence: 'typical',
+    reason: visual.reason,
+    sourceFamilyId: imported && Object.hasOwn(equipmentVisualAudit, familyId) ? familyId : null,
+    sourcePages: [...visual.sourcePages],
+    sourceImage: visual.fallbackImage || product.image || null,
+  };
+}

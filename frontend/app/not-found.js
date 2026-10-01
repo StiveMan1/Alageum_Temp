@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export default function NotFound() { return <div className="site-container site-info-page"><div className="public-error"><p className="site-eyebrow">404 / СТРАНИЦА НЕ НАЙДЕНА</p><h1>Этот маршрут<br />не ведёт к странице.</h1><p>Возможно, адрес изменился. Продолжите с каталога или главной страницы.</p><div className="site-actions"><Link href="/catalog" className="site-button site-button-primary">Перейти в каталог ↗</Link><Link href="/" className="site-text-link">На главную →</Link></div></div></div>; }

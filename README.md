@@ -1,3 +1,5 @@
+> **Public-site preview expanded 2026-10-01:** see [FULL-SITE-README.md](FULL-SITE-README.md) for the complete public frontend, 238-record reference catalog with category/subcategory navigation, all 104 supplied source pages, local inquiry/workspace demo and static preview. Catalog coverage and known source limitations are documented in [catalog-import](docs/catalog-import/README.md). The foundation notes below describe the original backend boundary.
+
 # ALAGEUM.COM pre-Discovery foundation
 
 Production-oriented modular-monolith foundation for a multi-tenant B2B platform. All bundled

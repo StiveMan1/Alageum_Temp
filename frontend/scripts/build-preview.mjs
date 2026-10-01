@@ -1,0 +1,30 @@
+// Isolated public-site export. The normal application keeps backend/dynamic routes.
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { resolve, join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+const root = process.cwd();
+const stage = resolve(root, '.preview-build');
+const output = resolve(root, 'preview-dist');
+// Both disposable directories are fixed children of this project.
+await rm(stage, { recursive: true, force: true });
+await mkdir(stage, { recursive: true });
+for (const entry of ['app', 'components', 'lib', 'public', 'package.json', 'jsconfig.json']) {
+ await cp(join(root, entry), join(stage, entry), { recursive: true });
+}
+for (const route of ['b2b', 'ai', 'login']) await rm(join(stage, 'app', route), { recursive: true, force: true });
+const productPage = join(stage, 'app/catalog/[slug]/page.js');
+await writeFile(productPage, (await readFile(productPage, 'utf8')) + '\nexport const dynamicParams = false;\n');
+// Static preview cards have no API-only detail routes. Remove the query hook only
+// from the disposable preview copy, so their verified specs are present in HTML
+// before hydration. The normal backend-aware component remains unchanged.
+const detailsPath = join(stage, 'components/catalog/ProductDetails.js');
+const detailsSource = await readFile(detailsPath, 'utf8');
+if (!detailsSource.includes('const params = useSearchParams();')) throw new Error('Unexpected product-detail source: review static export adapter');
+await writeFile(detailsPath, detailsSource.replace("import { useSearchParams } from 'next/navigation';\n", '').replace('const params = useSearchParams();', 'const params = new URLSearchParams();'));
+
+await writeFile(join(stage, 'next.config.mjs'), `export default { output: 'export', poweredByHeader: false, reactStrictMode: true, images: { unoptimized: true }, trailingSlash: true, turbopack: { root: ${JSON.stringify(root)} } };\n`);
+const result = spawnSync(process.execPath, [join(root, 'node_modules/next/dist/bin/next'), 'build', stage], { cwd: root, stdio: 'inherit', env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1' } });
+if (result.status !== 0) process.exit(result.status || 1);
+await rm(output, { recursive: true, force: true });
+await cp(join(stage, 'out'), output, { recursive: true });
+console.log(`Public preview exported to ${output}`);

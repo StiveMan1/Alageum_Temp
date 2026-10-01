@@ -1,12 +1,6 @@
-"use client";
-
-import Link from "next/link";
-import ResourceList from "@/components/ResourceList";
-import { getProducts } from "@/lib/api/catalog";
-
+import { Suspense } from 'react';
+import Catalog from '@/components/catalog/Catalog';
+export const metadata = { title: 'Технический каталог' };
 export default function CatalogPage() {
-  return <section><h1>Каталог</h1><p className="muted">Данные загружаются из backend API.</p>
-    <ResourceList load={getProducts} render={(product) => <Link className="card" key={product.id} href={`/catalog/${product.id}`}><h2>{product.translations?.ru?.name || product.slug}</h2><p className="muted">{product.sku}</p></Link>} />
-  </section>;
+  return <Suspense fallback={<div className="catalog-page"><p role="status">Загрузка каталога…</p></div>}><Catalog /></Suspense>;
 }
-

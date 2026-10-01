@@ -1,0 +1,10 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import PageIntro from '@/components/public/PageIntro';
+import SourceNote from '@/components/public/SourceNote';
+import ProjectCTA from '@/components/public/ProjectCTA';
+import { manufacturers, manufacturerById } from '@/lib/public/content';
+export const dynamicParams = false;
+export function generateStaticParams(){return manufacturers.map(item=>({slug:item.id}));}
+export async function generateMetadata({params}){const item=manufacturerById((await params).slug);return {title:item?.title || 'Предприятие',description:item?.description};}
+export default async function ManufacturerPage({params}){const item=manufacturerById((await params).slug);if(!item)notFound();return <div className="site-container site-info-page"><PageIntro label={item.short} parent={{href:'/manufacturers',label:'Предприятия'}} eyebrow={item.city} title={item.title} description={item.legal}/><section className="site-editorial-section"><div><p className="site-eyebrow">ПРОФИЛЬ ПРЕДПРИЯТИЯ</p><h2>{item.city}</h2><p className="site-body-muted">{item.description}</p></div><div><h2 className="public-section-title">Основные направления</h2><ol className="public-checklist">{item.capabilities.map((text,index)=><li key={text}><span>0{index+1}</span>{text}</li>)}</ol></div></section><div className="public-inline-actions">{item.catalogQuery && <Link className="site-button site-button-primary" href={`/catalog?q=${encodeURIComponent(item.catalogQuery)}`}>Оборудование предприятия ↗</Link>}<a className="site-text-link" href={item.source} target="_blank" rel="noopener noreferrer">Официальный профиль ↗</a><Link className="site-text-link" href="/contacts">Связаться с отделом продаж →</Link></div><SourceNote href={item.source}>Профиль предприятия ALAGEUM Electric</SourceNote><ProjectCTA href={`/inquiry?solution=${encodeURIComponent(item.title)}`} text="Укажите предприятие и требования проекта. Менеджер сможет уточнить производителя и техническое исполнение."/></div>;}

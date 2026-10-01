@@ -1,13 +1,9 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { getProduct } from "@/lib/api/catalog";
-
-export default function ProductPage() {
-  const { slug } = useParams(); const [item, setItem] = useState(null); const [error, setError] = useState("");
-  useEffect(() => { getProduct(slug).then(setItem).catch((reason) => setError(reason.message)); }, [slug]);
-  if (error) return <p className="error">{error}</p>; if (!item) return <p>Загрузка…</p>;
-  return <section><h1>{item.translations?.ru?.name || item.slug}</h1><p className="muted">SKU: {item.sku || "—"}</p><div className="card"><h2>Характеристики</h2>{item.attributes.map((a) => <p key={a.code}>{a.code}: {String(a.value)} {a.unit}</p>)}</div></section>;
+import { Suspense } from 'react';
+import ProductDetails from '@/components/catalog/ProductDetails';
+import { products, productById } from '@/lib/catalog/data';
+export function generateStaticParams() { return products.map((item) => ({ slug: item.id })); }
+export async function generateMetadata({ params }) { const item = productById((await params).slug); return { title: item?.name || 'Характеристики оборудования', description: item?.description || 'Параметры и источник данных оборудования.' }; }
+export default async function ProductPage({ params }) {
+ const { slug } = await params;
+ return <Suspense fallback={<div className="catalog-page" role="status">Загрузка карточки…</div>}><ProductDetails id={slug} /></Suspense>;
 }
-

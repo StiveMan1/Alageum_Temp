@@ -1,0 +1,1 @@
+export default function Loading() { return <div className="site-container public-loading" role="status"><span className="public-loading-bar"/><p className="site-metadata">Загружаем страницу…</p></div>; }
