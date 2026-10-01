@@ -1,0 +1,8 @@
+'use client';
+import { useState } from 'react';
+import { offices } from '@/lib/public/content';
+export default function OfficeDirectory() {
+  const [query, setQuery] = useState('');
+  const visible = offices.filter(office => office.city.toLocaleLowerCase('ru').includes(query.trim().toLocaleLowerCase('ru')));
+  return <section id="offices" className="corp-section" aria-labelledby="office-title"><div className="corp-directory-heading"><div><p className="site-eyebrow">02 / РЕГИОНАЛЬНЫЕ КАНАЛЫ</p><h2 id="office-title">Ближе к вашему проекту</h2></div><div className="corp-office-search"><label htmlFor="office-search">Найти отдел продаж по городу</label><div><input id="office-search" type="search" placeholder="Например, Алматы" value={query} onChange={event => setQuery(event.target.value)} />{query && <button type="button" aria-label="Очистить поиск города" onClick={() => setQuery('')}>×</button>}</div></div></div><p className="corp-result-count" role="status" aria-live="polite">Отделов продаж: {visible.length}</p>{visible.length ? <div className="corp-office-grid">{visible.map(office => <article className="corp-office" key={office.city}><span className="site-eyebrow">КАЗАХСТАН</span><h3>{office.city}</h3><address>{office.address}</address><a href={`tel:${office.tel}`}>{office.phone}</a><a href={`mailto:${office.email}`}>{office.email}<span aria-hidden="true">↗</span></a></article>)}</div> : <div className="corp-office-empty"><h3>Этот город пока не указан в списке</h3><p>Единый отдел продаж поможет уточнить нужный контакт.</p><a className="site-text-link" href="tel:+77710052222">+7 771 005 22 22</a><button type="button" className="site-button corp-button-secondary" onClick={() => setQuery('')}>Показать все города</button></div>}</section>;
+}

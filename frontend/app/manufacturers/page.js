@@ -1,6 +1,9 @@
-import Link from 'next/link';
+import { Suspense } from 'react';
 import PageIntro from '@/components/public/PageIntro';
-import SourceNote from '@/components/public/SourceNote';
-import { manufacturers } from '@/lib/public/content';
-export const metadata = { title: 'Предприятия', description: 'Предприятия группы ALAGEUM Electric: КТЗ, Asia Trafo, АЭМЗ, УТЗ, ПЭТЗ и Электромонтаж.' };
-export default function ManufacturersPage(){return <div className="site-container site-info-page"><PageIntro label="Предприятия" title={<>Сила группы.<br />Компетенция каждого.</>} description="Познакомьтесь с производственными и инженерными предприятиями. Профили и направления приведены по официальным источникам."/><section className="public-section"><div className="public-grid three">{manufacturers.map((item)=><article className="public-card" key={item.id}><span className="public-card-mark">{item.short}</span><h2>{item.title}</h2><p className="site-eyebrow">{item.city}</p><p>{item.description}</p><div className="public-tags">{item.capabilities.slice(0,2).map(tag=><span key={tag}>{tag}</span>)}</div><Link className="site-text-link" href={`/manufacturers/${item.id}`}>Профиль предприятия ↗</Link></article>)}</div></section><div className="public-note"><strong>Подборка предприятий</strong><p>Это обзор выбранных предприятий группы, а не полный реестр юридических лиц. Производственные возможности не являются характеристиками каждого изделия.</p></div><SourceNote href="https://alageum.com/ru/predpriyatiya">Официальный раздел предприятий</SourceNote></div>;}
+import EnterpriseDirectory from '@/components/public/EnterpriseDirectory';
+import { CorporateCTA } from '@/components/public/CorporateParts';
+import '../company-pages.css';
+export const metadata = { title: 'География предприятий', description: 'Предприятия ALAGEUM Electric в Кентау, Шымкенте, Алматы, Уральске и Петропавловске. Специализация, адреса и официальные контакты.' };
+export default function ManufacturersPage() {
+  return <div className="corp-page site-container site-info-page"><PageIntro label="Предприятия" eyebrow="ГЕОГРАФИЯ ГРУППЫ" title={<>Предприятия,<br /><span className="corp-heading-muted">соединённые энергией.</span></>} description="Производственные и инженерные компетенции по городам Казахстана. Выберите город, чтобы найти предприятие и его контакты." /><Suspense fallback={<p className="corp-loading" role="status">Загружаем географию предприятий…</p>}><EnterpriseDirectory /></Suspense><CorporateCTA title={<>Найдём компетенцию<br />для вашего проекта.</>} /></div>;
+}
