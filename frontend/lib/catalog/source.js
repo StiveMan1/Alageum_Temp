@@ -1,20 +1,15 @@
 import { apiFetch } from '@/lib/api/client';
-
-// Existing API mode is explicit: never silently replace an API error with demo records.
-// Until approved attribute mapping exists, raw API attributes are only shown on details.
+import { normalizeApiProduct } from './apiData';
+export { normalizeApiProduct } from './apiData';
+// Never silently replace an API failure with the bundled static snapshot.
 export async function loadApiCatalog() {
-  const all = [];
-  let page = 1;
-  for (;;) {
-    const result = await apiFetch(`/catalog/products?page=${page}&page_size=100`);
-    const items = result.items || [];
-    all.push(...items);
-    if (!items.length || all.length >= (result.total ?? all.length)) break;
-    if (page >= 100) throw new Error('Каталог превышает лимит демонстрационного API-адаптера. Нужна серверная фильтрация.');
-    page += 1;
-  }
-  return all.map(normalizeApiProduct);
-}
-export function normalizeApiProduct(product) {
-  return { ...product, name: product.translations?.ru?.name || product.translations?.en?.name || product.slug, source: 'api', category: '', power: null, voltage: null, cooling: null, installation: null };
+ const all = [];
+ for (let page = 1; page <= 100; page++) {
+  const result = await apiFetch(`/catalog/products?page=${page}&page_size=100`);
+  if (!Array.isArray(result.items) || !Number.isInteger(result.total)) throw new Error('Некорректный ответ API каталога');
+  all.push(...result.items);
+  if (all.length >= result.total) return all.map(normalizeApiProduct);
+  if (!result.items.length) break;
+ }
+ throw new Error('Не удалось получить полный актуальный каталог');
 }

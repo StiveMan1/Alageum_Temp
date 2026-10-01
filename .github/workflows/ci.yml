@@ -32,6 +32,7 @@ jobs:
       - run: pip install -r requirements-dev.lock
       - run: pip-audit -r requirements.lock
       - run: ruff check .
+      - run: python ../scripts/test_backend_readiness.py
       - run: pytest --cov=app --cov-report=term-missing
       - run: alembic upgrade head
       - run: alembic downgrade base
@@ -51,6 +52,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm install --global npm@11.6.2
       - run: npm ci
+      - run: python3 scripts/update_catalog_assets.py --check
+        working-directory: .
       - run: python3 scripts/check_frontend_env.py
         working-directory: .
       - run: npm audit --audit-level=high
@@ -72,6 +75,7 @@ jobs:
       - run: npm install --global npm@11.6.2
       - run: cp .env.example .env
       - run: ./scripts/bootstrap.sh
+      - run: docker compose run --rm -v "$PWD/docs/catalog-import:/catalog:ro" backend python -m scripts.import_catalog --catalog-dir /catalog
       - run: |
           backup_path="$(./scripts/backup.sh)"
           ./scripts/restore.sh "${backup_path}"
@@ -84,5 +88,14 @@ jobs:
         working-directory: frontend
       - if: always()
         run: docker compose logs --no-color > compose-e2e.log
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-context-${{ github.run_id }}
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+            compose-e2e.log
+          retention-days: 7
       - if: always()
         run: docker compose down -v

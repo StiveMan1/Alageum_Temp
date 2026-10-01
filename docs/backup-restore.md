@@ -23,3 +23,5 @@ Included: PostgreSQL schema and data. Not included: local/object-storage file by
 secrets, container images or external providers. Production destination, encryption, retention,
 file-storage backups, schedule, RPO/RTO and restore authority are **NEEDS_CLIENT**.
 
+
+After restarting the backend, restore waits for the database-backed `/api/v1/readiness` endpoint before reporting success. Requests have connection and total timeouts; the overall wait defaults to 120 seconds (`BACKEND_READY_TIMEOUT_SECONDS`, range 1–600). A timeout exits nonzero with the last bounded readiness error, so callers do not run smoke tests against a server that has only just started. Bootstrap uses the same readiness check.

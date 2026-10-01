@@ -9,13 +9,7 @@ if [[ ! -f "${project_dir}/.env" ]]; then
   printf 'Created .env from DEV-only example\n'
 fi
 docker compose -f "${project_dir}/docker-compose.yml" up -d --build
-for _ in $(seq 1 60); do
-  if curl --fail --silent "http://localhost:8000/api/v1/readiness" >/dev/null; then
-    break
-  fi
-  sleep 2
-done
-curl --fail --silent "http://localhost:8000/api/v1/readiness" >/dev/null
+"${project_dir}/scripts/wait-for-backend.sh"
 docker compose -f "${project_dir}/docker-compose.yml" exec -T backend python -m scripts.seed
 printf 'Frontend: http://localhost:3000\nAPI: http://localhost:8000/docs\n'
 

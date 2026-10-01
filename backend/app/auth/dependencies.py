@@ -12,6 +12,7 @@ from app.auth.security import decode_jwt
 from app.core.database import get_session
 from app.core.errors import AppError
 from app.identity.models import Membership, Role, User
+from app.identity.roles import PLATFORM_PERMISSIONS
 
 bearer = HTTPBearer(auto_error=False)
 
@@ -27,7 +28,10 @@ class AuthContext:
 
     @property
     def permissions(self) -> set[str]:
-        return {item.code for item in self.membership.role.permissions}
+        permissions = {item.code for item in self.membership.role.permissions}
+        if self.membership.role.organization_id is not None:
+            permissions -= PLATFORM_PERMISSIONS
+        return permissions
 
 
 async def current_user(
@@ -66,7 +70,12 @@ async def auth_context(
         raise AppError("organization_access_denied", "No active organization membership", 403)
     if len(memberships) > 1 and organization_id is None:
         raise AppError("organization_required", "X-Organization-ID header is required", 400)
-    context = AuthContext(user=user, membership=memberships[0])
+    membership = memberships[0]
+    if not membership.organization.is_active:
+        raise AppError("organization_access_denied", "Organization is inactive", 403)
+    if membership.role.organization_id not in {None, membership.organization_id}:
+        raise AppError("organization_access_denied", "Role does not belong to organization", 403)
+    context = AuthContext(user=user, membership=membership)
     structlog.contextvars.bind_contextvars(
         user_id=str(context.user.id), organization_id=str(context.organization_id)
     )

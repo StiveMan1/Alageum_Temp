@@ -1,4 +1,6 @@
 'use client';
+import { isApiCatalog } from '@/lib/catalog/apiData';
+import { LiveProductDetails } from './LiveCatalog';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -16,7 +18,7 @@ import { equipmentModelName } from '@/lib/catalog/models/types';
 import { ImportedSpecifications, ImportedDocuments } from './ImportedProductData';
 
 const tabs = [{ id: 'specs', name: 'Характеристики' }, { id: 'overview', name: 'Описание' }, { id: 'documents', name: 'Документы' }];
-export default function ProductDetails({ id }) {
+function StaticProductDetails({ id }) {
   const params = useSearchParams();
   const apiMode = params.get('source') === 'api' || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
   const [remote, setRemote] = useState({ product: null, status: 'loading' });
@@ -45,4 +47,9 @@ export default function ProductDetails({ id }) {
     </section>
     <div className="catalog-bottom-nav"><Link href={catalogHref}>← Вернуться к каталогу</Link><Link href="/selection">Моя подборка →</Link></div>
   </div>;
+}
+
+export default function ProductDetails({ id }) {
+ const params = useSearchParams();
+ return isApiCatalog(params) || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? <LiveProductDetails id={id}/> : <StaticProductDetails id={id}/>;
 }

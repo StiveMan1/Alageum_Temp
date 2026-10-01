@@ -23,6 +23,7 @@ from app.core.database import get_session
 from app.core.errors import AppError
 from app.core.rate_limit import RateLimitPolicy, limit_login, rate_limit
 from app.identity.models import Role, User
+from app.identity.roles import is_tenant_assignable
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
@@ -80,6 +81,8 @@ async def invite(
     )
     if not role:
         raise AppError("role_not_found", "Role does not belong to this organization", 404)
+    if not is_tenant_assignable(role, context.organization_id):
+        raise AppError("permission_denied", "Platform roles cannot be invited by tenant users", 403)
     token, expires = await AuthService(session).create_one_time_token(
         "invitation", body.email, context.organization_id, body.role_id
     )

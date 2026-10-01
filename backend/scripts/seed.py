@@ -27,6 +27,7 @@ from app.identity.models import Membership, Organization, Permission, Role, User
 
 PERMISSIONS = {
     "catalog.read",
+    "catalog.manage",
     "order.read",
     "order.create",
     "document.read",
@@ -49,10 +50,13 @@ async def seed() -> None:
         if await session.scalar(select(User.id).limit(1)):
             print("Seed skipped: users already exist")
             return
-        permissions = {
-            code: Permission(code=code, description="DEV example") for code in PERMISSIONS
-        }
-        session.add_all(permissions.values())
+        permissions = {}
+        for code in PERMISSIONS:
+            permission = await session.scalar(select(Permission).where(Permission.code == code))
+            if permission is None:
+                permission = Permission(code=code, description="DEV example")
+                session.add(permission)
+            permissions[code] = permission
         org_a = Organization(
             name="Demo Industrial Company", external_id="DEMO-ORG-A", is_active=True
         )
@@ -64,8 +68,21 @@ async def seed() -> None:
             organization_id=org_a.id,
             code="dev_admin",
             name="DEV Admin (placeholder)",
-            permissions=list(permissions.values()),
+            permissions=[permissions[code] for code in PERMISSIONS if code != "catalog.manage"],
         )
+        catalog_role = await session.scalar(
+            select(Role).where(
+                Role.organization_id.is_(None), Role.code == "platform_catalog_manager"
+            )
+        )
+        if catalog_role is None:
+            catalog_role = Role(
+                organization_id=None,
+                code="platform_catalog_manager",
+                name="Platform catalog manager",
+                permissions=[permissions["catalog.manage"], permissions["catalog.read"]],
+            )
+            session.add(catalog_role)
         buyer_role = Role(
             organization_id=org_a.id,
             code="dev_buyer",
@@ -118,18 +135,24 @@ async def seed() -> None:
         engineer = User(
             email="engineer@demo.example", display_name="Demo Engineer", password_hash=password
         )
-        session.add_all([admin, buyer, accountant, engineer])
+        catalog_admin = User(
+            email="catalog@demo.example",
+            display_name="Demo Catalog Manager",
+            password_hash=password,
+        )
+        session.add_all([admin, buyer, accountant, engineer, catalog_admin])
         await session.flush()
         session.add_all(
             [
                 Membership(user_id=admin.id, organization_id=org_a.id, role_id=admin_role.id),
+                Membership(
+                    user_id=catalog_admin.id, organization_id=org_a.id, role_id=catalog_role.id
+                ),
                 Membership(user_id=buyer.id, organization_id=org_a.id, role_id=buyer_role.id),
                 Membership(
                     user_id=accountant.id, organization_id=org_b.id, role_id=accountant_role.id
                 ),
-                Membership(
-                    user_id=engineer.id, organization_id=org_a.id, role_id=engineer_role.id
-                ),
+                Membership(user_id=engineer.id, organization_id=org_a.id, role_id=engineer_role.id),
             ]
         )
 

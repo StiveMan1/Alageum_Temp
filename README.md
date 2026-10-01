@@ -1,3 +1,5 @@
+> **Persistent catalog admin (2026-10-01):** database-backed prices, product create/edit/hide/restore and explicit live API mode are implemented in this branch. See [setup and production boundaries](docs/catalog-admin.md) and [verification](docs/catalog-admin-validation.md). The static public preview does not include administration.
+
 > **Public-site preview expanded 2026-10-01:** see [FULL-SITE-README.md](FULL-SITE-README.md) for the complete public frontend, 238-record reference catalog with category/subcategory navigation, all 104 supplied source pages, local inquiry/workspace demo and static preview. Catalog coverage and known source limitations are documented in [catalog-import](docs/catalog-import/README.md). The foundation notes below describe the original backend boundary.
 
 # ALAGEUM.COM pre-Discovery foundation
