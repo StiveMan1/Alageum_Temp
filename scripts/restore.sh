@@ -24,5 +24,6 @@ docker compose -f "${project_dir}/docker-compose.yml" exec -T postgres \
   sh -eu -c 'pg_restore --exit-on-error --no-owner --no-acl --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"' \
   < "${artifact}"
 docker compose -f "${project_dir}/docker-compose.yml" start backend >/dev/null
+"${project_dir}/scripts/wait-for-backend.sh"
 printf 'Restore completed: %s\n' "${artifact}"
 

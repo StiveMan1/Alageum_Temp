@@ -32,6 +32,7 @@ jobs:
       - run: pip install -r requirements-dev.lock
       - run: pip-audit -r requirements.lock
       - run: ruff check .
+      - run: python ../scripts/test_backend_readiness.py
       - run: pytest --cov=app --cov-report=term-missing
       - run: alembic upgrade head
       - run: alembic downgrade base
