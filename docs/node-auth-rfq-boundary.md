@@ -33,7 +33,7 @@ Demo seeding requires `ALAGEUM_SEED_DEMO=1` and a development/test application e
 
 ## Not migrated by this slice
 
-Invitation/password-reset flows, member-management writes, generic legacy quote creation, organization-wide quote history, RFQ attachments, RFQ status transitions, manager responses, orders, documents, finance, tickets, notifications, AI and integration workflows are not implemented here. Their legacy code is a reference, not a runtime service or proof of Node feature parity.
+Invitation/password-reset flows, member-management writes, generic legacy quote creation, organization-wide quote history, RFQ attachments, RFQ status transitions, manager responses, orders, documents, finance, advanced support workflows, notifications, AI and integration workflows are not implemented here. Their legacy code is a reference, not a runtime service or proof of Node feature parity.
 
 ## Verification
 
@@ -42,3 +42,5 @@ Invitation/password-reset flows, member-management writes, generic legacy quote 
 - The integration suite deliberately drops/recreates `b2b` only in that explicitly named database. Never point it at an application database
 - Integration coverage includes active/tenant/role checks, simultaneous refresh reuse, logout, atomic RFQ persistence, same/different-body concurrency, transactional audit rollback, owner/tenant isolation, immutable retries and catalog row-lock lifetime
 - Domain integration tests use a small PostgreSQL catalog fixture adapter. The Strapi-backed catalog adapter requires its own application integration coverage
+
+The separately migrated [customer support boundary](node-support-tickets.md) covers only category lookup, organization-wide ticket summaries and creation with an initial message. It does not add manager or message-reading workflows.

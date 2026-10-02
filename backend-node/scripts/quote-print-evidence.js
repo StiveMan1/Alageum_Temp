@@ -4,7 +4,8 @@ const { join } = require("node:path");
 
 // All generated artifacts stay outside the always-upload directory until a full
 // sanitizer pass succeeds. Both directories belong to this disposable run.
-function publishVerifiedEvidence({ staging, published, sanitize, report, redact }) {
+function publishVerifiedEvidence({ staging, published, sanitize, report, redact, reportName = "quote-print-results.json" }) {
+  if (!["quote-print-results.json", "results.json"].includes(reportName)) throw new Error("Unsupported evidence summary filename");
   let verified = false;
   try {
     sanitize(staging);
@@ -19,7 +20,7 @@ function publishVerifiedEvidence({ staging, published, sanitize, report, redact 
     rmSync(published, { recursive: true, force: true });
     mkdirSync(published, { recursive: true, mode: 0o700 });
   }
-  writeFileSync(join(published, "quote-print-results.json"), `${redact(JSON.stringify(report, null, 2))}\n`, { mode: 0o600 });
+  writeFileSync(join(published, reportName), `${redact(JSON.stringify(report, null, 2))}\n`, { mode: 0o600 });
   return verified;
 }
 module.exports = { publishVerifiedEvidence };

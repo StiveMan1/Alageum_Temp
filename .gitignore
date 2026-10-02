@@ -57,3 +57,7 @@ profile-delivery-evidence/
 # Disposable organization-selection acceptance build and evidence
 frontend/.next-organization/
 organization-delivery-evidence/
+
+# Disposable customer support acceptance build and evidence
+frontend/.next-support/
+support-delivery-evidence/

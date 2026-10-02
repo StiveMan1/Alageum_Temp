@@ -10,6 +10,7 @@ on:
       - 'docs/company-profile.md'
       - 'docs/organization-selection.md'
       - 'docs/quote-print.md'
+      - 'docs/node-support-tickets.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -23,6 +24,7 @@ on:
       - 'docs/company-profile.md'
       - 'docs/organization-selection.md'
       - 'docs/quote-print.md'
+      - 'docs/node-support-tickets.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -553,6 +555,94 @@ jobs:
           path: |
             organization-selection-evidence/
             ${{ runner.temp }}/organization-selection-tmp/alageum-organization-tests.*/evidence/
+          retention-days: 14
+
+  support-tickets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_ENV: test
+      STRAPI_TELEMETRY_DISABLED: 'true'
+      STRAPI_HIDE_UPDATE_MESSAGE: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            backend-node/package-lock.json
+            frontend/package-lock.json
+      - name: Prepare isolated support evidence and PostgreSQL tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          support_temp="$RUNNER_TEMP/support-tickets-tmp"
+          mkdir -p "$support_temp" support-tickets-evidence
+          printf 'TMPDIR=%s\n' "$support_temp" >> "$GITHUB_ENV"
+          pg_bin=$(pg_config --bindir)
+          for command in initdb pg_ctl createdb; do test -x "$pg_bin/$command"; done
+          printf 'PG_BIN=%s\n' "$pg_bin" >> "$GITHUB_ENV"
+      - name: Install locked support dependencies
+        timeout-minutes: 8
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix backend-node
+          npm ci --prefix frontend
+      - name: Install bounded Chromium for support acceptance
+        timeout-minutes: 5
+        working-directory: frontend
+        shell: bash
+        env:
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '60000'
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 270s npx --no-install playwright install --with-deps chromium 2>&1 | tee ../support-tickets-evidence/chromium-install.log
+      - name: Verify isolated real HTTP and all twenty support browser cases
+        timeout-minutes: 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The runner generates ephemeral credentials, respects the login
+          # limiter and stages only sanitized evidence outside its database.
+          timeout --signal=TERM --kill-after=20s 960s bash backend-node/scripts/run-support-tests.sh --browser
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const root = process.env.TMPDIR;
+          const runs = fs.readdirSync(root).filter(name => name.startsWith('alageum-support-tests.'));
+          assert.equal(runs.length, 1, 'one isolated support run is required');
+          const evidence = path.join(root, runs[0], 'evidence');
+          const report = JSON.parse(fs.readFileSync(path.join(evidence, 'results.json')));
+          assert.equal(report.status, 'passed');
+          assert.equal(report.browser, 'passed');
+          assert.equal(report.checks.length, 23);
+          assert.ok(report.checks.every(check => check.status === 'passed'));
+          assert.equal(report.cleanup, 'passed');
+          assert.equal(report.browserTests, 20);
+          assert.equal(report.screenshots.length, 4);
+          for (const project of ['support-desktop', 'support-mobile']) {
+            for (const name of ['saved-fictitious-ticket', 'fictitious-ticket-validation']) {
+              assert.ok(report.screenshots.some(shot => shot.project === project && shot.name === name));
+            }
+          }
+          const log = fs.readFileSync(path.join(evidence, 'playwright.log'), 'utf8');
+          assert.match(log, /\b20 passed\b/);
+          assert.doesNotMatch(log, /\b[1-9]\d* (?:failed|flaky|skipped|did not run)\b/);
+          NODE
+      - name: Retain sanitized support evidence and successful screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: support-tickets-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            support-tickets-evidence/
+            ${{ runner.temp }}/support-tickets-tmp/alageum-support-tests.*/evidence/
           retention-days: 14
 
   # Reimplemented acceptance has dedicated databases and independent failures.
