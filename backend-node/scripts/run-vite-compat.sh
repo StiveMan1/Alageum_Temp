@@ -50,6 +50,7 @@ trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 cd "$ROOT"
+node scripts/strapi-webpack-patch.js --check
 export PORT=$(free_port)
 export VITE_COMPAT_URL="http://127.0.0.1:$PORT"
 if [[ "$MODE" == --builds ]]; then

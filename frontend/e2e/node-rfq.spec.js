@@ -68,6 +68,13 @@ test('real Node RFQ survives anonymous handoff, save, retry, reload and own list
   await page.evaluate(() => document.fonts.ready);
   await expect(page.getByRole('contentinfo')).toBeVisible();
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  // Capture the completed flow from a deterministic viewport and focus state.
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  });
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(page.getByRole('banner')).toBeInViewport();
   const screenshotPath = testInfo.outputPath('node-rfq-saved.png');
   await page.screenshot({ path: screenshotPath, fullPage: true, animations: 'disabled' });
   await testInfo.attach('node-rfq-saved', { path: screenshotPath, contentType: 'image/png' });
