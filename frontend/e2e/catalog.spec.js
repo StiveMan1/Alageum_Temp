@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { expectCatalogViewport, expectReceivesPointer } from "./helpers/catalog-viewport";
 
 const selectionKey = "alageum.catalog.selection.v1";
 const catalogRows = (page) => page.getByRole("region", { name: "Таблица оборудования, прокрутка по горизонтали" }).locator("tbody tr");
@@ -238,7 +239,15 @@ test("explicit API errors never silently substitute demo products", async ({ pag
 });
 
 test("shared navigation closes after Escape and a route change", async ({ page, isMobile }) => {
+  // Also cover the fully hydrated public catalog before retaining the original
+  // demo navigation/Escape flow below. Both desktop and mobile must fit.
+  await page.goto("/catalog");
+  await expectCatalogViewport(page);
+  await expectReceivesPointer(isMobile
+    ? page.getByRole("button", { name: "Открыть навигацию", exact: true })
+    : page.locator('.site-nav-link[href="/company"]'));
   await page.goto("/catalog?source=demo");
+  await expectCatalogViewport(page);
   const header = page.getByRole("banner");
   if (isMobile) {
     await header.getByRole("button", { name: "Открыть навигацию", exact: true }).click();

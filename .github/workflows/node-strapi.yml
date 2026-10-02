@@ -411,6 +411,7 @@ jobs:
       NEXT_TELEMETRY_DISABLED: '1'
       NEXT_PUBLIC_CATALOG_SOURCE: static
       API_INTERNAL_BASE_URL: http://127.0.0.1:8019/api/v1
+      COMPANY_SOURCE: cms
       PAGES_SOURCE: api
       PAGES_STATIC_PREVIEW: '0'
       PAGES_SITE_ORIGIN: http://127.0.0.1:3142
@@ -470,11 +471,11 @@ jobs:
           set -euo pipefail
           npm run build --prefix frontend 2>&1 | tee page-delivery-evidence/next-build.log
       - name: Verify production HTTP fault matrix with disposable API fixtures
-        timeout-minutes: 4
+        timeout-minutes: 6
         shell: bash
         run: |
           set -euo pipefail
-          timeout --signal=TERM --kill-after=10s 190s node frontend/scripts/verify-editorial-http.mjs 2>&1 | tee page-delivery-evidence/fault-matrix.log
+          timeout --signal=TERM --kill-after=10s 310s node frontend/scripts/verify-editorial-http.mjs 2>&1 | tee page-delivery-evidence/fault-matrix.log
       - name: Install bounded Chromium for Page acceptance
         timeout-minutes: 5
         working-directory: frontend
@@ -484,7 +485,7 @@ jobs:
         run: |
           set -euo pipefail
           timeout --signal=TERM --kill-after=10s 270s npx --no-install playwright install --with-deps chromium 2>&1 | tee ../page-delivery-evidence/chromium-install.log
-      - name: Verify native CMS publication and all five Page browser cases
+      - name: Verify native CMS publication and all seven Page browser cases
         timeout-minutes: 14
         shell: bash
         env:
@@ -496,6 +497,7 @@ jobs:
         timeout-minutes: 6
         shell: bash
         env:
+          COMPANY_SOURCE: static
           PAGES_SOURCE: static
           PAGES_STATIC_PREVIEW: '1'
           NODE_ENV: production

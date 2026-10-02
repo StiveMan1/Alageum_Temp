@@ -2,6 +2,8 @@
 import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+// Reject before deleting, copying or replacing anything in the disposable tree.
+if (process.env.COMPANY_SOURCE !== undefined && process.env.COMPANY_SOURCE !== 'static') throw new Error('Static preview requires COMPANY_SOURCE unset or static');
 const root = process.cwd();
 const stage = resolve(root, '.preview-build');
 const output = resolve(root, 'preview-dist');
@@ -18,6 +20,8 @@ await writeFile(layoutPath, (await readFile(layoutPath, 'utf8'))
  .replace('<AuthProvider>', '').replace('</AuthProvider>', ''));
 const productPage = join(stage, 'app/(site)/catalog/[slug]/page.js');
 await writeFile(productPage, (await readFile(productPage, 'utf8')) + '\nexport const dynamicParams = false;\n');
+// Only the disposable tree replaces the request-time company resolver.
+await writeFile(join(stage, 'app/company/page.js'), `export { default, metadata } from '@/components/public/StaticCompanyPage';\n`);
 // The live editorial route stays dynamic. Only this disposable copy gets fixed
 // parameters, so future CMS slugs remain available without rebuilding the app.
 const editorialPage = join(stage, 'app/pages/[locale]/[slug]/page.js');
@@ -34,7 +38,7 @@ if (!detailsSource.includes('const params = useSearchParams();')) throw new Erro
 await writeFile(detailsPath, detailsSource.replace("import { useSearchParams } from 'next/navigation';\n", '').replaceAll('const params = useSearchParams();', 'const params = new URLSearchParams();'));
 
 await writeFile(join(stage, 'next.config.mjs'), `export default { output: 'export', poweredByHeader: false, reactStrictMode: true, images: { unoptimized: true }, trailingSlash: true, turbopack: { root: ${JSON.stringify(root)} } };\n`);
-const result = spawnSync(process.execPath, [join(root, 'node_modules/next/dist/bin/next'), 'build', stage], { cwd: root, stdio: 'inherit', env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1', NEXT_PUBLIC_CATALOG_SOURCE: 'static', PAGES_SOURCE: 'static', PAGES_STATIC_PREVIEW: '1' } });
+const result = spawnSync(process.execPath, [join(root, 'node_modules/next/dist/bin/next'), 'build', stage], { cwd: root, stdio: 'inherit', env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1', NEXT_PUBLIC_CATALOG_SOURCE: 'static', PAGES_SOURCE: 'static', PAGES_STATIC_PREVIEW: '1', COMPANY_SOURCE: 'static' } });
 if (result.status !== 0) process.exit(result.status || 1);
 await rm(output, { recursive: true, force: true });
 await cp(join(stage, 'out'), output, { recursive: true });

@@ -136,7 +136,97 @@ With the frontend build available, `bash scripts/run-page-tests.sh
 --delivery-http` creates a fresh Page database and exercises the actual native
 HTTP→Next path. It explicitly reports browser not run and is forbidden when CI
 is set. Hosted delivery runs `node backend-node/scripts/run-page-delivery.js`
-without that flag, after both CMS and Next builds, and requires all five browser
+without that flag, after both CMS and Next builds, and now requires all seven browser
 cases plus their screenshots. Every runner stops its own children and retains
 bounded evidence under ignored `page-delivery-evidence/` or its disposable test
 folder. No credentials are committed.
+
+
+## Explicit company CMS delivery (PR9 successor, 2026-10-02)
+
+This bounded integration starts from frozen PR9 head
+`7515df3499471c62c3981b0485b908e051eb70ff`, tree
+`61ec0c0e442b7e3bd00c7bc3ff6002b9497ea433`. Historical counts above belong to those
+older checkpoints. The current slice changes no dependencies, schema, API,
+production database or root shell. Only `/company` moves out of the existing
+loading boundary; its entire rich component and original metadata are preserved
+byte-for-byte except the relative CSS import location. Static remains the default.
+
+The installed Next 16.3.8 guides on previous-model dynamic route configuration,
+metadata/cache and not-found streaming were read before implementation. The
+normal build explicitly renders `/company` at request time, allowing that same
+build to start under unset, static and CMS selectors.
+
+Local validation on Node 24.19.0 and PostgreSQL 17:
+
+- Frontend lint and full units: 154/154 (including the child-process sentinel that
+  proves rejected CMS/invalid preview selection leaves staging and output intact)
+- Backend syntax and units: 55/55; native PostgreSQL Page contracts: 12/12
+- Normal production Next build and explicit static preview export pass
+- Production HTTP matrix: 196/196; all original 58 checks remain, plus 138 company
+  checks covering runtime selection, publication lifecycle, hard404/500 for browser
+  and Twitterbot, delayed faults/timeouts, canonical origin/config rejection,
+  invalid selector isolation, shared shell, SEO freshness and no fallback
+- Native Strapi/production Next delivery: 13 local HTTP groups pass against a new
+  exact-name disposable PostgreSQL database. Company and alias both cover draft,
+  publish, private edit, republish, moved/restored slug, unpublish, restored
+  publication, and actual backend shutdown. The hosted browser group makes 14
+- Browser discovery: 45/45 across all existing suites, including seven Page cases.
+  The two added company executions use existing desktop/mobile projects and retain
+  full screenshots. All prior cases and zero-retry assertions are retained
+
+A deliberately stricter intermediate HTTP assertion exposed two upstream reads
+on a browser API500 response. Inspection confirmed Next 16.3.8 creates a new RSC
+error render and reruns metadata after a generic error; each render gets a fresh
+React cache. The final matrix preserves the prior bound of at most two reads for
+all-error responses, requires at least one actual read, and verifies hard500/no
+content even when the recovery read succeeds. Success, shared metadata/body
+first-read-only snapshots and 404 require exactly one read; preflight configuration
+failures require zero. The next request independently observes publication or an
+outage. No global cache, unsupported framework internals or assertion retries are
+used to hide this framework behavior.
+
+Local Chromium execution remains blocked by the executor's verified process
+singleton socket policy; no browser was launched or bypass attempted. Discovery
+and HTTP evidence do not establish browser acceptance. The hosted workflow must
+still prove all seven Page cases, retained desktop/mobile company screenshots,
+and the unchanged earlier suites for the final commit. Optional webpack probes
+remain enforced in that workflow. Dependency audit, production environment guards,
+optimistic Page conflict handling, history restoration and production readiness
+remain unchanged limits; this slice authorizes no merge or deployment.
+
+
+### Hosted mobile navigation failure and containment candidate
+
+PR10 head `006aa2e2` passed six Page cases, including desktop company delivery,
+but the mobile company case could not click the existing menu toggle. The public
+trace shows a 390×844 viewport while the catalog loading shell is visible, then
+589×1275 after the real table mounts and before the first click. The failed PNG
+is horizontally displaced; click points such as (349,34) hit the header rail.
+This is layout inflation evidence, not justification to force a click or change
+header stacking.
+
+The compiled CSS in that trace matches source: the two table-header `.sr-only`
+labels are absolutely positioned; the horizontal `.catalog-table-wrap` has no
+positioned containing block. CSS overflow does not clip absolutely positioned
+descendants whose containing block lies outside the scroller
+([W3C CSS2 overflow](https://www.w3.org/TR/CSS2/visufx.html#overflow-clipping)).
+The narrow candidate sets `position: relative` on that existing scroll wrapper.
+It leaves the table's horizontal scrolling, hidden accessible text and every
+header rule intact. This explains the likely escaped-label overflow; the fix
+still requires fresh hosted browser confirmation.
+
+The company desktop/mobile case now waits for the hydrated table and asserts
+configured viewport width, no document overflow/horizontal displacement, normal
+visual scale, and real navigation-center hit testing before ordinary clicks.
+The existing catalog navigation case adds the same public-catalog checks while
+retaining its original demo open/Escape/reopen/navigation flow. Mobile checks also
+require that the wide table actually scrolls with ArrowRight inside its own
+region while document scrollX stays zero. No force
+click, JavaScript click, timeout increase, retry or footer shortcut is introduced.
+
+
+Local checks for this containment candidate pass: lint, all 154 frontend units,
+normal production and disposable static builds, 45 candidate-browser discovery
+and 46 existing catalog-browser discovery. No local browser was launched; those
+discovery counts do not establish interaction acceptance.

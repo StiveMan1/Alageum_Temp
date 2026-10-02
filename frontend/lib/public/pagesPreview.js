@@ -1,7 +1,7 @@
 // Reimplemented disposable-preview fixture, never an API-error fallback.
 // Title/body/SEO text is verbatim from the verified existing company page.
 // Dates describe its review snapshot, not a CMS publication.
-export const previewPageProvenance = Object.freeze({ sourceFile: 'frontend/app/(site)/company/page.js', sourceUrl: 'https://alageum.com/ru/kompaniya/o-nas', reviewedAt: '2026-10-01' });
+export const previewPageProvenance = Object.freeze({ sourceFile: 'frontend/components/public/StaticCompanyPage.js', sourceUrl: 'https://alageum.com/ru/kompaniya/o-nas', reviewedAt: '2026-10-01' });
 const paragraph = text => ({ type: 'paragraph', children: [{ type: 'text', text }] });
 const aboutRu = {
   slug: 'about', title: 'О компании', locale_code: 'ru',

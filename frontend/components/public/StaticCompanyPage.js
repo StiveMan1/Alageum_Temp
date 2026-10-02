@@ -4,7 +4,7 @@ import PageIntro from '@/components/public/PageIntro';
 import SourceNote from '@/components/public/SourceNote';
 import { CorporateCTA, ProjectStages, SectionHeading } from '@/components/public/CorporateParts';
 import { companyHistory, companySource } from '@/lib/public/company';
-import '../../company-pages.css';
+import '../../app/company-pages.css';
 export const metadata = { title: 'О компании', description: 'История ALAGEUM Electric с 1997 года. Электротехническое производство, проектирование, монтаж и сервис предприятий группы.' };
 export default function CompanyPage() {
   return <div className="corp-page site-container site-info-page">

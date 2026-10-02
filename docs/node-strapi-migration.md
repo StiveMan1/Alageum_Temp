@@ -248,8 +248,11 @@ See [checkpoint validation](node-strapi-validation.md) for exact passed, failed,
 ## Reimplemented editorial Page slice
 
 The separate Page branch adds guarded native Draft & Publish and exact-locale
-public delivery without changing the rich company route. It was reimplemented
-after a workspace reset and requires fresh hosted acceptance. See
+public delivery. The rich company route remains the default; the subsequent
+`COMPANY_SOURCE=cms` integration makes published `ru/about` authoritative at
+`/company` with strict fail-closed delivery and shared alias canonical. The Page
+slice was reimplemented after a workspace reset; each new integration checkpoint
+requires its own hosted acceptance. See
 [node-strapi-editorial-pages.md](node-strapi-editorial-pages.md) for migration,
 authority and indexing boundaries, and
 [node-strapi-editorial-validation.md](node-strapi-editorial-validation.md) for
