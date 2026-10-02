@@ -2,8 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
-  // Node-only fixtures run in playwright.node.config.js, never the legacy stack.
-  testIgnore: ["**/node-rfq.spec.js", "**/node-cms.spec.js", "**/node-pages.spec.js", "**/company-profile.spec.js", "**/organization-selection.spec.js"],
+  // Dedicated fixtures use their explicit configs, never the legacy stack.
+  testIgnore: ["**/node-rfq.spec.js", "**/node-cms.spec.js", "**/node-pages.spec.js", "**/company-profile.spec.js", "**/organization-selection.spec.js", "**/quote-print.spec.js", "**/quote-print-real.spec.js"],
   fullyParallel: false,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
