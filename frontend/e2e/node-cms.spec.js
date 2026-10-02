@@ -29,9 +29,17 @@ async function nativeLogin(page, kind = 'editor') {
   expect(response.status()).toBe(200);
   const { data } = await response.json();
   expect(data.user.email).toBe(emails[kind]);
-  expect(data.user.roles.some(role => role.code === 'strapi-super-admin')).toBe(false);
+  const token = data.token || data.accessToken;
+  expect(typeof token).toBe('string');
+  // Native login intentionally returns an unpopulated user. Verify the actual
+  // authenticated profile instead of weakening the least-privilege assertion.
+  const profileResponse = await page.request.get(`${origin}/admin/users/me`, { headers: { Authorization: `Bearer ${token}` } });
+  expect(profileResponse.status()).toBe(200);
+  const { data: profile } = await profileResponse.json();
+  expect(Array.isArray(profile.roles)).toBe(true);
+  expect(profile.roles.some(role => role.code === 'strapi-super-admin')).toBe(false);
   await expect(page).not.toHaveURL(/\/auth\/login/);
-  return data.token || data.accessToken;
+  return token;
 }
 async function openProduct(page, product) {
   await page.goto(`${cms}/plugins/alageum-catalog`);
