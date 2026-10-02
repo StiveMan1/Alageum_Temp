@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
+import { expectCatalogViewport, expectReceivesPointer } from './helpers/catalog-viewport';
 
 // Real Strapi 5.56 Content Manager, with fresh users from the dedicated Page
 // harness. No API-created test entries, mocked publication, or injected tokens.
@@ -278,6 +279,7 @@ test('public Page: responsive CMS company is authoritative within the existing n
     if (/\/api\/v1\/pages(?:\/|\?|$)/.test(request.url())) pageRequests.push(request.url());
   });
   expect((await page.goto(`${frontend}/catalog`)).status()).toBe(200);
+  await expectCatalogViewport(page);
   const assertRender = async () => {
     await expect(page.locator('main.site-main > .editorial-page.site-container')).toHaveAttribute('lang', 'ru');
     await expect(page.locator('h1')).toHaveCount(1);
@@ -302,10 +304,12 @@ test('public Page: responsive CMS company is authoritative within the existing n
   // opening, so this verifies the real public entry point as well as reload.
   let companyLink = page.locator('header.site-header .site-nav-link[href="/company"]');
   if (page.viewportSize().width <= 760) {
-    await page.getByRole('button', { name: 'Открыть навигацию', exact: true }).click();
+    const toggle = page.getByRole('button', { name: 'Открыть навигацию', exact: true });
+    await expectReceivesPointer(toggle);
+    await toggle.click();
     companyLink = page.locator('.site-mobile-navigation a[href="/company"]').first();
   }
-  await expect(companyLink).toBeVisible();
+  await expectReceivesPointer(companyLink);
   await Promise.all([page.waitForURL(`${frontend}/company`), companyLink.click()]);
   await assertRender();
   expect((await page.reload()).status()).toBe(200);

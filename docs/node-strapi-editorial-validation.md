@@ -194,3 +194,39 @@ and the unchanged earlier suites for the final commit. Optional webpack probes
 remain enforced in that workflow. Dependency audit, production environment guards,
 optimistic Page conflict handling, history restoration and production readiness
 remain unchanged limits; this slice authorizes no merge or deployment.
+
+
+### Hosted mobile navigation failure and containment candidate
+
+PR10 head `006aa2e2` passed six Page cases, including desktop company delivery,
+but the mobile company case could not click the existing menu toggle. The public
+trace shows a 390×844 viewport while the catalog loading shell is visible, then
+589×1275 after the real table mounts and before the first click. The failed PNG
+is horizontally displaced; click points such as (349,34) hit the header rail.
+This is layout inflation evidence, not justification to force a click or change
+header stacking.
+
+The compiled CSS in that trace matches source: the two table-header `.sr-only`
+labels are absolutely positioned; the horizontal `.catalog-table-wrap` has no
+positioned containing block. CSS overflow does not clip absolutely positioned
+descendants whose containing block lies outside the scroller
+([W3C CSS2 overflow](https://www.w3.org/TR/CSS2/visufx.html#overflow-clipping)).
+The narrow candidate sets `position: relative` on that existing scroll wrapper.
+It leaves the table's horizontal scrolling, hidden accessible text and every
+header rule intact. This explains the likely escaped-label overflow; the fix
+still requires fresh hosted browser confirmation.
+
+The company desktop/mobile case now waits for the hydrated table and asserts
+configured viewport width, no document overflow/horizontal displacement, normal
+visual scale, and real navigation-center hit testing before ordinary clicks.
+The existing catalog navigation case adds the same public-catalog checks while
+retaining its original demo open/Escape/reopen/navigation flow. Mobile checks also
+require that the wide table actually scrolls with ArrowRight inside its own
+region while document scrollX stays zero. No force
+click, JavaScript click, timeout increase, retry or footer shortcut is introduced.
+
+
+Local checks for this containment candidate pass: lint, all 154 frontend units,
+normal production and disposable static builds, 45 candidate-browser discovery
+and 46 existing catalog-browser discovery. No local browser was launched; those
+discovery counts do not establish interaction acceptance.
