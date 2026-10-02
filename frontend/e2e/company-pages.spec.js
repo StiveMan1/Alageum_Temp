@@ -75,10 +75,19 @@ test('contact actions have correct destinations and FAQ can open and close repea
   await expect(page.getByRole('link', { name: 'sales@alageum.com', exact: true })).toHaveAttribute('href','mailto:sales@alageum.com');
   const prepare = page.getByRole('complementary');
   await expect(prepare).toContainText('не отправляет заявку на сервер');
-  const summary = page.getByText('Можно ли приехать на предприятие?', { exact: true });
-  await summary.click(); await expect(page.getByText('Сначала уточните адрес, часы приёма', { exact: false })).toBeVisible();
-  await summary.click(); await expect(page.getByText('Сначала уточните адрес, часы приёма', { exact: false })).not.toBeVisible();
-  await summary.click();
+  // The failure trace retained a hidden page copy outside the main landmark.
+  // Interact with the active FAQ, while still rejecting duplicates within it.
+  const main = page.getByRole('main');
+  const summary = main.getByText('Можно ли приехать на предприятие?', { exact: true });
+  const answer = main.getByText('Сначала уточните адрес, часы приёма', { exact: false });
+  await expect(main).toHaveCount(1);
+  await expect(summary).toHaveCount(1);
+  await expect(summary).toBeVisible();
+  await expect(answer).toHaveCount(1);
+  await expect(answer).not.toBeVisible();
+  await summary.click(); await expect(answer).toBeVisible();
+  await summary.click(); await expect(answer).not.toBeVisible();
+  await summary.click(); await expect(answer).toBeVisible();
   // The final DOM must also contain only one canonical sales link.
   await expect(page.locator('.corp-contact-phone')).toHaveCount(1);
   await prepare.getByRole('link', { name: /Подготовить запрос/ }).click();

@@ -9,6 +9,7 @@ on:
       - 'docs/node-strapi-cms-media.md'
       - 'docs/company-profile.md'
       - 'docs/organization-selection.md'
+      - 'docs/quote-print.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -21,6 +22,7 @@ on:
       - 'docs/node-strapi-cms-media.md'
       - 'docs/company-profile.md'
       - 'docs/organization-selection.md'
+      - 'docs/quote-print.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -291,6 +293,16 @@ jobs:
           PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: 60000
         working-directory: frontend
         run: npx playwright install --with-deps chromium
+      - name: Prepare bounded PDF text verification tools
+        timeout-minutes: 4
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install --yes --no-install-recommends poppler-utils
+          fi
+          command -v pdftotext
       - name: Verify CMS health, catalog administration and RFQ browser flows
         timeout-minutes: 12
         shell: bash
@@ -326,8 +338,48 @@ jobs:
           # development Fast Refresh must not reload an in-flight RFQ.
           env -u E2E_QUOTES_BASE_URL E2E_QUOTES_PRODUCTION=1 NEXT_PUBLIC_CATALOG_SOURCE=static NODE_ENV=production \
             npm run test:e2e:quotes -- --max-failures=3
+          env -u E2E_QUOTES_BASE_URL E2E_QUOTES_PRODUCTION=1 NEXT_PUBLIC_CATALOG_SOURCE=static NODE_ENV=production \
+            npm run test:e2e:quote-print -- --max-failures=3 | tee quote-print-playwright.log
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const log = fs.readFileSync('quote-print-playwright.log', 'utf8');
+          assert.match(log, /\b54 passed\b/);
+          assert.doesNotMatch(log, /\b[1-9]\d* (?:failed|flaky|skipped|did not run)\b/);
+          NODE
         env:
           NODE_ENV: production
+      - name: Verify isolated real PostgreSQL own-request printing
+        timeout-minutes: 15
+        shell: bash
+        run: |
+          set -euo pipefail
+          quote_print_temp="$RUNNER_TEMP/quote-print-tmp"
+          mkdir -p "$quote_print_temp"
+          export TMPDIR="$quote_print_temp"
+          export PG_BIN="$(pg_config --bindir)"
+          for command in initdb pg_ctl createdb; do test -x "$PG_BIN/$command"; done
+          # Prior baseline API/Next process groups have completed their trap.
+          # This creates its own exact test database, ignores caller DATABASE_URL,
+          # reuses the static production build and writes sanitized evidence only.
+          timeout --signal=TERM --kill-after=20s 840s bash backend-node/scripts/run-quote-print-tests.sh --browser
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const root = process.env.TMPDIR;
+          const runs = fs.readdirSync(root).filter(name => name.startsWith('alageum-quote-print-tests.'));
+          assert.equal(runs.length, 1, 'one isolated quote print run is required');
+          const report = JSON.parse(fs.readFileSync(path.join(root, runs[0], 'evidence', 'quote-print-results.json')));
+          assert.equal(report.status, 'passed');
+          assert.equal(report.browser, 'passed');
+          assert.equal(report.expectedBackendChecks, 7);
+          assert.equal(report.expectedBrowserTests, 5);
+          assert.equal(report.browserTests, 5);
+          assert.equal(report.checks.length, 8);
+          assert.equal(report.checks.filter(check => check.group === 'backend').length, 7);
+          assert.ok(report.checks.every(check => check.status === 'passed'));
+          NODE
       - name: Save browser and server evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -339,6 +391,8 @@ jobs:
             node-strapi-api.log
             node-strapi-frontend.log
             node-strapi-fixtures.log
+            frontend/quote-print-playwright.log
+            ${{ runner.temp }}/quote-print-tmp/alageum-quote-print-tests.*/evidence/
           retention-days: 7
 
   company-profile:
