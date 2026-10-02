@@ -10,6 +10,9 @@ COPY scripts/strapi-webpack-patch.js ./scripts/strapi-webpack-patch.js
 COPY patches/strapi-webpack-koa.json ./patches/strapi-webpack-koa.json
 RUN npm ci
 COPY . .
+# data/catalog-media is the generated immutable raster mirror, outside public/.
+# Fail before compiling if the backend-only context omitted or changed any bytes.
+RUN node scripts/check-media-package.js
 ENV STRAPI_TELEMETRY_DISABLED=true STRAPI_HIDE_UPDATE_MESSAGE=true
 # The caller supplies build configuration as a BuildKit secret, never ARG/ENV
 # credentials or a committed .env. A build does not need database connectivity.

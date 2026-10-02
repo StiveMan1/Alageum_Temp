@@ -6,6 +6,8 @@ on:
       - 'frontend/**'
       - 'docs/catalog-import/**'
       - 'docs/node-strapi-migration.md'
+      - 'docs/node-strapi-cms-media.md'
+      - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
   push:
@@ -14,6 +16,8 @@ on:
       - 'frontend/**'
       - 'docs/catalog-import/**'
       - 'docs/node-strapi-migration.md'
+      - 'docs/node-strapi-cms-media.md'
+      - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
   workflow_dispatch:

@@ -3,7 +3,9 @@ import { useAuth, useFetchClient } from "@strapi/strapi/admin";
 import { useSearchParams } from "react-router-dom";
 import "./catalog.css";
 import Specifications, { SpecField } from "./Specifications";
+import Media from "./Media";
 import { createSpecsDraft, serializeSpecsDraft, validationErrors } from "../spec-draft.mjs";
+import { createMediaDraft, mediaPatch } from "../media-draft.mjs";
 import { errorMessage, accountKey, mutationOptions, acceptMutationResponse } from "../client-guards.mjs";
 
 const ROOT = "/alageum-catalog";
@@ -23,6 +25,11 @@ function Editor({ id, categories, token, onClose, onSaved }) {
   const [notice, setNotice] = useState("");
   const [specDraft, setSpecDraft] = useState(null);
   const [specDirty, setSpecDirty] = useState(false);
+  const [mediaDraft, setMediaDraft] = useState([]);
+  const [mediaDirty, setMediaDirty] = useState(false);
+  const [mediaOptions, setMediaOptions] = useState(null);
+  const [mediaOptionsError, setMediaOptionsError] = useState("");
+  const [mediaOptionsLoading, setMediaOptionsLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const active = useRef(true);
@@ -33,18 +40,40 @@ function Editor({ id, categories, token, onClose, onSaved }) {
     setProduct(p);
     setSpecDraft(createSpecsDraft(p.specs));
     setSpecDirty(false);
+    setMediaDraft(createMediaDraft(p.media));
+    setMediaDirty(false);
     setFieldErrors({});
     setForm({ ...p, translations: structuredClone(p.translations), price: p.price ?? "", currency: p.currency ?? "KZT", sku: p.sku ?? "" });
   };
+  async function loadMediaOptions(p, generation) {
+    setMediaOptions(null);
+    setMediaOptionsError("");
+    setMediaOptionsLoading(true);
+    try {
+      const { data } = await get(`${ROOT}/products/${p.id}/media-options`);
+      if (!active.current || generation !== loadGeneration.current) return;
+      if (data.product_id !== p.id || data.version !== p.version) throw new Error("The product changed while image choices were loading.");
+      setMediaOptions(data);
+    } catch (e) {
+      if (active.current && generation === loadGeneration.current) setMediaOptionsError(errorMessage(e));
+    } finally {
+      if (active.current && generation === loadGeneration.current) setMediaOptionsLoading(false);
+    }
+  }
   async function load() {
     const generation = ++loadGeneration.current;
     setError("");
     setNotice("");
     setFieldErrors({});
+    setMediaOptions(null);
+    setMediaOptionsError("");
     setBusy(true);
     try {
       const { data } = await get(`${ROOT}/products/${id}`);
-      if (active.current && generation === loadGeneration.current) populate(data);
+      if (active.current && generation === loadGeneration.current) {
+        populate(data);
+        await loadMediaOptions(data, generation);
+      }
     } catch (e) {
       if (active.current && generation === loadGeneration.current) setError(errorMessage(e));
     } finally {
@@ -63,14 +92,20 @@ function Editor({ id, categories, token, onClose, onSaved }) {
   }
   async function save(action = "save") {
     if (inFlight.current || !form) return;
-    if (action !== "save" && specDirty) {
-      setError("Save or reload your specification edits before changing publication state.");
+    if (action !== "save" && (specDirty || mediaDirty)) {
+      setError("Save or reload your specification and media edits before changing publication state.");
+      return;
+    }
+    if (mediaDirty && !mediaOptions) {
+      setError("Reload the product’s reviewed image choices before saving media edits. Your draft is retained.");
       return;
     }
     const specsResult = action === "save" && specDirty ? serializeSpecsDraft(specDraft) : null;
-    if (specsResult && Object.keys(specsResult.errors).length) {
-      setFieldErrors(specsResult.errors);
-      setError("Review the marked specification fields. Your edits have not been saved.");
+    const mediaResult = mediaPatch(mediaDraft, action === "save" && mediaDirty, mediaOptions);
+    const errors = { ...specsResult?.errors, ...mediaResult.errors };
+    if (Object.keys(errors).length) {
+      setFieldErrors(errors);
+      setError("Review the marked specification and media fields. Your edits have not been saved.");
       setNotice("");
       return;
     }
@@ -86,6 +121,7 @@ function Editor({ id, categories, token, onClose, onSaved }) {
       else {
         const body = { slug: form.slug, sku: form.sku || null, category_id: form.category_id, translations: form.translations, status: form.status, comparable: form.comparable, price_mode: form.price_mode, price: form.price_mode === "fixed" ? form.price : null, currency: form.price_mode === "fixed" ? form.currency : null };
         if (specsResult) body.specs = specsResult.specs;
+        Object.assign(body, mediaResult.body);
         response = isNew ? await post(`${ROOT}/products`, { ...body, public_key: form.public_key }, options) : await put(`${ROOT}/products/${id}`, { ...body, version: product.version }, options);
       }
       acceptMutationResponse(response);
@@ -93,6 +129,7 @@ function Editor({ id, categories, token, onClose, onSaved }) {
       populate(response.data);
       setNotice("Product saved");
       onSaved(response.data);
+      if (!isNew) await loadMediaOptions(response.data, ++loadGeneration.current);
     } catch (e) {
       if (active.current) { setError(errorMessage(e)); setFieldErrors(validationErrors(e)); }
     } finally {
@@ -123,11 +160,12 @@ function Editor({ id, categories, token, onClose, onSaved }) {
           {form.price_mode === "fixed" && <><Field label="Price"><input required inputMode="decimal" value={form.price} onChange={(e) => field("price", e.target.value)} /></Field><Field label="Currency"><input required maxLength={3} pattern="[A-Z]{3}" value={form.currency} onChange={(e) => field("currency", e.target.value.toUpperCase())} /></Field></>}
         </div>
         <Specifications draft={specDraft} category={categories.find((c) => c.id === form.category_id)} errors={fieldErrors} onChange={(next) => { setSpecDraft(next); setSpecDirty(true); }} />
+        <Media draft={mediaDraft} options={mediaOptions} optionsError={mediaOptionsError} optionsLoading={mediaOptionsLoading} productId={product.id} token={token} isNew={isNew} dirty={mediaDirty} errors={fieldErrors} onChange={(next) => { setMediaDraft(next); setMediaDirty(true); }} />
         <label className="alageum-checkbox"><input type="checkbox" checked={form.comparable} onChange={(e) => field("comparable", e.target.checked)} />Available for comparison</label>
-        {!isNew && <p className="alageum-muted">Public ID: {product.id}. Source evidence, media and fields outside this editor are retained.</p>}
-        {!isNew && specDirty && <p className="alageum-muted">Save or reload your specification edits before using Hide product or Restore draft.</p>}
+        {!isNew && <p className="alageum-muted">Public ID: {product.id}. Source evidence and fields outside this editor are retained.</p>}
+        {!isNew && (specDirty || mediaDirty) && <p className="alageum-muted">Save or reload your specification and media edits before using Hide product or Restore draft.</p>}
         <div className="alageum-actions"><button className="alageum-primary" type="submit">{busy ? "Saving…" : "Save product"}</button>
-          {!isNew && <button type="button" disabled={specDirty} onClick={() => save(product.status === "hidden" ? "restore" : "hide")}>{product.status === "hidden" ? "Restore draft" : "Hide product"}</button>}
+          {!isNew && <button type="button" disabled={specDirty || mediaDirty} onClick={() => save(product.status === "hidden" ? "restore" : "hide")}>{product.status === "hidden" ? "Restore draft" : "Hide product"}</button>}
           {!isNew && <button type="button" onClick={load}>Reload product</button>}
         </div>
       </fieldset>

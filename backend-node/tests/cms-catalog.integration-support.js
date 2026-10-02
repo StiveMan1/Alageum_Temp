@@ -567,6 +567,17 @@ async function runCmsCatalogTests(t, app, { category, businessToken }) {
     adminId: fixtures.editor.id,
     valid,
   });
+  await require("./cms-media.integration-support").runCmsMediaTests(t, app, {
+    request,
+    base,
+    editor,
+    denied,
+    businessToken,
+    adminId: fixtures.editor.id,
+    valid,
+    fixtures,
+    login,
+  });
   await t.test(
     "native CMS logout invalidates actual session and blocks subsequent plugin reads/writes",
     async () => {

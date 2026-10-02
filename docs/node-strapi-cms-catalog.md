@@ -16,6 +16,11 @@ voltage/unit, cooling, installation, subtype, manufacturer, series and orderable
 SKU fields. It does not offer category authoring, media uploads or provenance
 editing. Record/family relationships and extra metadata remain untouched.
 
+The bounded [media editor](node-strapi-cms-media.md) supports each imported
+record's reviewed existing image, alternative text, removal, attachment order
+and explicit restoration of its reviewed representation. Untouched media is
+omitted from saves. The editor does not add uploads or a global image picker.
+
 ### Structured specification contract
 
 The form uses the existing `specs` object on the versioned native plugin PUT;

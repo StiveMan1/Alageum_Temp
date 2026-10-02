@@ -1,0 +1,384 @@
+{
+  "format": "alageum-catalog-media-public-v1",
+  "overrides": {
+    "cat-bktp-modular-v001": {
+      "database_id": "bb8ef35d-c8e6-5913-a84f-bfc267248ed2",
+      "imported": [
+        {
+          "path": "/catalog-products/cat-bktp-modular.webp",
+          "kind": "image",
+          "alt": "Иллюстрация серии из каталога · не фото конкретного исполнения"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/page-038.webp",
+          "kind": "image",
+          "alt": "Страница 38 исходного каталога; не фотография изделия"
+        }
+      ]
+    }
+  },
+  "assets": {
+    "/catalog-products/cat-pktp.webp": {
+      "representation": "crop",
+      "source_pages": [
+        87
+      ]
+    },
+    "/catalog-products/kso-366.webp": {
+      "representation": "crop",
+      "source_pages": [
+        23
+      ]
+    },
+    "/catalog-products/kso-292.webp": {
+      "representation": "crop",
+      "source_pages": [
+        28
+      ]
+    },
+    "/catalog-products/kso-2-10.webp": {
+      "representation": "crop",
+      "source_pages": [
+        25
+      ]
+    },
+    "/catalog-products/cat-ktp-25-250.webp": {
+      "representation": "crop",
+      "source_pages": [
+        6
+      ]
+    },
+    "/catalog-products/cat-ktpn-25-3150.webp": {
+      "representation": "crop",
+      "source_pages": [
+        8
+      ]
+    },
+    "/catalog-products/cat-2ktpn-25-3150.webp": {
+      "representation": "crop",
+      "source_pages": [
+        10
+      ]
+    },
+    "/catalog-products/cat-ktpg-25-3150.webp": {
+      "representation": "crop",
+      "source_pages": [
+        12
+      ]
+    },
+    "/catalog-products/cat-2ktpg-25-3150.webp": {
+      "representation": "crop",
+      "source_pages": [
+        13
+      ]
+    },
+    "/catalog-products/cat-ktpp-2ktpp-250-6300.webp": {
+      "representation": "crop",
+      "source_pages": [
+        15
+      ]
+    },
+    "/catalog-products/cat-ktpo-4-10.webp": {
+      "representation": "crop",
+      "source_pages": [
+        17
+      ]
+    },
+    "/catalog-products/cat-ktpto-80.webp": {
+      "representation": "crop",
+      "source_pages": [
+        18
+      ]
+    },
+    "/catalog-products/cat-ktps-100-1600.webp": {
+      "representation": "crop",
+      "source_pages": [
+        19
+      ]
+    },
+    "/catalog-products/cat-mtp-25-100.webp": {
+      "representation": "crop",
+      "source_pages": [
+        21
+      ]
+    },
+    "/catalog-products/cat-mtpo-4-10.webp": {
+      "representation": "crop",
+      "source_pages": [
+        22
+      ]
+    },
+    "/catalog-products/cat-kso-366m.webp": {
+      "representation": "crop",
+      "source_pages": [
+        24
+      ]
+    },
+    "/catalog-products/cat-kso-2-20.webp": {
+      "representation": "crop",
+      "source_pages": [
+        27
+      ]
+    },
+    "/catalog-products/cat-rmu-ae.webp": {
+      "representation": "crop",
+      "source_pages": [
+        30
+      ]
+    },
+    "/catalog-products/cat-krn-iv.webp": {
+      "representation": "crop",
+      "source_pages": [
+        31
+      ]
+    },
+    "/catalog-products/cat-shcho-70.webp": {
+      "representation": "crop",
+      "source_pages": [
+        33
+      ]
+    },
+    "/catalog-products/cat-shnn.webp": {
+      "representation": "crop",
+      "source_pages": [
+        35
+      ]
+    },
+    "/catalog-products/cat-shchsu-04.webp": {
+      "representation": "crop",
+      "source_pages": [
+        36
+      ]
+    },
+    "/catalog-products/cat-bktp-modular.webp": {
+      "representation": "crop",
+      "source_pages": [
+        39
+      ]
+    },
+    "/catalog-source/page-038.webp": {
+      "representation": "source-scan",
+      "source_pages": [
+        38
+      ]
+    },
+    "/catalog-products/cat-bktp-concrete.webp": {
+      "representation": "crop",
+      "source_pages": [
+        41
+      ]
+    },
+    "/catalog-products/cat-kru-k07-ktz.webp": {
+      "representation": "crop",
+      "source_pages": [
+        43
+      ]
+    },
+    "/catalog-products/cat-krun07-ktz.webp": {
+      "representation": "crop",
+      "source_pages": [
+        43
+      ]
+    },
+    "/catalog-products/cat-kru-kerneu-6-10.webp": {
+      "representation": "crop",
+      "source_pages": [
+        45
+      ]
+    },
+    "/catalog-products/cat-kru-kerneu-35.webp": {
+      "representation": "crop",
+      "source_pages": [
+        47
+      ]
+    },
+    "/catalog-products/cat-k8m.webp": {
+      "representation": "crop",
+      "source_pages": [
+        49
+      ]
+    },
+    "/catalog-products/cat-k59.webp": {
+      "representation": "crop",
+      "source_pages": [
+        51
+      ]
+    },
+    "/catalog-products/cat-km7m.webp": {
+      "representation": "crop",
+      "source_pages": [
+        53
+      ]
+    },
+    "/catalog-products/cat-ktpb-k.webp": {
+      "representation": "crop",
+      "source_pages": [
+        55
+      ]
+    },
+    "/catalog-products/cat-shuot.webp": {
+      "representation": "crop",
+      "source_pages": [
+        62
+      ]
+    },
+    "/catalog-products/cat-shtz.webp": {
+      "representation": "crop",
+      "source_pages": [
+        63
+      ]
+    },
+    "/catalog-products/cat-pr-shr11.webp": {
+      "representation": "crop",
+      "source_pages": [
+        64
+      ]
+    },
+    "/catalog-products/cat-yatp.webp": {
+      "representation": "crop",
+      "source_pages": [
+        65
+      ]
+    },
+    "/catalog-products/cat-ya5000-rusm5000.webp": {
+      "representation": "crop",
+      "source_pages": [
+        66
+      ]
+    },
+    "/catalog-products/cat-ptm-tded.webp": {
+      "representation": "crop",
+      "source_pages": [
+        69
+      ]
+    },
+    "/catalog-products/cat-bdrm.webp": {
+      "representation": "crop",
+      "source_pages": [
+        70
+      ]
+    },
+    "/catalog-products/cat-pusk-3m.webp": {
+      "representation": "crop",
+      "source_pages": [
+        72
+      ]
+    },
+    "/catalog-products/cat-kik.webp": {
+      "representation": "crop",
+      "source_pages": [
+        74
+      ]
+    },
+    "/catalog-products/cat-skip.webp": {
+      "representation": "crop",
+      "source_pages": [
+        74
+      ]
+    },
+    "/catalog-products/cat-ktpzh-2-4.webp": {
+      "representation": "crop",
+      "source_pages": [
+        75
+      ]
+    },
+    "/catalog-products/cat-ktpzh-25-1000.webp": {
+      "representation": "crop",
+      "source_pages": [
+        76
+      ]
+    },
+    "/catalog-products/cat-mtpzh-1-25-2-5.webp": {
+      "representation": "crop",
+      "source_pages": [
+        77
+      ]
+    },
+    "/catalog-products/cat-mtpzh-10.webp": {
+      "representation": "crop",
+      "source_pages": [
+        78
+      ]
+    },
+    "/catalog-products/cat-atp-2x25.webp": {
+      "representation": "crop",
+      "source_pages": [
+        81
+      ]
+    },
+    "/catalog-products/cat-psk-27-5.webp": {
+      "representation": "crop",
+      "source_pages": [
+        84
+      ]
+    },
+    "/catalog-products/cat-kru-27-5.webp": {
+      "representation": "crop",
+      "source_pages": [
+        86
+      ]
+    },
+    "/catalog-products/cat-kru-rn.webp": {
+      "representation": "crop",
+      "source_pages": [
+        89
+      ]
+    },
+    "/catalog-products/cat-yakno-6-10.webp": {
+      "representation": "crop",
+      "source_pages": [
+        90
+      ]
+    },
+    "/catalog-products/cat-yakno-20.webp": {
+      "representation": "crop",
+      "source_pages": [
+        91
+      ]
+    },
+    "/catalog-products/cat-ktpshg.webp": {
+      "representation": "crop",
+      "source_pages": [
+        92
+      ]
+    },
+    "/catalog-products/cat-ukzv.webp": {
+      "representation": "crop",
+      "source_pages": [
+        93
+      ]
+    },
+    "/catalog-products/cat-ukzn.webp": {
+      "representation": "crop",
+      "source_pages": [
+        93
+      ]
+    },
+    "/catalog-products/cat-bueskn.webp": {
+      "representation": "crop",
+      "source_pages": [
+        95
+      ]
+    },
+    "/catalog-products/cat-bushk-2m.webp": {
+      "representation": "crop",
+      "source_pages": [
+        96
+      ]
+    },
+    "/catalog-products/cat-ktpnd.webp": {
+      "representation": "crop",
+      "source_pages": [
+        97
+      ]
+    },
+    "/catalog-products/cat-modular-oil.webp": {
+      "representation": "crop",
+      "source_pages": [
+        98
+      ]
+    }
+  }
+}

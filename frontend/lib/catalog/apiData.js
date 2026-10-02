@@ -1,4 +1,5 @@
 import { UUID } from '../quotes/model.js';
+import { selectApiProductImage } from './media.js';
 // Stable public_key is the UI identity; the database UUID is transport-only.
 export function isApiCatalog(params) {
  const source = typeof params?.get === 'function' ? params.get('source') : params?.source;
@@ -12,7 +13,7 @@ const text = value => typeof value === 'string' || typeof value === 'number' ? v
 export function normalizeApiProduct(product) {
  const specs = product.specs || {}, provenance = product.provenance || {};
  const technicalSpecs = Array.isArray(specs.technicalSpecs) ? specs.technicalSpecs.filter(row => row && typeof row === 'object').map(row => ({ label: String(row.label || ''), value: String(text(row.value) ?? '—'), unit: String(row.unit || ''), page: Number.isInteger(row.page) ? row.page : null })) : [];
- const image = product.media?.find?.(media => media.kind === 'image' && /^\/(catalog-products|catalog-source|brand)\/[A-Za-z0-9_./-]+\.(webp|png|jpe?g|gif|avif)$/i.test(media.path));
+ const image = selectApiProductImage(product.public_key || product.id, product.media, product.id);
  return {
   id: product.public_key || product.id, databaseId: product.id, slug: product.slug,
   name: product.translations?.ru?.name || product.translations?.en?.name || product.slug,
@@ -26,7 +27,7 @@ export function normalizeApiProduct(product) {
   sourceKind: text(provenance.sourceKind), sourceTitle: text(provenance.sourceTitle),
   sourcePages: Array.isArray(provenance.sourcePages) ? provenance.sourcePages.filter(page => Number.isInteger(page) && page > 0 && page <= 104) : [],
   sourceUrl: safeSourceUrl(provenance.sourceUrl), sourceCheckedAt: provenance.sourceCheckedAt,
-  image: image?.path || null, imageCaption: image?.alt || '', attributes: product.attributes || [],
+  image: image?.path || null, imageCaption: typeof image?.alt === 'string' ? image.alt : null, attributes: product.attributes || [],
  };
 }
 export function normalizeApiSelection(value) {
