@@ -102,6 +102,16 @@ jobs:
             frontend/playwright-report/
             compose-e2e.log
           retention-days: 7
+      - name: Retain public company-page retry diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: company-page-retry-context-${{ github.run_id }}
+          path: |
+            frontend/test-results/company-pages-*/test-failed-*.png
+            frontend/test-results/company-pages-*/error-context.md
+          if-no-files-found: ignore
+          retention-days: 7
       - if: always()
         run: docker compose down -v
 

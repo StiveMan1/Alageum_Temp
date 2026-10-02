@@ -13,7 +13,13 @@ for (const [route, title] of [['/', 'Создаём основу'], ['/company',
 }
 test('home catalog and city links preserve useful destination state', async ({ page }) => {
   await page.goto('/');
-  await page.locator('.corp-equipment-card').filter({ hasText: 'Подстанции' }).click();
+  // Wait for one complete category card before interacting. Persistent
+  // duplicates still fail rather than silently choosing one of them.
+  const substationCard = page.locator('.corp-equipment-card').filter({ hasText: 'Подстанции' });
+  await expect(substationCard).toHaveCount(1);
+  await expect(substationCard.getByRole('heading', { level: 3, name: 'Подстанции', exact: true })).toBeVisible();
+  await expect(substationCard).toHaveAttribute('href', '/catalog?category=substations');
+  await substationCard.click();
   await expect(page).toHaveURL(/category=substations/);
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await page.goBack();
