@@ -138,7 +138,22 @@ test('responsive saved profile: real save, personal identity separation and relo
   await expect(personal(page)).not.toContainText(values.business_contact_email);
   expect((await readCurrent(page)).body).toEqual(snapshot);
   await expectResponsive(page);
-  await page.evaluate(() => { document.activeElement?.blur(); window.scrollTo(0, 0); });
+  // A full-page capture must start from a settled viewport. Otherwise mobile
+  // fixed layers can be composited at the previous scroll position even though
+  // the responsive form assertions passed. Keep application styling unchanged.
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  });
+  await expect.poll(() => page.evaluate(() => ({
+    x: window.scrollX, y: window.scrollY,
+    visualTop: window.visualViewport?.pageTop ?? 0,
+    headerTop: Math.round(document.querySelector('header.site-header').getBoundingClientRect().top),
+  }))).toEqual({ x: 0, y: 0, visualTop: 0, headerTop: 0 });
+  await expect(page.getByRole('banner')).toBeInViewport();
+  await expect.poll(() => page.locator('.site-skip-link').evaluate(element => element.getBoundingClientRect().bottom)).toBeLessThanOrEqual(0);
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const path = testInfo.outputPath(`saved-fictitious-profile-${testInfo.project.name}.png`);
   await page.screenshot({ path, fullPage: true, animations: 'disabled' });
   await testInfo.attach('saved-fictitious-company-profile', { path, contentType: 'image/png' });
