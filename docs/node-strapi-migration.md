@@ -243,3 +243,14 @@ Until then, the production startup guard must remain enabled.
 See [the security review and current dependency gate](node-strapi-security-review.md). CMS authoring verification is tracked separately from the still-blocked production cutover.
 
 See [checkpoint validation](node-strapi-validation.md) for exact passed, failed, and never-run checks on this local implementation.
+
+
+## Reimplemented editorial Page slice
+
+The separate Page branch adds guarded native Draft & Publish and exact-locale
+public delivery without changing the rich company route. It was reimplemented
+after a workspace reset and requires fresh hosted acceptance. See
+[node-strapi-editorial-pages.md](node-strapi-editorial-pages.md) for migration,
+authority and indexing boundaries, and
+[node-strapi-editorial-validation.md](node-strapi-editorial-validation.md) for
+actual checks and remaining release blocks.

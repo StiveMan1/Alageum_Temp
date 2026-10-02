@@ -41,9 +41,9 @@ test('corporate history has an official source for every event', () => {
 });
 test('corporate pages use local verified assets, keep contact preparation truthful and link to live routes', () => {
   for (const path of ['public/company/ktz-production.webp','public/company/aemz-engineers.webp']) assert.ok(existsSync(path));
-  const contact = readFileSync('app/contacts/page.js','utf8');
+  const contact = readFileSync('app/(site)/contacts/page.js','utf8');
   assert.match(contact, /не отправляет заявку на сервер/); assert.match(contact, /почтовую программу/);
   assert.ok(!contact.includes('<form')); assert.ok(!contact.includes('fetch('));
-  const home = readFileSync('app/page.js','utf8');
+  const home = readFileSync('app/(site)/page.js','utf8');
   assert.match(home, /officialProducts.length/); assert.match(home, /manufacturer/);
 });

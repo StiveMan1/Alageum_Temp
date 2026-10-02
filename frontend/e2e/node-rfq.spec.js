@@ -60,8 +60,15 @@ test('real Node RFQ survives anonymous handoff, save, retry, reload and own list
   await expect(ownLink).toHaveCount(1);
   await expect(page.getByText(comment, { exact: true })).toBeVisible();
   await ownLink.click();
+  await expect(page).toHaveURL(new URL(`/b2b/quotes/${quote.id}`, page.url()).href);
+  const detailHeading = page.getByRole('heading', { level: 1, name: `Запрос ${quote.id.slice(0, 8)}`, exact: true });
+  await expect(detailHeading).toHaveCount(1);
+  await expect(detailHeading).toBeVisible();
   await expect(page.getByText(comment, { exact: true })).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  await expect(page.getByRole('contentinfo')).toBeVisible();
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   const screenshotPath = testInfo.outputPath('node-rfq-saved.png');
-  await page.screenshot({ path: screenshotPath, fullPage: true });
+  await page.screenshot({ path: screenshotPath, fullPage: true, animations: 'disabled' });
   await testInfo.attach('node-rfq-saved', { path: screenshotPath, contentType: 'image/png' });
 });

@@ -15,7 +15,7 @@ Base: `581e4c05c17dea3432deab1cdffda0a6ad791530`.
   `frontend/components/catalog/ApiSelectionProvider.js`, `LiveCatalog.js`.
 - RFQ review/login continuation, private attempt persistence and list/detail:
   `frontend/components/quotes/`, `frontend/lib/quotes/`, `frontend/lib/api/quotes.js`,
-  `frontend/lib/api/loginRedirect.js`, `frontend/app/b2b/quotes/` and inquiry entry/CSS.
+  `frontend/lib/api/loginRedirect.js`, `frontend/app/(site)/b2b/quotes/` (relocated from `app/b2b/quotes/`) and inquiry entry/CSS.
 - Behavioral contract and honest feature boundaries: `docs/catalog-rfq.md`.
 - Frontend unit/browser cases: `frontend/tests/quotes.test.mjs`, `frontend/e2e/quotes.spec.js`
   and updated real-backend flow in `frontend/e2e/security.spec.js`.

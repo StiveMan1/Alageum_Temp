@@ -45,3 +45,6 @@ backend-node/public/uploads/*
 
 backend-node/.strapi-updater.json
 backend-node/dependency-audit.json
+
+# Disposable reimplemented Page delivery evidence, never repository fixtures
+page-delivery-evidence/

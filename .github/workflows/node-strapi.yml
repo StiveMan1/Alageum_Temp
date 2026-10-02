@@ -209,3 +209,182 @@ jobs:
             node-strapi-frontend.log
             node-strapi-fixtures.log
           retention-days: 7
+
+  # Reimplemented acceptance has dedicated databases and independent failures.
+  # These jobs deliberately do not change the catalog/RFQ or audit jobs above.
+  page-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: alageum_strapi_pages_test
+          POSTGRES_USER: alageum_pages_ci
+          POSTGRES_PASSWORD: disposable-page-contracts-ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U alageum_pages_ci -d alageum_strapi_pages_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      APP_ENV: test
+      ALAGEUM_TEST_PAGE_FIXTURES: '1'
+      DATABASE_URL: postgresql://alageum_pages_ci:disposable-page-contracts-ci@127.0.0.1:5432/alageum_strapi_pages_test
+      STRAPI_TELEMETRY_DISABLED: 'true'
+      STRAPI_HIDE_UPDATE_MESSAGE: 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend-node/package-lock.json
+      - name: Install locked Page contract dependencies
+        timeout-minutes: 6
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p page-delivery-evidence
+          npm ci --prefix backend-node 2>&1 | tee page-delivery-evidence/contracts-install.log
+      - name: Run isolated PostgreSQL Page contracts explicitly
+        timeout-minutes: 7
+        working-directory: backend-node
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test --test-concurrency=1 tests/pages.integration.cjs 2>&1 | tee ../page-delivery-evidence/page-contracts.log
+      - name: Retain Page contract evidence on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: page-contracts-${{ github.run_id }}-${{ github.run_attempt }}
+          path: page-delivery-evidence/
+          retention-days: 14
+
+  page-delivery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: alageum_strapi_pages_test
+          POSTGRES_USER: alageum_pages_ci
+          POSTGRES_PASSWORD: disposable-page-delivery-ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U alageum_pages_ci -d alageum_strapi_pages_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      APP_ENV: test
+      ALAGEUM_TEST_PAGE_FIXTURES: '1'
+      DATABASE_URL: postgresql://alageum_pages_ci:disposable-page-delivery-ci@127.0.0.1:5432/alageum_strapi_pages_test
+      HOST: 127.0.0.1
+      PORT: '8019'
+      STRAPI_TELEMETRY_DISABLED: 'true'
+      STRAPI_HIDE_UPDATE_MESSAGE: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_CATALOG_SOURCE: static
+      API_INTERNAL_BASE_URL: http://127.0.0.1:8019/api/v1
+      PAGES_SOURCE: api
+      PAGES_STATIC_PREVIEW: '0'
+      PAGES_SITE_ORIGIN: http://127.0.0.1:3142
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            backend-node/package-lock.json
+            frontend/package-lock.json
+      - name: Generate disposable application keys for CMS build
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p page-delivery-evidence
+          node <<'NODE'
+          const { randomBytes } = require('node:crypto');
+          const { appendFileSync } = require('node:fs');
+          for (const key of ['APP_KEYS', 'ADMIN_JWT_SECRET', 'API_TOKEN_SALT', 'TRANSFER_TOKEN_SALT', 'ENCRYPTION_KEY', 'ALAGEUM_JWT_SECRET']) {
+            const value = process.env[key] || Array.from({ length: key === 'APP_KEYS' ? 2 : 1 }, () => randomBytes(32).toString('hex')).join(',');
+            // This step has no tee/artifact stream. Never write mask commands
+            // into logs retained by the browser/native acceptance harness.
+            console.log(`::add-mask::${value}`);
+            appendFileSync(process.env.GITHUB_ENV, `${key}=${value}\n`);
+          }
+          NODE
+      - name: Install locked Page backend dependencies
+        timeout-minutes: 6
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix backend-node 2>&1 | tee page-delivery-evidence/backend-install.log
+      - name: Install locked Page frontend dependencies
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix frontend 2>&1 | tee page-delivery-evidence/frontend-install.log
+      - name: Build the actual Strapi CMS
+        timeout-minutes: 6
+        shell: bash
+        env:
+          NODE_ENV: production
+        run: |
+          set -euo pipefail
+          npm run build --prefix backend-node 2>&1 | tee page-delivery-evidence/cms-build.log
+      - name: Build production Next with live Page delivery
+        timeout-minutes: 6
+        shell: bash
+        env:
+          NODE_ENV: production
+        run: |
+          set -euo pipefail
+          npm run build --prefix frontend 2>&1 | tee page-delivery-evidence/next-build.log
+      - name: Verify production HTTP fault matrix with disposable API fixtures
+        timeout-minutes: 4
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 190s node frontend/scripts/verify-editorial-http.mjs 2>&1 | tee page-delivery-evidence/fault-matrix.log
+      - name: Install bounded Chromium for Page acceptance
+        timeout-minutes: 5
+        working-directory: frontend
+        shell: bash
+        env:
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '60000'
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 270s npx --no-install playwright install --with-deps chromium 2>&1 | tee ../page-delivery-evidence/chromium-install.log
+      - name: Verify native CMS publication and all five Page browser cases
+        timeout-minutes: 14
+        shell: bash
+        env:
+          NODE_ENV: production
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=15s 800s node backend-node/scripts/run-page-delivery.js 2>&1 | tee page-delivery-evidence/native-delivery.log
+      - name: Build explicit disposable static Page preview
+        timeout-minutes: 6
+        shell: bash
+        env:
+          PAGES_SOURCE: static
+          PAGES_STATIC_PREVIEW: '1'
+          NODE_ENV: production
+        run: |
+          set -euo pipefail
+          npm run build:preview --prefix frontend 2>&1 | tee page-delivery-evidence/static-preview-build.log
+      - name: Retain Page logs, JSON and successful desktop/mobile screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: page-delivery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            page-delivery-evidence/
+            frontend/playwright-report/pages-results/
+          retention-days: 14
