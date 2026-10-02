@@ -38,6 +38,8 @@ module.exports = ({ strapi }) => ({
   ticketCategories: (ctx) => strapi.alageum.support.categories(ctx),
   tickets: (ctx) => strapi.alageum.support.list(ctx),
   createTicket: (ctx) => strapi.alageum.support.create(ctx),
+  orders: (ctx) => strapi.alageum.orders.list(ctx),
+  order: (ctx) => strapi.alageum.orders.detail(ctx),
   createQuote: (ctx) => strapi.alageum.quotes.create(ctx),
   quotes: (ctx) => strapi.alageum.quotes.list(ctx),
   quote: (ctx) => strapi.alageum.quotes.detail(ctx),

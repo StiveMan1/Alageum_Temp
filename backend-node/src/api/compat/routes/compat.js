@@ -24,6 +24,8 @@ const routes = [
   ["GET", "/support/categories", "ticketCategories"],
   ["GET", "/support/tickets", "tickets"],
   ["POST", "/support/tickets", "createTicket"],
+  ["GET", "/orders", "orders"],
+  ["GET", "/orders/:id", "order"],
   ["POST", "/quotes/catalog", "createQuote"],
   ["GET", "/quotes", "quotes"],
   ["GET", "/quotes/:id", "quote"],

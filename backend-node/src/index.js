@@ -1,6 +1,7 @@
 "use strict";
 const authModule = require("./domain/auth");
 const supportModule = require("./domain/support");
+const ordersModule = require("./domain/orders");
 const quoteModule = require("./domain/quotes");
 const auditModule = require("./domain/audit");
 const organizationProfileModule = require("./domain/organization-profile");
@@ -21,6 +22,7 @@ module.exports = {
     await quoteModule.ensureSchema(db);
     await auditModule.ensureSchema(db);
     await supportModule.ensureSchema(db);
+    await ordersModule.ensureSchema(db);
     await pageEditorial.completePageSchema(strapi);
     const auth = authModule.createAuth({
       db,
@@ -41,7 +43,8 @@ module.exports = {
     });
     const organizationProfile = organizationProfileModule.createOrganizationProfile({ db, auth, audit: auditModule.audit });
     const support = supportModule.createSupport({ db, auth, audit: auditModule.audit });
-    strapi.alageum = { auth, catalog, quotes, cmsCatalog, organizationProfile, support };
+    const orders = ordersModule.createOrders({ db, auth, audit: auditModule.audit });
+    strapi.alageum = { auth, catalog, quotes, cmsCatalog, organizationProfile, support, orders };
     if (config.importCatalog)
       strapi.log.info(
         "Reviewed catalog import: " +
