@@ -188,7 +188,7 @@ for (const kind of ['readonly', 'createonly', 'denied']) test(`${kind} permissio
   const calls = []; page.on('request', value => { if ([tickets, categories].includes(value.url())) calls.push(`${value.method()} ${value.url()}`); });
   await login(page, kind);
   if (kind === 'denied') {
-    await expect(page.getByRole('alert')).toContainText('нет доступа к обращениям');
+    await expect(page.getByRole('main').getByRole('alert')).toContainText('нет доступа к обращениям');
     await expect(page.getByRole('link', { name: 'Поддержка', exact: true })).toHaveCount(0);
     await expect(form(page)).toHaveCount(0); await expect(list(page)).toHaveCount(0); expect(calls).toEqual([]);
   } else {
