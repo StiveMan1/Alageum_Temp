@@ -53,3 +53,7 @@ page-delivery-evidence/
 # Disposable company profile acceptance build and evidence
 frontend/.next-profile/
 profile-delivery-evidence/
+
+# Disposable organization-selection acceptance build and evidence
+frontend/.next-organization/
+organization-delivery-evidence/

@@ -8,14 +8,21 @@ import { COMPANY_PROFILE_FIELDS, createCompanyProfileEditor, initialCompanyProfi
 import styles from './CompanyProfileEditor.module.css';
 
 function CompanyEditor({ scope, organizationId, editable }) {
-  const { isAuthScopeCurrent, updateOrganization } = useAuth();
+  const { isAuthScopeCurrent, updateOrganization, registerOrganizationChange } = useAuth();
   const [state, setState] = useState(initialCompanyProfileState);
-  const editor = useRef(null), errorBox = useRef(null);
+  const editor = useRef(null), errorBox = useRef(null), latestState = useRef(initialCompanyProfileState());
+  useLayoutEffect(() => registerOrganizationChange(() => {
+    const current = latestState.current;
+    return {
+      dirty: Boolean(current.editing && current.draft && current.snapshot && COMPANY_PROFILE_FIELDS.some(({ key }) => current.draft[key] !== (current.snapshot[key] ?? ''))),
+      pending: current.pending,
+    };
+  }), [registerOrganizationChange]);
   useLayoutEffect(() => {
     const current = createCompanyProfileEditor({
       read: getOrganizationProfile, save: updateOrganizationProfile,
       isCurrent: () => isAuthScopeCurrent(scope), canEdit: () => editable,
-      onChange: setState, onConfirmed: snapshot => updateOrganization(snapshot, scope), organizationId,
+      onChange: next => { latestState.current = next; setState(next); }, onConfirmed: snapshot => updateOrganization(snapshot, scope), organizationId,
     });
     editor.current = current;
     // Resolve after layout setup so React Strict Mode can discard its first flow.

@@ -2,7 +2,7 @@ import { clearSession, getSession, getSessionGeneration, setSession } from "./se
 
 export { clearSession, getSession, setSession } from "./sessionTransport.js";
 
-// Vercel Services routes the browser's same-origin API requests to FastAPI.
+// The browser uses the existing v1 same-origin API boundary.
 // The explicit override still supports the separate-port Docker/local setup.
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api/v1";
 
@@ -23,6 +23,11 @@ function captureSession() {
 function sameSession(left, right = captureSession()) {
   return left.access_token === right.access_token && left.refresh_token === right.refresh_token &&
     left.organization_id === right.organization_id && left.sessionGeneration === right.sessionGeneration;
+}
+function sameContext(left, right = captureSession()) {
+  // Token rotation is not a new login. A tenant change or a fresh login is.
+  return left.sessionGeneration === right.sessionGeneration &&
+    left.organization_id === right.organization_id;
 }
 function sessionChanged() {
   return new ApiError(401, { error: { code: "session_changed", message: "Session changed while the request was pending" } });
@@ -60,29 +65,63 @@ function expireSession(requestSession) {
   if (typeof window !== "undefined") window.dispatchEvent(new Event("alageum:session-expired"));
 }
 
-export async function apiFetch(path, options = {}, retry = true) {
+async function request(path, options = {}, retry = true, candidateOrganizationId, onAcceptedQuoteReceipt) {
   const session = captureSession();
   const headers = new Headers(options.headers || {});
   if (!(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
   if (session.access_token) headers.set("Authorization", `Bearer ${session.access_token}`);
-  if (session.organization_id) headers.set("X-Organization-ID", session.organization_id);
+  const organizationId = candidateOrganizationId ?? session.organization_id;
+  if (organizationId) headers.set("X-Organization-ID", organizationId);
   const response = await fetch(`${API_URL}${path}`, { ...options, headers, cache: "no-store" });
-  if (response.status === 401 && retry && session.refresh_token && !path.startsWith("/auth/")) {
+  const authenticatedRead = !path.startsWith("/auth/") || path === "/auth/me";
+  const readOnly = ["GET", "HEAD"].includes((options.method || "GET").toUpperCase());
+  if (response.status === 401 && retry && readOnly && session.refresh_token && authenticatedRead) {
     try {
-      const rotated = await rotateSession(session);
+      // Another read may already have completed the same login's refresh.
+      const rotated = sameContext(session) && !sameSession(session) ? captureSession() : await rotateSession(session);
       if (!sameSession(rotated)) throw sessionChanged();
-      return apiFetch(path, options, false);
+      if (options.signal?.aborted) throw sessionChanged();
+      return request(path, options, false, candidateOrganizationId);
     } catch (error) {
       expireSession(session);
       throw error;
     }
   }
-  if (response.status === 401 && !path.startsWith("/auth/")) expireSession(session);
-  if (response.status === 204) return null;
-  const payload = await response.json().catch(() => ({}));
+  if (response.status === 401 && authenticatedRead) expireSession(session);
+  const payload = response.status === 204 ? null : await response.json().catch(() => ({}));
   if (!response.ok) throw new ApiError(response.status, payload);
+  if (onAcceptedQuoteReceipt) {
+    // The sole accepted-receipt exception belongs to the fixed quote POST below.
+    // Persist only its validated ID into the ORIGINAL scoped attempt. Never pass
+    // old private response fields through to an active-context continuation.
+    if (![200, 201].includes(response.status) || typeof payload?.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.id)) {
+      throw new ApiError(502, { error: { code: 'invalid_quote_receipt', message: 'Не удалось подтвердить номер сохранённого запроса.' } });
+    }
+    onAcceptedQuoteReceipt(payload.id);
+  }
+  // An already accepted mutation cannot be undone, but its old-context success
+  // must never navigate, repaint or unlock actions in the newly selected tenant.
+  // Candidate /me reads compare the ORIGINAL context, not their candidate header.
+  if (session.access_token && (!sameContext(session) || options.signal?.aborted)) throw sessionChanged();
   return payload;
 }
+
+export const apiFetch = (path, options = {}, retry = true) => request(path, options, retry);
+
+// Only this read may override the active tenant header. Validate first; the auth
+// coordinator commits a selection later without temporarily changing the session.
+export const readOrganizationContext = (organizationId, signal) => request('/auth/me', { signal }, true, organizationId);
+
+// Unlike an ordinary response callback, this hook only records an accepted UUID.
+// The response itself still fails the common context guard after a tenant/login
+// change. No mutation refresh/replay or generic stale-response opt-out exists.
+export const createQuoteRequest = (data, idempotencyKey, onAcceptedReceipt) => request('/quotes/catalog', {
+  method: 'POST', headers: { 'Idempotency-Key': idempotencyKey }, body: JSON.stringify(data),
+}, false, undefined, quoteId => {
+  // A storage failure must not turn an acknowledged server save into a replay.
+  // The original durable attempt/key remains available for explicit recovery.
+  try { onAcceptedReceipt?.(quoteId); } catch { /* Keep the accepted response semantics. */ }
+});
 
 export async function apiPage(path, options = {}) {
   const payload = await apiFetch(path, options);

@@ -10,25 +10,26 @@ import { catalogPrice } from '@/lib/catalog/admin';
 import { createQuote } from '@/lib/api/quotes';
 import { canReuseAttempt, QUOTE_LIMIT, quoteError, quoteScope } from '@/lib/quotes/model';
 import { completeQuoteAttempt, prepareQuoteAttempt, resetQuoteDraft, saveQuoteComment, useQuoteDraft } from '@/lib/quotes/store';
+import { createQuoteContinuation } from '@/lib/quotes/continuation';
 
 export default function LiveInquiry() {
-  const { profile } = useAuth();
-  // A different account/organization starts an independent UI flow. The old
-  // request can still finish and update its own durable attempt in the background.
-  return <LiveInquiryFlow key={quoteScope(profile) || 'anonymous'} />;
+  const { authScope } = useAuth();
+  // Every login starts an independent UI flow, even for the same owner/tenant.
+  // The old request can still record its original scoped receipt in the background.
+  return <LiveInquiryFlow key={authScope || 'anonymous'} />;
 }
 
 function LiveInquiryFlow() {
-  const { profile, loading, hasPermission } = useAuth(), router = useRouter(), selection = useApiSelection();
+  const { profile, loading, hasPermission, authScope, isAuthScopeCurrent } = useAuth(), router = useRouter(), selection = useApiSelection();
   const scope = quoteScope(profile), draft = useQuoteDraft(scope);
   const [catalog, setCatalog] = useState({ status: 'loading', items: [] });
   const [revision, setRevision] = useState(0), [error, setError] = useState(''), [pending, setPending] = useState(false);
   const submitting = useRef(false), errorBox = useRef(null), activeFlow = useRef(null);
   useLayoutEffect(() => {
-    const flow = { scope };
+    const flow = createQuoteContinuation(authScope, isAuthScopeCurrent);
     activeFlow.current = flow;
-    return () => { if (activeFlow.current === flow) activeFlow.current = null; };
-  }, [scope]);
+    return () => { flow.dispose(); if (activeFlow.current === flow) activeFlow.current = null; };
+  }, [authScope, isAuthScopeCurrent]);
   useEffect(() => {
     let active = true;
     loadApiCatalog().then(items => { if (active) setCatalog({ status: 'ready', items }); })
@@ -49,17 +50,19 @@ function LiveInquiryFlow() {
     if (submitting.current || !scope || completed) return;
     if (selection.storageUnavailable) { setError('Разрешите хранилище браузера перед отправкой: подборка должна сохраниться при перезагрузке.'); return; }
     const flow = activeFlow.current;
-    const isCurrent = () => Boolean(flow && activeFlow.current === flow && flow.scope === scope);
+    const isCurrent = () => Boolean(flow && activeFlow.current === flow && flow.isCurrent());
     if (!isCurrent()) return;
     submitting.current = true; setPending(true); setError('');
     let attempt;
     try {
       attempt = prepareQuoteAttempt(scope, selection.items);
       if (attempt.quoteId) { router.push(`/b2b/quotes/${attempt.quoteId}`); return; }
-      const quote = await createQuote(attempt.payload, attempt.key);
-      // If storage fills after the POST, retaining the existing key still makes
-      // retry safe. Do not misreport a confirmed server success as a failure.
-      try { completeQuoteAttempt(scope, attempt.key, quote.id); } catch { /* Safe replay remains possible. */ }
+      const originalScope = scope, originalKey = attempt.key;
+      const quote = await createQuote(attempt.payload, originalKey, quoteId => {
+        // Record an acknowledged UUID only in its original owner/tenant/key.
+        // A newer attempt is protected by completeQuoteAttempt's key check.
+        completeQuoteAttempt(originalScope, originalKey, quoteId);
+      });
       // Leaving this form or changing account does not cancel a server commit.
       // Save the original attempt above, but never hijack a newer navigation.
       if (isCurrent()) router.replace(`/b2b/quotes/${quote.id}`);
