@@ -41,6 +41,44 @@ async function seed(page, { authenticated = true, old = false } = {}) {
     if (!localStorage.getItem('alageum.catalog.api-selection.v1')) localStorage.setItem('alageum.catalog.api-selection.v1', JSON.stringify([{ id: 'rfq-test', ...(old ? {} : { databaseId: productId }), quantity: 3 }]));
   }, { session, productId, authenticated, old });
 }
+test('login stays disabled before hydration and preserves the inquiry return URL', async ({ page }) => {
+  await api(page);
+  await seed(page, { authenticated: false });
+  let releaseScripts;
+  const scriptsReady = new Promise(resolve => { releaseScripts = resolve; });
+  const heldScriptRequests = [];
+  const holdScripts = async route => {
+    if (route.request().resourceType() === 'script') {
+      heldScriptRequests.push(route.request().url());
+      await scriptsReady;
+    }
+    await route.continue();
+  };
+  const loginRequests = [];
+  page.on('request', request => { if (new URL(request.url()).pathname.endsWith('/auth/login')) loginRequests.push(request); });
+  await page.route('**/_next/static/**', holdScripts);
+  const destination = '/login?next=%2Finquiry%3Fsource%3Dapi';
+  try {
+    await page.goto(destination, { waitUntil: 'commit' });
+    const submit = page.getByRole('button', { name: 'Войти', exact: true });
+    await expect(submit).toBeDisabled();
+    await expect(page.getByLabel('Email', { exact: true })).toBeDisabled();
+    await expect(page.getByLabel('Пароль', { exact: true })).toBeDisabled();
+    await expect.poll(() => heldScriptRequests.length).toBeGreaterThan(0);
+    await page.keyboard.press('Enter');
+    expect(new URL(page.url()).pathname + new URL(page.url()).search).toBe(destination);
+    expect(loginRequests).toHaveLength(0);
+    releaseScripts();
+    await expect(submit).toBeEnabled();
+    await submit.click();
+    await expect(page).toHaveURL(/\/inquiry\?source=api$/);
+    await expect(page.getByLabel('Количество RFQ-1')).toHaveValue('3');
+    expect(loginRequests).toHaveLength(1);
+  } finally {
+    releaseScripts();
+    await page.unroute('**/_next/static/**', holdScripts);
+  }
+});
 test('anonymous catalogue selection resumes through login, submits once and reloads durable detail/list', async ({ page }, testInfo) => {
   const requests = await api(page, { delay: 300 });
   await page.goto('/catalog?source=api');

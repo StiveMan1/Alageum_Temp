@@ -3,7 +3,7 @@ import PageIntro from '@/components/public/PageIntro';
 import SourceNote from '@/components/public/SourceNote';
 import OfficeDirectory from '@/components/public/OfficeDirectory';
 import { contactSource } from '@/lib/public/company';
-import '../company-pages.css';
+import '../../company-pages.css';
 export const metadata = { title: 'Связаться с менеджером', description: 'Единый отдел продаж и региональные контакты ALAGEUM Electric. Телефоны, адреса, электронная почта и подготовка запроса по оборудованию.' };
 export default function ContactsPage() {
   return <div className="corp-page site-container site-info-page"><PageIntro label="Контакты" title={<>Есть задача?<br /><span className="corp-heading-muted">Давайте обсудим.</span></>} description="Начните с единого отдела продаж или выберите региональный контакт. Поможем направить ваш запрос по оборудованию." />

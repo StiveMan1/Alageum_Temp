@@ -5,13 +5,19 @@ const auditModule = require("./domain/audit");
 const { createCatalog } = require("./domain/catalog");
 const { createCmsCatalogAuthorizer } = require("./domain/cms-catalog");
 const { readCatalog } = require("./domain/catalog-source");
+const pageEditorial = require("./domain/page-editorial");
 module.exports = {
+  async register({ strapi }) {
+    await pageEditorial.preflightPages(strapi);
+    strapi.documents.use(pageEditorial.editorialMiddleware(strapi));
+  },
   async bootstrap({ strapi }) {
     const db = strapi.db.connection,
       config = strapi.config.get("alageum");
     await authModule.ensureSchema(db);
     await quoteModule.ensureSchema(db);
     await auditModule.ensureSchema(db);
+    await pageEditorial.completePageSchema(strapi);
     const auth = authModule.createAuth({
       db,
       config,

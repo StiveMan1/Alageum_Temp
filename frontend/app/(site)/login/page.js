@@ -1,13 +1,20 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { loginDestination } from "@/lib/api/loginRedirect";
 import { login } from "@/lib/api/auth";
 import { useAuth } from "@/components/AuthProvider";
 
+const subscribeReady = () => () => {};
+const clientReady = () => true;
+const serverReady = () => false;
+
 export default function LoginPage() {
   const router = useRouter();
+  // A native form submit before hydration loses the approved return URL.
+  // Keep the server-rendered controls disabled until handlers are attached.
+  const ready = useSyncExternalStore(subscribeReady, clientReady, serverReady);
   const { setProfile } = useAuth();
   const [email, setEmail] = useState("buyer@demo.example");
   const [password, setPassword] = useState("ChangeMe123!");
@@ -26,10 +33,10 @@ export default function LoginPage() {
     <section>
       <h1>Вход в B2B кабинет</h1>
       <form className="form card" onSubmit={submit}>
-        <label>Email<input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required /></label>
-        <label>Пароль<input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required /></label>
+        <label>Email<input disabled={!ready} value={email} onChange={(e) => setEmail(e.target.value)} type="email" required /></label>
+        <label>Пароль<input disabled={!ready} value={password} onChange={(e) => setPassword(e.target.value)} type="password" required /></label>
         {error && <p className="error" role="alert">{error}</p>}
-        <button className="button" disabled={pending}>{pending ? "Вход…" : "Войти"}</button>
+        <button className="button" disabled={!ready || pending}>{pending ? "Вход…" : "Войти"}</button>
       </form>
     </section>
   );

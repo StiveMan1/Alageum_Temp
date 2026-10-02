@@ -4,7 +4,7 @@ import EquipmentIcon from '@/components/catalog/EquipmentIcon';
 import { CorporateCTA, ProjectStages, SectionHeading } from '@/components/public/CorporateParts';
 import { officialProducts } from '@/lib/catalog/data';
 import { projects } from '@/lib/public/content';
-import './company-pages.css';
+import '../company-pages.css';
 
 export const metadata = { title: 'ALAGEUM Electric — энергия созидания', description: 'Электротехническое производство, инжиниринг и сервис. Предприятия ALAGEUM Electric, каталог оборудования и связь с отделом продаж.' };
 const categories = [

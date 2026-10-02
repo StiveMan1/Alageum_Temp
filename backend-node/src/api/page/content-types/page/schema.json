@@ -7,7 +7,7 @@
     "displayName": "Page"
   },
   "options": {
-    "draftAndPublish": false
+    "draftAndPublish": true
   },
   "pluginOptions": {
     "content-manager": {
@@ -20,11 +20,13 @@
   "attributes": {
     "slug": {
       "type": "uid",
-      "required": true
+      "required": true,
+      "maxLength": 160
     },
     "title": {
       "type": "string",
-      "required": true
+      "required": true,
+      "maxLength": 240
     },
     "locale_code": {
       "type": "enumeration",
@@ -35,20 +37,19 @@
         "zh",
         "uz"
       ],
-      "default": "ru"
+      "default": "ru",
+      "required": true
     },
     "body": {
       "type": "blocks"
     },
     "seo_title": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 240
     },
     "seo_description": {
-      "type": "text"
-    },
-    "published": {
-      "type": "boolean",
-      "default": false
+      "type": "text",
+      "maxLength": 500
     }
   }
 }
