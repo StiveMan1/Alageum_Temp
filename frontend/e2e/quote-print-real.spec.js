@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 import fixtures from '../../backend-node/scripts/seed-test-quote-print-users.js';
 
@@ -5,6 +6,7 @@ import fixtures from '../../backend-node/scripts/seed-test-quote-print-users.js'
 // fabricated HTTP reply, runtime test endpoint, or live catalog enrichment.
 const api = process.env.E2E_QUOTE_PRINT_API_URL;
 const manifest = JSON.parse(process.env.E2E_QUOTE_PRINT_MANIFEST || '{}');
+const printView = page => page.locator('.quote-print-page');
 const preview = page => page.locator('[data-quote-print-document="preview"]');
 const paper = page => page.locator('[data-quote-print-paper]');
 const printButton = page => page.getByRole('button', { name: 'Печать', exact: true });
@@ -53,6 +55,7 @@ async function screenshot(page, testInfo, name) {
 async function installPrintCapture(page, testInfo) {
   const pdf = testInfo.project.name.endsWith('desktop');
   let count = 0;
+  const paths = [];
   if (pdf) await page.exposeFunction('captureFixturePrint', async () => {
     const path = testInfo.outputPath(`persisted-request-${++count}.pdf`);
     // This invokes Chromium's real beforeprint/afterprint lifecycle. The feature
@@ -60,6 +63,7 @@ async function installPrintCapture(page, testInfo) {
     const bytes = await page.pdf({ path, format: 'A4', printBackground: true, preferCSSPageSize: true });
     expect(bytes.subarray(0, 5).toString()).toBe('%PDF-');
     await testInfo.attach(`persisted-request-${count}`, { path, contentType: 'application/pdf' });
+    paths.push(path);
   });
   await page.evaluate(usePdf => {
     window.fixturePrintRecords = [];
@@ -74,6 +78,7 @@ async function installPrintCapture(page, testInfo) {
       window.dispatchEvent(new Event('afterprint'));
     };
   }, pdf);
+  return paths;
 }
 
 test('responsive own persisted request reloads, prints twice and keeps frozen decimals', async ({ page }, testInfo) => {
@@ -128,10 +133,22 @@ test('legacy missing and partial snapshots remain explicit historical gaps', asy
   await expect(preview(page)).toContainText('0.001');
   await expect(preview(page)).not.toContainText('CURRENT CATALOG MUST NEVER APPEAR');
   await screenshot(page, testInfo, 'real-legacy-gaps');
-  await installPrintCapture(page, testInfo);
+  const pdfPaths = await installPrintCapture(page, testInfo);
   await printButton(page).click();
   await expect(page.getByRole('status')).toContainText('Для повторной печати нажмите «Печать»');
   expect((await page.evaluate(() => window.fixturePrintRecords[0])).authorized).toBe(true);
+  await expect.poll(() => pdfPaths.length).toBe(1);
+  const pages = execFileSync('pdftotext', ['-layout', pdfPaths[0], '-'], { encoding: 'utf8' }).split('\f').filter(text => text.trim());
+  for (const [index, item] of quote.items.entries()) {
+    const heading = `${index + 1}. ${item.product_snapshot.sku || 'Позиция запроса'}`;
+    const itemPages = pages.filter(text => text.replace(/\s+/g, ' ').includes(heading));
+    expect(itemPages).toHaveLength(1);
+    // A short line's ID may not be orphaned onto a page without its saved data.
+    expect(itemPages[0]).toContain(item.product_id);
+    expect(itemPages[0]).toContain(item.quantity);
+  }
+  const lastItemPage = pages.find(text => text.includes(quote.items.at(-1).product_id));
+  expect(lastItemPage).toContain('Конец запроса');
   expectReadOnly(requests);
 });
 
@@ -144,7 +161,7 @@ test('same-organization other owner and cross-tenant requests disclose no privat
     const visitor = await context.newPage(), requests = observeApi(visitor);
     try {
       await login(visitor, kind, `/b2b/quotes/${quote.id}/print`);
-      await expect(visitor.getByRole('alert')).toContainText('Запрос не найден');
+      await expect(printView(visitor).getByRole('alert')).toContainText('Запрос не найден');
       await expect(preview(visitor)).toHaveCount(0);
       await expect(visitor.getByText(quote.comment, { exact: true })).toHaveCount(0);
       await expect(paper(visitor)).not.toHaveAttribute('data-authorized', 'true');
@@ -164,7 +181,7 @@ test('current quote.read revocation clears an already-open preview before print'
     await fixtures.setOwnerRead(manifest, false);
     requests.length = 0;
     await printButton(page).click();
-    await expect(page.getByRole('alert')).toContainText('Доступ к печати запроса не подтверждён');
+    await expect(printView(page).getByRole('alert')).toContainText('Доступ к печати запроса не подтверждён');
     await expect(preview(page)).toHaveCount(0);
     await expect(page.getByText(quote.comment, { exact: true })).toHaveCount(0);
     await expect(paper(page)).not.toHaveAttribute('data-authorized', 'true');
@@ -176,7 +193,7 @@ test('current quote.read revocation clears an already-open preview before print'
     await screenshot(page, testInfo, 'real-revoked-print-cleared');
     expectReadOnly(requests);
     await page.reload();
-    await expect(page.getByRole('alert')).toContainText('Нет доступа к запросам КП');
+    await expect(printView(page).getByRole('alert')).toContainText('Нет доступа к запросам КП');
     await expect(preview(page)).toHaveCount(0);
   } finally { await fixtures.setOwnerRead(manifest, true); }
 });

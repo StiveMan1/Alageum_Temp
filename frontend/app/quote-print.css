@@ -44,14 +44,15 @@
   .quote-print-document{font-size:10pt;color:#000;line-height:1.45;overflow:visible}
   .quote-print-document h1{font-size:21pt}
   .quote-print-document h2{font-size:14pt;break-after:avoid}
-  .quote-print-document h3{font-size:12pt;orphans:3;widows:3}
+  .quote-print-document h3{font-size:12pt;orphans:3;widows:3;break-after:avoid}
   .quote-print-document p{orphans:3;widows:3}
   .quote-print-heading,.quote-print-notice{break-inside:avoid}
-  .quote-print-comment,.quote-print-item{break-inside:auto;overflow:visible}
-  .quote-print-item{padding:5mm 0}
-  .quote-print-item dl{display:block;break-inside:avoid}
+  .quote-print-comment{break-inside:auto;overflow:visible}
+  /* Keep short lines whole; oversized blocks can still fragment at page limits. */
+  .quote-print-item{padding:5mm 0;break-inside:avoid;overflow:visible}
+  .quote-print-item dl{display:block;break-inside:avoid;break-after:avoid}
   .quote-print-item dl>div{display:inline-block;vertical-align:top;width:47%;margin:0 2% 3mm 0}
   .quote-print-item dd{font-size:10pt}
   .quote-print-product-id,.quote-print-end{font-size:8pt}
-  .quote-print-end{break-inside:avoid}
+  .quote-print-end{break-inside:avoid;break-before:avoid}
 }

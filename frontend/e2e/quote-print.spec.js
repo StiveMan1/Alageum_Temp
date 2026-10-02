@@ -204,7 +204,9 @@ test('saved RFQ preview keeps exact snapshot decimals and fits desktop/mobile', 
   await expect(screen(page)).not.toContainText(/Итого|Общая стоимость/);
   await page.evaluate(() => document.fonts.ready);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
-  await testInfo.attach('fictitious-saved-rfq-preview', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+  const screenshotPath = testInfo.outputPath('fictitious-saved-rfq-preview.png');
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+  await testInfo.attach('fictitious-saved-rfq-preview', { path: screenshotPath, contentType: 'image/png' });
   const blocked = await printMediaState(page);
   expect(blocked.documentVisible).toBe(false);
   expect(blocked.fallbackVisible).toBe(true);
@@ -331,7 +333,7 @@ for (const kind of ['permission revoked', 'different user', 'different organizat
     else state.profileOverride = { user: { id: kind === 'different user' ? otherUserId : userId }, organization: { id: kind === 'different organization' ? otherOrgId : orgId }, permissions: ['quote.read'] };
     await printButton(page).click();
     await expect(screen(page)).not.toContainText(savedName);
-    await expect(page.getByRole('alert').first()).toBeVisible();
+    await expect(screen(page).getByRole('alert')).toBeVisible();
     await expect(privateDocument(page)).toHaveCount(0);
     expect(printing.captures).toHaveLength(0);
     expect(state.requests.slice(start).map(request => request.path)).toEqual(['/auth/me']);
