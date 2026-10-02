@@ -141,12 +141,24 @@ async function check(name, work) {
 }
 const htmlText = text => text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#x27;");
 async function delivered(slug, expected, { present = [], absent = [], locale = "ru" } = {}) {
-  const response = await fetch(`${webOrigin}/pages/${locale}/${slug}`, { signal: AbortSignal.timeout(18000), redirect: "manual" });
-  const body = await response.text();
-  assert.equal(response.status, expected, `Next /pages/${locale}/${slug}: hard HTTP status`);
-  for (const text of present) assert.ok(body.includes(htmlText(text)), "Published body must be present in server HTML");
-  for (const text of absent) assert.ok(!body.includes(htmlText(text)), "Private, stale or fallback body must be absent");
-  return body;
+  // The native about lifecycle must reach both public surfaces from one build.
+  const company = locale === "ru" && slug === "about";
+  const paths = [`/pages/${locale}/${slug}`, ...(company ? ["/company"] : [])];
+  for (const path of paths) {
+    const response = await fetch(`${webOrigin}${path}`, { signal: AbortSignal.timeout(18000), redirect: "manual" });
+    const body = await response.text();
+    assert.equal(response.status, expected, `Next ${path}: hard HTTP status`);
+    for (const text of present) assert.ok(body.includes(htmlText(text)), "Published body must be present in server HTML");
+    for (const text of absent) assert.ok(!body.includes(htmlText(text)), "Private, stale or fallback body must be absent");
+    if (expected === 200) {
+      assert.ok(body.includes(`<link rel="canonical" href="${webOrigin}${company ? "/company" : path}"`));
+      assert.match(body, /<meta name="robots" content="noindex, nofollow"/);
+      assert.match(body, /<header[^>]+class="[^"]*site-header/);
+      assert.match(body, /<footer[^>]+class="[^"]*site-footer/);
+      assert.equal((body.match(/<h1(?:>|\s)/g) || []).length, 1);
+      assert.doesNotMatch(body, /class="corp-mission"|id="history"|corp-end-note/);
+    }
+  }
 }
 
 (async () => {
@@ -179,7 +191,7 @@ async function delivered(slug, expected, { present = [], absent = [], locale = "
     cmsOrigin = `http://127.0.0.1:${app.server.httpServer.address().port}`;
     const port = await freePort(); webOrigin = `http://127.0.0.1:${port}`;
     next = loggedChild([join(frontend, "node_modules/next/dist/bin/next"), "start", "--hostname", "127.0.0.1", "--port", String(port)], frontend, {
-      ...process.env, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", API_INTERNAL_BASE_URL: `${cmsOrigin}/api/v1`, PAGES_SOURCE: "api", PAGES_STATIC_PREVIEW: "0", PAGES_SITE_ORIGIN: webOrigin,
+      ...process.env, NODE_ENV: "production", NEXT_TELEMETRY_DISABLED: "1", API_INTERNAL_BASE_URL: `${cmsOrigin}/api/v1`, PAGES_SOURCE: "api", PAGES_STATIC_PREVIEW: "0", PAGES_SITE_ORIGIN: webOrigin, COMPANY_SOURCE: "cms",
     }, "native-next.log");
     const readyDeadline = Date.now() + 45000;
     while (true) {
@@ -262,7 +274,12 @@ async function delivered(slug, expected, { present = [], absent = [], locale = "
       await save(initial); await publish(); assert.deepEqual((await apiPage("about", 200)).body, initial.body);
       await delivered("about", 200, { present: [firstText], absent: [privateText] });
     });
-    if (!httpOnly) await check("five native CMS and public browser cases", async () => {
+    await check("unpublish restored about removes company and alias before republishing", async () => {
+      await native(`${collection}/${id}/actions/unpublish`, { actor: actors.publisher, method: "POST", body: {} });
+      await apiPage("about", 404); await delivered("about", 404, { absent: [firstText, privateText] });
+      await publish(); await delivered("about", 200, { present: [firstText], absent: [privateText] });
+    });
+    if (!httpOnly) await check("seven native CMS and public browser cases", async () => {
       const browserEnv = { ...process.env, E2E_PAGE_CMS_BASE_URL: `${cmsOrigin}/cms`, EDITORIAL_PAGES_BASE_URL: webOrigin, FORCE_COLOR: "0" };
       for (const key of ["PLAYWRIGHT_JSON_OUTPUT_FILE", "PLAYWRIGHT_JSON_OUTPUT_NAME", "PLAYWRIGHT_JSON_OUTPUT_DIR"]) delete browserEnv[key];
       for (const kind of ["editor", "publisher", "denied"]) for (const field of ["email", "password"]) browserEnv[`E2E_PAGE_${kind.toUpperCase()}_${field.toUpperCase()}`] = admins[kind][field];
@@ -272,7 +289,7 @@ async function delivered(slug, expected, { present = [], absent = [], locale = "
       report.browser = { status: "failed", ...result };
       assert.equal(result.signal, null, "Browser child must exit normally"); assert.equal(result.code, 0, "Browser child close must report exit 0");
       const browserReport = JSON.parse(readFileSync(join(evidence, "browser-results.json"), "utf8"));
-      assert.equal(browserReport.stats.expected, 5, "All five selected Page browser cases must pass");
+      assert.equal(browserReport.stats.expected, 7, "All seven selected Page browser cases must pass");
       assert.equal(browserReport.stats.unexpected + browserReport.stats.skipped + browserReport.stats.flaky, 0);
       report.browser = { status: "passed", ...result, expected: browserReport.stats.expected, unexpected: 0, skipped: 0, flaky: 0 };
     });

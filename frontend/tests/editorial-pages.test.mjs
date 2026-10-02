@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFile, access } from 'node:fs/promises';
+import { readFile, access, mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { createRequire, registerHooks } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { createElement } from 'react';
@@ -14,6 +17,7 @@ const marker = registerHooks({ resolve(specifier, context, nextResolve) {
   return specifier === 'server-only' ? { url: 'data:text/javascript,export {}', shortCircuit: true } : nextResolve(specifier, context);
 } });
 const { loadEditorialPage, EditorialPageError } = await import('../lib/api/pagesServer.js');
+const { companyDelivery, companyMetadata } = await import('../lib/api/companyServer.js');
 marker.deregister();
 const fixture = () => getPreviewPage('ru', 'about');
 const route = { locale: 'ru', slug: 'about' };
@@ -95,12 +99,12 @@ test('React Blocks rendering escapes text, clamps body H1 only and fetches no me
   assert.throws(() => renderToStaticMarkup(createElement(Blocks, { body: [{ type: 'image', image: { url: 'https://example.com/' } }] })));
 });
 
-test('preview contains exactly one RU page copied verbatim from the grouped company source', async () => {
+test('preview contains exactly one RU page copied verbatim from the extracted company source', async () => {
   assert.deepEqual(previewPageParams(), [{ locale: 'ru', slug: 'about' }]);
-  const company = await source('app/(site)/company/page.js');
+  const company = await source('components/public/StaticCompanyPage.js');
   const page = fixture();
   for (const value of [page.title, page.seo_title, page.seo_description, ...page.body.flatMap(block => block.children.map(child => child.text))]) assert.ok(company.includes(value), value);
-  assert.equal(previewPageProvenance.sourceFile, 'frontend/app/(site)/company/page.js');
+  assert.equal(previewPageProvenance.sourceFile, 'frontend/components/public/StaticCompanyPage.js');
   assert.equal(previewPageProvenance.sourceUrl, 'https://alageum.com/ru/kompaniya/o-nas');
   assert.equal(previewPageProvenance.reviewedAt, '2026-10-01');
   for (const locale of ['en', 'kk', 'uz', 'zh']) assert.equal(getPreviewPage(locale, 'about'), null);
@@ -192,10 +196,61 @@ test('live route stays server-only and dynamic; static params exist only in disp
 });
 
 test('editorial ancestry has no loading boundary while the existing site retains its loader', async () => {
-  for (const path of ['app/loading.js', 'app/pages/loading.js', 'app/pages/[locale]/loading.js', 'app/pages/[locale]/[slug]/loading.js']) await assert.rejects(access(new URL(`../${path}`, import.meta.url)), { code: 'ENOENT' });
+  for (const path of ['app/loading.js', 'app/company/loading.js', 'app/pages/loading.js', 'app/pages/[locale]/loading.js', 'app/pages/[locale]/[slug]/loading.js']) await assert.rejects(access(new URL(`../${path}`, import.meta.url)), { code: 'ENOENT' });
   await access(new URL('../app/(site)/loading.js', import.meta.url));
   const layout = await source('app/layout.js');
   assert.doesNotMatch(layout, /Suspense|loading/);
   assert.match(layout, /<SiteHeader \/>/); assert.match(layout, /<SiteFooter \/>/);
-  for (const path of ['app/(site)/page.js', 'app/(site)/company/page.js', 'app/(site)/catalog/page.js', 'app/(site)/inquiry/page.js']) await access(new URL(`../${path}`, import.meta.url));
+  for (const path of ['app/(site)/page.js', 'app/company/page.js', 'app/(site)/catalog/page.js', 'app/(site)/inquiry/page.js']) await access(new URL(`../${path}`, import.meta.url));
+});
+
+
+test('company selection defaults to static without requiring or reading Page configuration', () => {
+  for (const selected of [undefined, 'static']) assert.deepEqual(companyDelivery({ COMPANY_SOURCE: selected, PAGES_SOURCE: 'bad', API_INTERNAL_BASE_URL: 'bad', PAGES_SITE_ORIGIN: 'bad' }), { source: 'static' });
+  for (const selected of ['', 'CMS', ' static', 'cms ', 'api', 'false']) assert.throws(() => companyDelivery({ COMPANY_SOURCE: selected }), /COMPANY_SOURCE/);
+});
+
+test('CMS company requires live Page mode and a valid explicit canonical origin', () => {
+  const valid = { COMPANY_SOURCE: 'cms', PAGES_SITE_ORIGIN: 'https://preview.example.com' };
+  for (const source of [undefined, 'api']) {
+    const config = companyDelivery({ ...valid, PAGES_SOURCE: source });
+    assert.deepEqual(config, { source: 'cms', canonical: 'https://preview.example.com/company' });
+    assert.deepEqual(companyMetadata(fixture(), config), { title: fixture().seo_title, description: fixture().seo_description, robots: { index: false, follow: false }, alternates: { canonical: config.canonical } });
+  }
+  for (const source of ['', 'static', 'unknown']) assert.throws(() => companyDelivery({ ...valid, PAGES_SOURCE: source }), /PAGES_SOURCE/);
+  assert.throws(() => companyDelivery({ ...valid, PAGES_STATIC_PREVIEW: '1' }), /preview/);
+  for (const origin of [undefined, '', ' ', '/company', 'https://user:secret@example.com', 'https://example.com/path', 'https://example.com?x=1', 'https://example.com#hash', 'javascript:bad']) assert.throws(() => companyDelivery({ ...valid, PAGES_SITE_ORIGIN: origin }));
+});
+
+test('company and generic routes resolve metadata and content together before rendering', async () => {
+  const company = await source('app/company/page.js');
+  const generic = await source('app/pages/[locale]/[slug]/page.js');
+  assert.match(company, /export const dynamic = 'force-dynamic'/);
+  assert.match(company, /const getCompany = cache\(async/);
+  assert.match(company, /if \(config.source === 'static'\) return/);
+  assert.match(company, /page: null, metadata: staticMetadata/);
+  assert.equal((company.match(/await loadEditorialPage\(/g) || []).length, 1);
+  assert.match(company, /loadEditorialPage\('ru', 'about'\)/);
+  assert.match(company, /return \(await getCompany\(\)\).metadata/);
+  assert.match(generic, /locale === 'ru' && slug === 'about' \? companyDelivery\(\) : null/);
+  assert.match(generic, /return \{ page, metadata \}/);
+  assert.match(generic, /return \(await getPage\(locale, slug\)\).metadata/);
+  for (const value of [company, await source('lib/api/companyServer.js')]) assert.doesNotMatch(value, /searchParams|cookies\(|NEXT_PUBLIC_COMPANY/);
+  await assert.rejects(access(new URL('../app/(site)/company/page.js', import.meta.url)), { code: 'ENOENT' });
+});
+
+test('preview rejects CMS and invalid company selectors before mutating disposable staging or output', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'company-preview-guard-'));
+  try {
+    for (const directory of ['.preview-build', 'preview-dist']) {
+      await mkdir(join(root, directory));
+      await writeFile(join(root, directory, 'sentinel.txt'), `unchanged ${directory}`);
+    }
+    for (const selection of ['cms', '', 'invalid']) {
+      const result = spawnSync(process.execPath, [new URL('../scripts/build-preview.mjs', import.meta.url).pathname], { cwd: root, env: { ...process.env, COMPANY_SOURCE: selection }, encoding: 'utf8' });
+      assert.notEqual(result.status, 0);
+      assert.match(result.stderr, /Static preview requires COMPANY_SOURCE unset or static/);
+      for (const directory of ['.preview-build', 'preview-dist']) assert.equal(await readFile(join(root, directory, 'sentinel.txt'), 'utf8'), `unchanged ${directory}`);
+    }
+  } finally { await rm(root, { recursive: true, force: true }); }
 });

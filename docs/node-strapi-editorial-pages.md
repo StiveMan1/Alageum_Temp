@@ -77,19 +77,37 @@ A ready native schema can restart without changing Page data.
 
 Existing routes and their original loading component live under route group
 `app/(site)`. Public URLs and the single shared root layout are preserved. The
-editorial routes sit outside that loading/Suspense boundary, so missing pages
+company and generic editorial routes sit outside that loading/Suspense boundary, so missing pages
 and backend failures can return hard 404/500 before streaming begins. There is
 no proxy precheck and no second fetch solely to decide route availability.
 
-The existing rich `/company` page remains the primary existing company surface.
-The initial generic `/pages` template is noindex/nofollow. Its canonical is only
-its own URL when `PAGES_SITE_ORIGIN` is explicitly configured. Selecting CMS as
-the authoritative existing company source is a separate integration decision.
+`COMPANY_SOURCE` is a strict server-only runtime selector. Unset or exact `static`
+keeps the full original `/company` presentation and metadata with no Page reads or
+backend configuration. Exact `cms` makes published `ru/about` authoritative whole
+content through the existing text template; it does not append static history or
+mission sections. Empty or unknown values fail. Query strings, cookies and client
+state cannot override it. CMS requires `PAGES_SOURCE` unset or `api`, rejects the
+static-preview flag, and requires valid explicit `PAGES_SITE_ORIGIN`. Missing,
+draft and unpublished content is hard404; configuration/upstream/payload/timeout
+failures are hard500, with no fixture, stale or static content substituted.
+
+CMS `/company` and only the exact `/pages/ru/about` alias canonicalize to the
+configured origin plus `/company`, with noindex/nofollow and no redirects. Generic
+routes retain optional self-canonicals. Company configuration is validated only
+on the company route/alias, so an invalid selector cannot break other published
+slugs. The company page explicitly forces request-time rendering. Each route's
+React cache resolver validates metadata together with content, so errors precede
+streaming and successful metadata/body share one API read. Next's separate RSC
+error recovery may make a bounded second metadata read after a generic throw;
+first-error/second-success still returns hard500 without the successful body.
+No shared content cache or availability precheck is introduced.
 
 Static preview is an explicit separate source: `PAGES_SOURCE=static` requires
-`PAGES_STATIC_PREVIEW=1`, injected only into the disposable build adapter. It
+`PAGES_STATIC_PREVIEW=1`, injected only into the disposable build adapter alongside
+`COMPANY_SOURCE=static`. CMS or invalid company selectors are rejected before any
+staging deletion or copy; a static wrapper is written only in that disposable tree. It
 exports only `/pages/ru/about` with verified text copied from the existing company
-route. Provenance and review date are in `pagesPreview.js`; its timestamps are
+component. Provenance and review date are in `pagesPreview.js`; its timestamps are
 fixture-review metadata, not native publication dates. Live errors never select
 this preview source. Private application routes remain excluded from export.
 

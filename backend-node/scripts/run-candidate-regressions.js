@@ -47,7 +47,7 @@ const selected = [
   { key: "admin", config: "playwright.admin.config.js", file: "catalog-admin.spec.js", count: 3 },
   { key: "rfq", config: "playwright.node.config.js", file: "node-rfq.spec.js", count: 2 },
   { key: "quotes", config: "playwright.quotes.config.js", file: "quotes.spec.js", count: 28 },
-  { key: "pages", config: "playwright.pages.config.js", file: "node-pages.spec.js", count: 5 },
+  { key: "pages", config: "playwright.pages.config.js", file: "node-pages.spec.js", count: 7 },
 ];
 const protectedFiles = [
   ...selected.flatMap(item => [path.join("frontend", item.config), path.join("frontend/e2e", item.file)]),
@@ -182,7 +182,7 @@ async function discover() {
     assert.ok(tests.every(test => test.expectedStatus === "passed"), "No expected skips/failures");
     report.browsers[item.key] = { discovered: tests.length, status: "not-run" }; total += tests.length;
   }
-  assert.equal(total, 43); report.discoveredBrowserCases = total; save(); console.log("DISCOVERED 43 browser cases");
+  assert.equal(total, 45); report.discoveredBrowserCases = total; save(); console.log("DISCOVERED 45 browser cases");
 }
 async function ready(proc, url, timeoutMs = 150000) {
   const deadline = Date.now() + timeoutMs;
@@ -249,19 +249,19 @@ async function main() {
   // Both exact-name databases belong to the newly initialized cluster above.
   await run("reset-owned-page-database", path.join(pg, "dropdb"), [...pgArgs, "alageum_strapi_pages_test"], root, { PGPASSWORD: password });
   await run("recreate-owned-page-database", path.join(pg, "createdb"), [...pgArgs, "alageum_strapi_pages_test"], root, { PGPASSWORD: password });
-  const deliveryEnv = { ...pagesEnv, NODE_ENV: "production", NEXT_PUBLIC_CATALOG_SOURCE: "static", API_INTERNAL_BASE_URL: `http://127.0.0.1:${apiPort}/api/v1`, PAGES_SOURCE: "api", PAGES_STATIC_PREVIEW: "0", PAGES_SITE_ORIGIN: `http://127.0.0.1:${webPort}` };
+  const deliveryEnv = { ...pagesEnv, NODE_ENV: "production", NEXT_PUBLIC_CATALOG_SOURCE: "static", API_INTERNAL_BASE_URL: `http://127.0.0.1:${apiPort}/api/v1`, COMPANY_SOURCE: "cms", PAGES_SOURCE: "api", PAGES_STATIC_PREVIEW: "0", PAGES_SITE_ORIGIN: `http://127.0.0.1:${webPort}` };
   await npm("frontend-page-build", ["run", "build"], frontend, deliveryEnv);
-  await node("page-http-fault-matrix", ["frontend/scripts/verify-editorial-http.mjs"], root, deliveryEnv, 200000);
+  await node("page-http-fault-matrix", ["frontend/scripts/verify-editorial-http.mjs"], root, deliveryEnv, 330000);
   const matrix = JSON.parse(fs.readFileSync(path.join(root, "page-delivery-evidence/fault-matrix-results.json"), "utf8"));
-  assert.equal(matrix.status, "passed"); assert.equal(matrix.cases.length, 58); assert.ok(matrix.cases.every(item => item.status === "passed"));
+  assert.equal(matrix.status, "passed"); assert.equal(matrix.cases.length, 196); assert.ok(matrix.cases.every(item => item.status === "passed"));
   report.pageHttpFaultCases = matrix.cases.length;
   await node("page-native-delivery", ["backend-node/scripts/run-page-delivery.js", ...(browserBlocked ? ["--http-only"] : [])], root, deliveryEnv, 810000);
   const native = JSON.parse(fs.readFileSync(path.join(root, "page-delivery-evidence/native-results.json"), "utf8"));
   assert.equal(native.status, "passed"); assert.ok(native.cases.every(item => item.status === "passed")); report.pageNativeChecks = native.cases.length;
   if (!browserBlocked) verifyBrowsers(selected[4], path.join(root, "page-delivery-evidence/browser-results.json"));
   fs.cpSync(path.join(root, "page-delivery-evidence"), path.join(work, "page-delivery-evidence"), { recursive: true });
-  await npm("frontend-static-preview-build", ["run", "build:preview"], frontend, { ...deliveryEnv, PAGES_SOURCE: "static", PAGES_STATIC_PREVIEW: "1" });
-  report.passedBrowserCases = Object.values(report.browsers).reduce((sum, value) => sum + (value.passed || 0), 0); assert.equal(report.passedBrowserCases, browserBlocked ? 0 : 43);
+  await npm("frontend-static-preview-build", ["run", "build:preview"], frontend, { ...deliveryEnv, COMPANY_SOURCE: "static", PAGES_SOURCE: "static", PAGES_STATIC_PREVIEW: "1" });
+  report.passedBrowserCases = Object.values(report.browsers).reduce((sum, value) => sum + (value.passed || 0), 0); assert.equal(report.passedBrowserCases, browserBlocked ? 0 : 45);
 }
 let interrupted = false;
 for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { interrupted = true; if (active) void stop(active); for (const proc of servers) void stop(proc); });
