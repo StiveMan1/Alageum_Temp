@@ -77,7 +77,23 @@ async function addTechnicalRow(page, label, value, type = 'text', unit) {
   return row;
 }
 
+async function captureSpecEvidence(page, testInfo, target, filename) {
+  // Capture the verified controls, not whichever scroll position a prior click
+  // happened to leave. The tall viewport must contain the complete target.
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  });
+  await target.evaluate(element => element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }));
+  await page.mouse.move(0, 0);
+  await expect(target).toBeVisible();
+  await expect(target).toBeInViewport({ ratio: 1 });
+  const screenshotPath = testInfo.outputPath(filename);
+  await page.screenshot({ path: screenshotPath, fullPage: false, animations: 'disabled', caret: 'hide' });
+  await testInfo.attach(filename, { path: screenshotPath, contentType: 'image/png' });
+}
+
 test('native CMS login and guarded edits publish to the API and Next catalog', async ({ page, request }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1800 });
   const original = await publicProduct(request, 'tmg-400');
   await nativeLogin(page);
   await expect(page.getByRole('link', { name: 'ALAGEUM catalog', exact: true })).toBeVisible();
@@ -148,20 +164,32 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   await expect(page.getByText('12.5', { exact: true })).toBeVisible();
   await page.getByText('CMS fixture configuration', { exact: true }).click();
   await expect(page.getByText(multilineValue, { exact: true })).toBeVisible();
+  await captureSpecEvidence(page, testInfo, page.locator('.product-panel'), 'public-detail-specifications.png');
   await page.goto(`${frontend}/catalog/compare?source=api&ids=${original.public_key},tmg-630`);
   await expect(page.locator('.comparison-table tbody th').filter({ hasText: /^CMS fixture literal, кВА$/ })).toBeVisible();
   await expect(page.getByRole('cell', { name: '0001,250–2,0', exact: true })).toBeVisible();
+  await captureSpecEvidence(page, testInfo, page.locator('.comparison-table'), 'public-comparison-specifications.png');
   await openProduct(page, saved);
   await page.getByText('Structured specifications', { exact: true }).click();
+  const restoredLiteral = page.getByRole('group', { name: 'Technical specifications row 1', exact: true });
+  await expect(restoredLiteral.getByLabel('Specification value type', { exact: true })).toHaveValue('text');
+  await expect(restoredLiteral.getByLabel('Specification value', { exact: true })).toHaveValue('0001,250–2,0');
+  await expect(restoredLiteral.getByLabel('Unit', { exact: true })).toHaveValue('кВА');
+  await restoredLiteral.getByText('Source reference', { exact: true }).click();
+  await expect(restoredLiteral.getByLabel('Source page', { exact: true })).toHaveValue('32');
+  await captureSpecEvidence(page, testInfo, restoredLiteral, 'native-cms-literal-source-page.png');
   const restoredNumber = page.getByRole('group', { name: 'Technical specifications row 2', exact: true });
   await expect(restoredNumber.getByLabel('Specification value type', { exact: true })).toHaveValue('number');
+  await expect(restoredNumber.getByLabel('Specification value', { exact: true })).toHaveValue('12.5');
   await expect(restoredNumber.getByLabel('Unit type', { exact: true })).toHaveValue('null');
+  await captureSpecEvidence(page, testInfo, restoredNumber, 'native-cms-numeric-null-unit.png');
   await page.getByText('Configurations', { exact: true }).click();
   const restoredConfigRow = page.getByRole('group', { name: 'Configuration 1 specifications row 1', exact: true });
   await expect(restoredConfigRow.getByLabel('Specification value', { exact: true })).toHaveValue(multilineValue);
   await expect(restoredConfigRow.getByLabel('Unit', { exact: true })).toHaveValue('мм');
   await restoredConfigRow.getByText('Source reference', { exact: true }).click();
   await expect(restoredConfigRow.getByLabel('Source page', { exact: true })).toHaveValue('32');
+  await captureSpecEvidence(page, testInfo, page.getByRole('group', { name: 'Configuration 1', exact: true }), 'native-cms-multiline-configuration.png');
   await mutation(page, saved.id, 'Hide product', '/hide');
   expect((await request.get(`${api}/catalog/products/${saved.id}`)).status()).toBe(404);
   await mutation(page, saved.id, 'Restore draft', '/restore');

@@ -1,5 +1,39 @@
 # Native catalog specification editor validation
 
+## Hosted functional acceptance and pending visual evidence
+
+PR9 hosted acceptance is green at exact commit
+`a40d3242d7fe3a64df3195a489c9b90a93bf87ea` (tree
+`d46b6526be5a9c5d3314021569d56f728652d37a`): **55 backend units, 52 PostgreSQL
+integrations, 150 frontend units, all 43 default browser cases and all four
+optional-webpack CMS browser cases passed without retries**. The dependency
+audit reports **0 high and 15 moderate** findings. This supersedes the pending
+hosted status of the earlier local feature checkpoints described below.
+
+The retained `native-cms-guarded-editor.png` shows the bottom of the editor;
+it does not establish visual acceptance of the typed specification controls.
+The current screenshot-only checkpoint adds five captures after the relevant
+saved/reloaded or public assertions, using a 1440 × 1800 desktop viewport,
+cleared focus, deliberate target-centered scrolling and a full-visibility
+assertion before each PNG:
+
+- `native-cms-literal-source-page.png`
+- `native-cms-numeric-null-unit.png`
+- `native-cms-multiline-configuration.png`
+- `public-detail-specifications.png`
+- `public-comparison-specifications.png`
+
+They use the existing CMS test output directory under
+`frontend/playwright-report/cms-results/`, with native test attachments. Existing
+workflow artifact paths already retain these PNGs; privacy allowlists, workflow,
+application behavior and dependencies are unchanged. Current functional
+assertions are retained. **This new screenshot checkpoint awaits a hosted run
+and pixel inspection; the green a40d3242 run does not verify the new captures.**
+The screenshot checkpoint passes frontend lint, JavaScript syntax and whitespace
+checks, and discovery still selects all five native CMS cases with zero retries.
+
+## Earlier local combined verification
+
 Validation date: 2026-10-02. The feature was rebased without conflicts onto the
 verified PR8 commit `7866ef10815059dc79a7015009d99fdd49706d5d` (tree
 `9e3407a8ff65672b02e9ffc13ab9ff2c2c001b27`). Combined acceptance below ran against
@@ -68,12 +102,13 @@ passed. Its generated compatibility report was retained in the feature-specific
 supplemental audit/protocol/webpack checks. The original PR8 compatibility
 report was restored byte-for-byte.
 
-## Prepared for hosted verification, not run locally
+## Browser coverage and local execution limit
 
 The cloud executor's previously verified Unix-socket restriction blocks local
 Chromium. No browser was launched or alternate route attempted for this slice.
-Browser test discovery is not browser execution, and the new UI assertions have
-not yet passed in a browser.
+Browser test discovery is not browser execution. Hosted a40d3242 acceptance above
+establishes the functional browser pass; the new screenshot captures remain
+unrun locally and await their own hosted evidence.
 
 The existing native flows now additionally check:
 
@@ -93,7 +128,7 @@ The existing native flows now additionally check:
 The existing workflow runs these cases with its actual built Strapi CMS and
 production Next app. All 43 default cases, four optional webpack CMS cases and
 the real-browser compiled equivalence probe remain unrun locally for this
-feature. The broader Page HTTP/contracts/builds did run as recorded above.
-PR8's earlier hosted success does not constitute acceptance of the new editor
-assertions. The moderate advisories and production startup refusal remain;
-this report makes no production-readiness claim.
+feature. Hosted results are distinguished above. The broader Page
+HTTP/contracts/builds did run locally as recorded. The moderate advisories and
+production startup refusal remain; this report makes no production-readiness
+claim.
