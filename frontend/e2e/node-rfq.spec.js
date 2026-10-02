@@ -61,5 +61,7 @@ test('real Node RFQ survives anonymous handoff, save, retry, reload and own list
   await expect(page.getByText(comment, { exact: true })).toBeVisible();
   await ownLink.click();
   await expect(page.getByText(comment, { exact: true })).toBeVisible();
-  await testInfo.attach('node-rfq-saved', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+  const screenshotPath = testInfo.outputPath('node-rfq-saved.png');
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+  await testInfo.attach('node-rfq-saved', { path: screenshotPath, contentType: 'image/png' });
 });

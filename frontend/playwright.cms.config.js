@@ -3,6 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e', testMatch: 'node-cms.spec.js',
   outputDir: './playwright-report/cms-results',
+  preserveOutput: 'always',
   forbidOnly: Boolean(process.env.CI), fullyParallel: false, workers: 1,
   retries: 0, timeout: 45000,
   reporter: process.env.CI ? 'github' : 'list',

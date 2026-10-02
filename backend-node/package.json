@@ -35,6 +35,9 @@
     "postcss": "8.5.28",
     "@strapi/provider-email-sendmail": {
       "nodemailer": "10.0.13"
+    },
+    "@strapi/strapi": {
+      "vite": "6.4.3"
     }
   }
 }

@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: './e2e',
   testMatch: 'node-rfq.spec.js',
   outputDir: './playwright-report/node-results',
+  preserveOutput: 'always',
   forbidOnly: Boolean(process.env.CI),
   fullyParallel: false,
   workers: 1,

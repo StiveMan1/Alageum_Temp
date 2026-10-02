@@ -16,7 +16,8 @@ findings, not counts of independent vulnerabilities. Registry advisory metadata
 can change without a dependency change.
 
 The [current complete npm audit report](../backend-node/docs/dependency-audit.json)
-records **18 affected packages: 3 high, 15 moderate, 0 critical**. The exact command
+on this isolated Vite compatibility branch records **16 affected packages:
+3 high, 13 moderate, 0 critical**, down from 18 before the experiment. The exact command
 `npm audit --audit-level=high --json` still exits **1**. The independent CI audit
 job is unchanged and hard-fails; neither reachability analysis nor passing
 functional tests waives that gate. No advisory ignore, severity downgrade,
@@ -24,7 +25,13 @@ functional tests waives that gate. No advisory ignore, severity downgrade,
 
 ### Bounded update applied
 
-The only package version changed in this pass is **Nodemailer 9.0.1 → 10.0.13**,
+This branch also contains the separate, **not-yet-adopted Vite 6.4.3 candidate**
+described in [the compatibility experiment](node-strapi-vite-compatibility.md).
+Its clean install, peer tree, unit checks, cold/warm CMS builds and real local
+Strapi asset/watch/HMR probes passed. Hosted browser acceptance remains pending;
+the candidate has not been applied to the baseline or editorial worktree.
+
+The preceding dependency pass changed **Nodemailer 9.0.1 → 10.0.13**,
 using a parent-scoped override under `@strapi/provider-email-sendmail` rather than
 a blanket override. Earlier Axios 1.20.0, PostCSS 8.5.28, DOMPurify 3.4.16,
 markdown-it 14.3.1, uuid 11.1.1 and react-router-dom 6.30.6 pins are retained.
@@ -69,18 +76,22 @@ Verification for this dependency change:
 All remaining packages appear in npm's production dependency classification
 because Strapi ships CLI/build/development code alongside its server packages.
 That classification does not prove every vulnerable code path runs in every
-application mode. The high findings are **Vite**, **webpack-dev-middleware**, and
-the propagated **@strapi/strapi** parent finding.
+application mode. On this candidate branch the high findings are
+**webpack-dev-middleware** and the propagated **@strapi/strapi** and
+**@strapi/plugin-users-permissions** parent findings. Vite and esbuild are absent
+from this audit's vulnerability list; unchanged high-package counts do not mean
+the high findings themselves are unchanged.
 
-- **Vite 5.4.21 / esbuild 0.21.5:** Strapi's `dist/src/node/vite/watch.js` creates
+- **Baseline Vite 5.4.21 / esbuild 0.21.5:** Strapi's `dist/src/node/vite/watch.js` creates
   the Vite development server; building the CMS also uses Vite. The reported
   file-read/UNC findings concern serving development endpoints, rather than
   merely serving already-built CMS assets. The Windows-specific advisory has
   additional filesystem/platform conditions. This is a Linux local checkpoint,
   and development listeners must remain loopback-only. Vite 5 has no current
   patched release for the listed findings. Moving to the patched 6.4.3+ line
-  also changes its esbuild dependency and needs Strapi build/watch acceptance.
-  A separate override across esbuild's 0.x minor API boundary is not applied
+  also changes its esbuild dependency. The isolated 6.4.3 candidate resolves its
+  supported esbuild 0.25.12 and has local build/watch evidence in the linked
+  report; browser acceptance is still open. A separate esbuild override is not applied
 - **webpack-dev-middleware 6.1.3:** loaded by Strapi's optional webpack watch
   path, not by this project's default Vite bundler. The path-traversal advisory
   depends on a `publicPath` lacking a trailing slash. Strapi's supplied webpack
