@@ -156,7 +156,7 @@ function effectivePermissions(role) {
 }
 
 // Recheck and hold the authorization rows when a domain write needs a stable tenant boundary.
-async function assertActiveContext(db, context, permission) {
+async function assertActiveContext(db, context, permission, options = {}) {
   const user = await table(db, "users")
     .where({ id: context.user.id, is_active: true })
     .forShare()
@@ -182,10 +182,13 @@ async function assertActiveContext(db, context, permission) {
       "No active organization membership",
       403,
     );
-  const organization = await table(db, "organizations")
-    .where({ id: member.organization_id, is_active: true })
-    .forShare()
-    .first();
+  // Choose the strongest required lock at first acquisition. Organization
+  // profile writes must never upgrade two concurrent FOR SHARE locks.
+  const organizationQuery = table(db, "organizations")
+    .where({ id: member.organization_id, is_active: true });
+  const organization = await (options.lockOrganizationForUpdate
+    ? organizationQuery.forUpdate()
+    : organizationQuery.forShare()).first();
   const role = await table(db, "roles")
     .where({ id: member.role_id })
     .forShare()
@@ -203,12 +206,14 @@ async function assertActiveContext(db, context, permission) {
     );
   }
   const permissions = effectivePermissions(role);
-  if (!permissions.has(permission))
-    throw new AppError(
-      "permission_denied",
-      `Permission '${permission}' is required`,
-      403,
-    );
+  for (const required of Array.isArray(permission) ? permission : [permission]) {
+    if (!permissions.has(required))
+      throw new AppError(
+        "permission_denied",
+        `Permission '${required}' is required`,
+        403,
+      );
+  }
   return {
     user,
     membership: { ...member, role },

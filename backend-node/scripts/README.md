@@ -39,3 +39,30 @@ before closing Strapi. This prevents an unawaited count query from racing pool
 shutdown, even when telemetry is disabled; metric failures still propagate.
 `run-local-tests.sh --fixtures-only` verifies the actual CLI in a new isolated
 cluster without building or launching the browser.
+
+## Separate company-profile fixtures
+
+`bash backend-node/scripts/run-profile-tests.sh --browser` (from repository root)
+creates a new local PostgreSQL cluster and the exact `alageum_strapi_profile_test`
+database, starts actual Strapi, creates only fictitious B2B profile users, builds
+Next into `.next-profile`, and runs the explicit 16-case desktop/mobile profile
+suite. Set `PG_BIN` to the installed PostgreSQL 16+ binaries and use Node 24 with
+locked dependencies and Playwright Chromium already installed. The runner ignores
+the caller's database URL and generates fresh runtime secrets/passwords.
+
+`--backend-only` runs the real HTTP fixture/permission/persistence/conflict checks
+without a browser or frontend build. It is a local diagnostic mode; CI rejects it
+so a partial pass cannot be mistaken for browser acceptance. Existing default 45
+and optional webpack 4 browser cases keep their original scopes.
+
+`seed-test-profile-users.js` requires `APP_ENV=test`,
+`ALAGEUM_TEST_PROFILE_FIXTURES=1`, an explicit long disposable
+`E2E_PROFILE_PASSWORD`, and the exact loopback test database. Its CLI preflight
+refuses any existing application tables before Strapi synchronization. Seeding
+refuses existing B2B rows/CMS administrators and creates dedicated role grants;
+existing/demo roles are never widened. Do not run it on any customer database.
+
+The runner prints the sanitized evidence directory. Share only its sanitized
+logs/results and explicitly captured fictitious saved-state PNGs; never raw
+databases, credentials, cookies, tokens or network traces. See
+[`docs/company-profile.md`](../../docs/company-profile.md) for contract and limits.

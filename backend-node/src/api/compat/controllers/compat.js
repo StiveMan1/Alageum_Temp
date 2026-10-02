@@ -15,6 +15,8 @@ module.exports = ({ strapi }) => ({
   logout: (ctx) => strapi.alageum.auth.logout(ctx),
   me: (ctx) => strapi.alageum.auth.me(ctx),
   organizations: (ctx) => strapi.alageum.auth.organizations(ctx),
+  organizationProfile: (ctx) => strapi.alageum.organizationProfile.get(ctx),
+  updateOrganizationProfile: (ctx) => strapi.alageum.organizationProfile.update(ctx),
   categories: (ctx) => strapi.alageum.catalog.categoryList(ctx),
   products: (ctx) => strapi.alageum.catalog.list(ctx),
   product: (ctx) => strapi.alageum.catalog.get(ctx),
