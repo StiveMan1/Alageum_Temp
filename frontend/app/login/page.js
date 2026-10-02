@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { loginDestination } from "@/lib/api/loginRedirect";
 import { login } from "@/lib/api/auth";
 import { useAuth } from "@/components/AuthProvider";
 
@@ -17,7 +18,7 @@ export default function LoginPage() {
     event.preventDefault();
     if (submitting.current) return;
     submitting.current = true; setPending(true); setError("");
-    try { setProfile(await login(email, password)); router.push(new URLSearchParams(window.location.search).get("next") === "/admin/catalog" ? "/admin/catalog" : "/b2b"); }
+    try { setProfile(await login(email, password)); router.replace(loginDestination(new URLSearchParams(window.location.search).get("next"))); }
     catch (reason) { setError(reason.message); }
     finally { submitting.current = false; setPending(false); }
   }
@@ -27,7 +28,7 @@ export default function LoginPage() {
       <form className="form card" onSubmit={submit}>
         <label>Email<input value={email} onChange={(e) => setEmail(e.target.value)} type="email" required /></label>
         <label>Пароль<input value={password} onChange={(e) => setPassword(e.target.value)} type="password" required /></label>
-        {error && <p className="error">{error}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
         <button className="button" disabled={pending}>{pending ? "Вход…" : "Войти"}</button>
       </form>
     </section>

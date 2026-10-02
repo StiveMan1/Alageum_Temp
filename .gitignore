@@ -27,3 +27,21 @@ test.db
 # Disposable static public-preview build
 frontend/.preview-build/
 frontend/preview-dist/
+
+# Isolated Node/Strapi migration workspace
+backend-node/node_modules/
+backend-node/.cache/
+backend-node/.strapi/
+backend-node/build/
+backend-node/dist/
+backend-node/.tmp/
+backend-node/public/uploads/
+backend-node/.env*
+!backend-node/.env.example
+
+!backend-node/public/uploads/
+backend-node/public/uploads/*
+!backend-node/public/uploads/.gitkeep
+
+backend-node/.strapi-updater.json
+backend-node/dependency-audit.json

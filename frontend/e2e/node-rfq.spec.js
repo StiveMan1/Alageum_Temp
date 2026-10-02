@@ -1,0 +1,65 @@
+import { expect, test } from '@playwright/test';
+
+// No route interception: this test requires the running Node/Strapi backend and
+// its isolated seeded PostgreSQL database. Mocked interruption cases remain in
+// quotes.spec.js; this suite proves the same UI contract against real storage.
+const api = process.env.E2E_API_URL || 'http://127.0.0.1:8016/api/v1';
+
+test('real Node RFQ survives anonymous handoff, save, retry, reload and own list', async ({ page, request }, testInfo) => {
+  const published = await request.get(`${api}/catalog/products/tmg-400`);
+  expect(published.ok()).toBeTruthy();
+  const product = await published.json();
+  const comment = `Node RFQ ${testInfo.project.name} ${Date.now()}`;
+
+  await page.goto('/catalog/tmg-400?source=api');
+  await page.getByRole('button', { name: 'В подборку +', exact: true }).click();
+  await page.goto('/selection?source=api');
+  await page.getByLabel(`Количество ${product.sku}`, { exact: true }).fill('3');
+  await page.getByRole('link', { name: 'Запросить КП →', exact: true }).click();
+  await page.getByRole('link', { name: 'Войти и продолжить', exact: true }).click();
+  await page.getByLabel('Email', { exact: true }).fill('buyer@demo.example');
+  await page.getByLabel('Пароль', { exact: true }).fill('ChangeMe123!');
+  await page.getByRole('button', { name: 'Войти', exact: true }).click();
+  await expect(page).toHaveURL(/\/inquiry\?source=api$/);
+  await expect(page.getByLabel(`Количество ${product.sku}`, { exact: true })).toHaveValue('3');
+  await page.getByLabel('Сообщение (необязательно)', { exact: true }).fill(comment);
+
+  const savedResponse = page.waitForResponse(response => response.url() === `${api}/quotes/catalog` && response.request().method() === 'POST');
+  await page.getByRole('button', { name: 'Сохранить запрос КП', exact: true }).click();
+  const response = await savedResponse;
+  expect(response.status()).toBe(201);
+  const quote = await response.json();
+  expect(quote.comment).toBe(comment);
+  expect(quote.item_count).toBe(1);
+  expect(quote.items[0].product_id).toBe(product.id);
+  expect(Number(quote.items[0].quantity)).toBe(3);
+  expect(quote.items[0].product_snapshot.public_key).toBe(product.public_key);
+  expect(quote.items[0].product_snapshot.version).toBe(product.version);
+  await expect(page).toHaveURL(new RegExp(`/b2b/quotes/${quote.id}$`));
+  await expect(page.getByText(comment, { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText(comment, { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: product.translations.ru.name, exact: true })).toBeVisible();
+
+  // Repeat the browser's exact request and prove the DB idempotency contract.
+  const original = response.request();
+  const headers = await original.allHeaders();
+  const replay = await request.post(`${api}/quotes/catalog`, {
+    headers: {
+      Authorization: headers.authorization,
+      'X-Organization-Id': headers['x-organization-id'],
+      'Idempotency-Key': headers['idempotency-key'],
+    },
+    data: original.postDataJSON(),
+  });
+  expect(replay.status()).toBe(200);
+  expect((await replay.json()).id).toBe(quote.id);
+
+  await page.getByRole('link', { name: '← Мои запросы КП', exact: true }).click();
+  const ownLink = page.getByRole('link', { name: `Запрос ${quote.id.slice(0, 8)} →`, exact: true });
+  await expect(ownLink).toHaveCount(1);
+  await expect(page.getByText(comment, { exact: true })).toBeVisible();
+  await ownLink.click();
+  await expect(page.getByText(comment, { exact: true })).toBeVisible();
+  await testInfo.attach('node-rfq-saved', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+});

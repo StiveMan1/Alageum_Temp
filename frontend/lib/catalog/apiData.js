@@ -1,3 +1,4 @@
+import { UUID } from '../quotes/model.js';
 // Stable public_key is the UI identity; the database UUID is transport-only.
 export function isApiCatalog(params) {
  const source = typeof params?.get === 'function' ? params.get('source') : params?.source;
@@ -31,5 +32,5 @@ export function normalizeApiProduct(product) {
 export function normalizeApiSelection(value) {
  if (!Array.isArray(value)) return [];
  const seen = new Set();
- return value.filter(item => item && typeof item.id === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id) && !seen.has(item.id) && seen.add(item.id)).slice(0,500).map(item => ({id:item.id,quantity:Math.min(999,Math.max(1,Math.floor(Number(item.quantity))||1))}));
+ return value.filter(item => item && typeof item.id === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.id) && !seen.has(item.id) && seen.add(item.id)).slice(0,500).map(item => ({id:item.id,...(UUID.test(item.databaseId || '') ? { databaseId: item.databaseId } : {}),quantity:Math.min(999,Math.max(1,Math.floor(Number(item.quantity))||1))}));
 }

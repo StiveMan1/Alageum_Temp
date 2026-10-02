@@ -154,3 +154,25 @@ async def login(client, email: str) -> str:
     )
     assert response.status_code == 200, response.text
     return response.json()["access_token"]
+
+
+async def published_product(session: AsyncSession, key: str = "rfq-product"):
+    from app.catalog.models import Category, Product
+
+    category = Category(slug=key, public_key=key, is_published=True)
+    session.add(category)
+    await session.flush()
+    product = Product(
+        slug=key,
+        public_key=key,
+        category_id=category.id,
+        status="published",
+        translations={"ru": {"name": "Test catalogue product"}},
+        price_mode="fixed",
+        price=Decimal("120.50"),
+        currency="KZT",
+        specs={"series": "Test series", "isOrderableSku": False},
+    )
+    session.add(product)
+    await session.commit()
+    return product

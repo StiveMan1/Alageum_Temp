@@ -1,0 +1,73 @@
+"use strict";
+const { randomUUID } = require("node:crypto");
+const { AppError } = require("../domain/errors");
+const { createRateLimiter } = require("../domain/rate-limit");
+module.exports = () => {
+  const loginLimit = createRateLimiter({ limit: 20 });
+  return async (ctx, next) => {
+    const requestId = randomUUID();
+    const apiPath = ctx.path.toLowerCase().replace(/\/+$/, "");
+    ctx.state.requestId = requestId;
+    ctx.set("X-Request-ID", requestId);
+    if (apiPath.startsWith("/api/v1/") || apiPath === "/api/v1")
+      ctx.set("Cache-Control", "no-store");
+    try {
+      if (ctx.method === "POST" && apiPath === "/api/v1/auth/login")
+        loginLimit(ctx.ip);
+      await next();
+      if (
+        (apiPath.startsWith("/api/v1/") || apiPath === "/api/v1") &&
+        ctx.status === 404 &&
+        !ctx.body?.error?.request_id
+      ) {
+        ctx.body = {
+          error: {
+            code: "route_not_available",
+            message:
+              "This endpoint is not available in the bounded Node migration",
+            details: null,
+            request_id: requestId,
+          },
+        };
+        ctx.status = 404;
+      }
+    } catch (error) {
+      if (!(apiPath.startsWith("/api/v1/") || apiPath === "/api/v1"))
+        throw error;
+      const known = error instanceof AppError;
+      const status = known
+        ? error.status
+        : error.status === 413
+          ? 413
+          : error.status === 400
+            ? 422
+            : 500;
+      if (status === 500)
+        strapi.log.error("API request failed", {
+          request_id: requestId,
+          code: error.code,
+        });
+      ctx.status = status;
+      ctx.body = {
+        error: {
+          code: known
+            ? error.code
+            : status === 413
+              ? "request_too_large"
+              : status === 422
+                ? "validation_error"
+                : "internal_error",
+          message: known
+            ? error.message
+            : status === 413
+              ? "Request body too large"
+              : status === 422
+                ? "Invalid request body"
+                : "Request failed",
+          details: known ? error.details : null,
+          request_id: requestId,
+        },
+      };
+    }
+  };
+};

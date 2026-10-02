@@ -39,6 +39,10 @@ jobs:
       - run: alembic downgrade base
       - run: alembic upgrade head
       - run: alembic check
+      - name: Verify RFQ transactions on PostgreSQL (including concurrent retries)
+        run: pytest tests/test_quote_requests.py
+        env:
+          ALAGEUM_TEST_POSTGRES_URL: postgresql+asyncpg://alageum:ci-password@localhost:5432/alageum_ci
   frontend:
     runs-on: ubuntu-latest
     defaults:

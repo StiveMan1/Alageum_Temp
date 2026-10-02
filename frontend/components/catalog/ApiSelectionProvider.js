@@ -12,7 +12,7 @@ export function ApiSelectionProvider({children}) {
  const raw=useSyncExternalStore(subscribe,snapshot,()=>'[]');
  const items=useMemo(()=>decode(raw),[raw]);
  const value={items,count:items.reduce((sum,item)=>sum+item.quantity,0),storageUnavailable:unavailable,
-  add(id) { const latest=decode(snapshot()),existing=latest.find(item=>item.id===id); save(existing?latest.map(item=>item.id===id?{...item,quantity:item.quantity+1}:item):[...latest,{id,quantity:1}]); },
+  add(id,databaseId) { const latest=decode(snapshot()),existing=latest.find(item=>item.id===id); save(existing?latest.map(item=>item.id===id?{...item,databaseId,quantity:item.quantity+1}:item):[...latest,{id,databaseId,quantity:1}]); },
   remove(id) { save(decode(snapshot()).filter(item=>item.id!==id)); },
   setQuantity(id,quantity) { save(decode(snapshot()).map(item=>item.id===id?{...item,quantity}:item)); },
  };

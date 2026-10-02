@@ -1,0 +1,211 @@
+name: Node Strapi migration foundation
+on:
+  pull_request:
+    paths:
+      - 'backend-node/**'
+      - 'frontend/**'
+      - 'docs/catalog-import/**'
+      - 'docs/node-strapi-migration.md'
+      - 'docker-compose.node.yml'
+      - '.github/workflows/node-strapi.yml'
+  push:
+    paths:
+      - 'backend-node/**'
+      - 'frontend/**'
+      - 'docs/catalog-import/**'
+      - 'docs/node-strapi-migration.md'
+      - 'docker-compose.node.yml'
+      - '.github/workflows/node-strapi.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: node-strapi-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend-node/package-lock.json
+      - name: Install locked backend dependency tree
+        working-directory: backend-node
+        run: npm ci
+      - name: Gate high-severity backend dependency advisories
+        working-directory: backend-node
+        run: npm audit --audit-level=high --json > dependency-audit.json
+      - name: Save complete dependency audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-strapi-dependency-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: backend-node/dependency-audit.json
+          retention-days: 14
+
+  node-strapi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: alageum_strapi_ci
+          POSTGRES_USER: alageum_strapi_ci
+          # Disposable CI service only, never copied into deployment examples.
+          POSTGRES_PASSWORD: disposable-node-strapi-ci
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U alageum_strapi_ci -d alageum_strapi_ci"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgresql://alageum_strapi_ci:disposable-node-strapi-ci@127.0.0.1:5432/alageum_strapi_ci
+      ALAGEUM_DOMAIN_TEST_DATABASE_URL: postgresql://alageum_strapi_ci:disposable-node-strapi-ci@127.0.0.1:5432/alageum_strapi_domain_test
+      ALAGEUM_CMS_BROWSER_DATABASE_URL: postgresql://alageum_strapi_ci:disposable-node-strapi-ci@127.0.0.1:5432/alageum_strapi_browser_test
+      HOST: 127.0.0.1
+      PORT: '8016'
+      ALAGEUM_SEED_DEMO: '1'
+      ALAGEUM_IMPORT_CATALOG: '1'
+      ALAGEUM_TEST_ADMIN_FIXTURES: '1'
+      CORS_ORIGINS: http://127.0.0.1:3141
+      STRAPI_TELEMETRY_DISABLED: 'true'
+      STRAPI_HIDE_UPDATE_MESSAGE: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      NEXT_PUBLIC_API_URL: http://127.0.0.1:8016/api/v1
+      NEXT_PUBLIC_CATALOG_SOURCE: api
+      E2E_API_URL: http://127.0.0.1:8016/api/v1
+      E2E_BASE_URL: http://127.0.0.1:3141
+      E2E_QUOTES_BASE_URL: http://127.0.0.1:3141
+      E2E_CMS_BASE_URL: http://127.0.0.1:8016/cms
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            backend-node/package-lock.json
+            frontend/package-lock.json
+      - name: Generate disposable application keys
+        run: |
+          node <<'NODE'
+          const { randomBytes } = require('node:crypto');
+          const { appendFileSync } = require('node:fs');
+          for (const key of ['APP_KEYS', 'ADMIN_JWT_SECRET', 'API_TOKEN_SALT', 'TRANSFER_TOKEN_SALT', 'ENCRYPTION_KEY', 'ALAGEUM_JWT_SECRET']) {
+            const value = Array.from({ length: key === 'APP_KEYS' ? 2 : 1 }, () => randomBytes(32).toString('hex')).join(',');
+            console.log(`::add-mask::${value}`);
+            appendFileSync(process.env.GITHUB_ENV, `${key}=${value}\n`);
+          }
+          for (const key of ['E2E_CMS_EDITOR_PASSWORD', 'E2E_CMS_DENIED_PASSWORD']) {
+            const value = 'Aa1!' + randomBytes(24).toString('hex');
+            console.log(`::add-mask::${value}`);
+            appendFileSync(process.env.GITHUB_ENV, `${key}=${value}\n`);
+          }
+          NODE
+      - name: Install locked Node backend dependencies
+        working-directory: backend-node
+        run: npm ci
+      - name: Install locked frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      - name: Create separate destructive-domain-test database
+        working-directory: backend-node
+        run: |
+          node <<'NODE'
+          const { Client } = require('pg');
+          (async () => {
+            const db = new Client({ connectionString: process.env.DATABASE_URL });
+            await db.connect();
+            try {
+              await db.query('CREATE DATABASE alageum_strapi_domain_test');
+              await db.query('CREATE DATABASE alageum_strapi_browser_test');
+            }
+            finally { await db.end(); }
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+      - name: Check backend syntax and unit tests
+        working-directory: backend-node
+        run: |
+          npm run check
+      - name: Verify PostgreSQL integration contracts
+        working-directory: backend-node
+        run: npm run test:integration
+      - name: Build Strapi CMS administration
+        working-directory: backend-node
+        run: npm run build
+        env:
+          NODE_ENV: production
+      - name: Check frontend lint and unit tests
+        working-directory: frontend
+        run: |
+          npm run lint
+          NEXT_PUBLIC_CATALOG_SOURCE=static npm run test:unit
+      - name: Build frontend against Node API
+        working-directory: frontend
+        run: npm run build
+      - name: Install Chromium
+        timeout-minutes: 5
+        env:
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: 60000
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Verify CMS health, catalog administration and RFQ browser flows
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          (cd backend-node && DATABASE_URL="$ALAGEUM_CMS_BROWSER_DATABASE_URL" node scripts/seed-test-cms-admins.js) > node-strapi-fixtures.log 2>&1
+          DATABASE_URL="$ALAGEUM_CMS_BROWSER_DATABASE_URL" setsid bash -c 'cd backend-node && exec npm run start' > node-strapi-api.log 2>&1 &
+          api_pid=$!
+          setsid bash -c 'cd frontend && exec npm run start -- --hostname 127.0.0.1 --port 3141' > node-strapi-frontend.log 2>&1 &
+          web_pid=$!
+          cleanup() {
+            kill -- -"${api_pid}" -"${web_pid}" 2>/dev/null || true
+            wait "${api_pid}" "${web_pid}" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          deadline=$((SECONDS + 150))
+          until curl --fail --silent --connect-timeout 2 --max-time 5 "${E2E_API_URL}/readiness" > /dev/null \
+            && curl --fail --silent --connect-timeout 2 --max-time 5 "${E2E_BASE_URL}/inquiry?source=api" > /dev/null; do
+            if ! kill -0 "${api_pid}" || ! kill -0 "${web_pid}" || (( SECONDS >= deadline )); then
+              tail -100 node-strapi-api.log node-strapi-frontend.log
+              exit 1
+            fi
+            sleep 2
+          done
+          curl --fail --silent --max-time 10 http://127.0.0.1:8016/_health > /dev/null
+          curl --location --fail --silent --max-time 10 http://127.0.0.1:8016/cms > /dev/null
+          cd frontend
+          npx playwright test --config=playwright.cms.config.js --max-failures=1
+          npm run test:e2e:admin -- --max-failures=1
+          npx playwright test --config=playwright.node.config.js --max-failures=1
+          # The legacy interruption suite intentionally tests both demo and API
+          # source modes. The live API-default build disallows static overrides.
+          # Its config starts a separate static-default development server.
+          env -u E2E_QUOTES_BASE_URL NEXT_PUBLIC_CATALOG_SOURCE=static NODE_ENV=development \
+            npm run test:e2e:quotes -- --max-failures=3
+        env:
+          NODE_ENV: production
+      - name: Save browser and server evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: node-strapi-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+            node-strapi-api.log
+            node-strapi-frontend.log
+            node-strapi-fixtures.log
+          retention-days: 7
