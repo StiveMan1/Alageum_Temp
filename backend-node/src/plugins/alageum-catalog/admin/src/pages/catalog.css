@@ -24,6 +24,13 @@
 .alageum-muted { color: var(--ac-muted); font-size: 13px; overflow-wrap: anywhere; }
 .alageum-error { color: #a91818; background: #fff0f0; border: 1px solid #ffc3c3; padding: 12px; border-radius: 6px; }
 .alageum-success { color: #13633a; background: #eaf9ef; padding: 12px; border-radius: 6px; }
+.alageum-catalog .alageum-spec-row { border: 1px solid var(--ac-border); border-radius: 6px; padding: 16px; margin: 16px 0; }
+.alageum-spec-row legend { padding: 0 6px; font-weight: 600; }
+.alageum-spec-group { margin: 20px 0; }
+.alageum-spec-group h3 { font-size: 18px; font-weight: 600; }
+.alageum-spec-cell { min-width: 0; }
+.alageum-field-error { color: #b42318; font-size: 13px; font-weight: 500; }
+.alageum-field [aria-invalid="true"] { border-color: #b42318; }
 .alageum-table-wrap { overflow-x: auto; margin-top: 16px; border: 1px solid var(--ac-border); border-radius: 7px; background: var(--ac-panel); }
 .alageum-catalog table { width: 100%; border-collapse: collapse; text-align: left; }
 .alageum-catalog th, .alageum-catalog td { padding: 14px 16px; border-bottom: 1px solid var(--ac-border); vertical-align: top; }

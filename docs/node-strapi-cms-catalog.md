@@ -9,11 +9,46 @@ that permission cannot use its endpoints.
 The editor supports product creation, search and pagination, names/descriptions
 in RU/KZ/EN/CN/UZ, category, SKU, slug, comparison eligibility, publication state
 and exact decimal pricing. Public keys and transport UUIDs remain immutable after
-creation. Existing translations outside those five languages, technical
-specifications, source evidence and media are preserved on an ordinary edit.
-This first editor does not yet offer category authoring, media uploads or editing
-of the full structured specification/provenance fields. Public editorial pages
-are still outside the connected CMS delivery slice.
+creation. Existing translations outside those five languages, source evidence and media
+are preserved on an ordinary edit. The structured specification form supports
+technical and variant rows, configurations, notes, and the existing power,
+voltage/unit, cooling, installation, subtype, manufacturer, series and orderable
+SKU fields. It does not offer category authoring, media uploads or provenance
+editing. Record/family relationships and extra metadata remain untouched.
+
+### Structured specification contract
+
+The form uses the existing `specs` object on the versioned native plugin PUT;
+it adds no endpoint, public identity, database migration or v1 transport field.
+An ordinary edit omits `specs` entirely until the specification form is changed.
+When edited, it retains all unknown object/row/configuration keys, the exact
+order of rows, citations, absent sections and existing nulls/empty strings.
+Removing a row or configuration is an explicit action. Reload discards local
+changes; version conflicts retain the unsaved specification draft. Hide/Restore
+is unavailable while specifications are dirty, with a save/reload instruction,
+so an unrelated status action cannot discard that draft.
+
+Text and numeric row values are selected explicitly. Multiline controls preserve
+literal LF line breaks in text values, labels, units and designations. Literal ranges, leading
+zeroes, decimal commas and source spelling stay text. Numeric input must be
+finite and roundtrip without decimal loss; unsafe integers and negative zero
+(which JSON would change to zero) are rejected with
+an option to keep the original value as text. Unit text is never inferred,
+normalized or converted. “Not recorded”, “No stated value” and empty unit text
+retain the contract's absent/null/empty distinctions. Pages are optional positive
+integers. Typed booleans are never derived from truthy strings. No missing
+translations or technical values are synthesized.
+
+Category context orders relevant existing attributes first and shows the
+selected category/publication state. Existing server category rules check
+identity and publication; all categories use the shared typed specification
+schema. There are no authoritative per-category engineering limits in this
+contract, so the editor does not invent them. Changing category keeps the
+specifications and asks the editor to review their relevance. Existing schema
+422 paths map to fields; missing/unpublished category errors map to Category.
+Only rows (500), configurations (500), typed values and the existing 256 KiB
+server payload bound are constrained. Audit, freshness and authorization rules
+below apply to specification edits without a separate write path.
 
 ## Authorization and writes
 

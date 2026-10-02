@@ -2,6 +2,8 @@ import React, { useEffect, useId, useRef, useState } from "react";
 import { useAuth, useFetchClient } from "@strapi/strapi/admin";
 import { useSearchParams } from "react-router-dom";
 import "./catalog.css";
+import Specifications, { SpecField } from "./Specifications";
+import { createSpecsDraft, serializeSpecsDraft, validationErrors } from "../spec-draft.mjs";
 import { errorMessage, accountKey, mutationOptions, acceptMutationResponse } from "../client-guards.mjs";
 
 const ROOT = "/alageum-catalog";
@@ -19,6 +21,9 @@ function Editor({ id, categories, token, onClose, onSaved }) {
   const [form, setForm] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [specDraft, setSpecDraft] = useState(null);
+  const [specDirty, setSpecDirty] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const active = useRef(true);
   const inFlight = useRef(false);
@@ -26,12 +31,16 @@ function Editor({ id, categories, token, onClose, onSaved }) {
   const isNew = id === "new";
   const populate = (p) => {
     setProduct(p);
+    setSpecDraft(createSpecsDraft(p.specs));
+    setSpecDirty(false);
+    setFieldErrors({});
     setForm({ ...p, translations: structuredClone(p.translations), price: p.price ?? "", currency: p.currency ?? "KZT", sku: p.sku ?? "" });
   };
   async function load() {
     const generation = ++loadGeneration.current;
     setError("");
     setNotice("");
+    setFieldErrors({});
     setBusy(true);
     try {
       const { data } = await get(`${ROOT}/products/${id}`);
@@ -54,8 +63,19 @@ function Editor({ id, categories, token, onClose, onSaved }) {
   }
   async function save(action = "save") {
     if (inFlight.current || !form) return;
+    if (action !== "save" && specDirty) {
+      setError("Save or reload your specification edits before changing publication state.");
+      return;
+    }
+    const specsResult = action === "save" && specDirty ? serializeSpecsDraft(specDraft) : null;
+    if (specsResult && Object.keys(specsResult.errors).length) {
+      setFieldErrors(specsResult.errors);
+      setError("Review the marked specification fields. Your edits have not been saved.");
+      setNotice("");
+      return;
+    }
     inFlight.current = true;
-    setBusy(true); setError(""); setNotice("");
+    setBusy(true); setError(""); setNotice(""); setFieldErrors({});
     try {
       // Native Strapi's fetch client retries every method on 401. Accept that
       // response here and reject it ourselves, outside its retry interceptor.
@@ -65,6 +85,7 @@ function Editor({ id, categories, token, onClose, onSaved }) {
       if (action !== "save") response = await post(`${ROOT}/products/${id}/${action}`, { version: product.version }, options);
       else {
         const body = { slug: form.slug, sku: form.sku || null, category_id: form.category_id, translations: form.translations, status: form.status, comparable: form.comparable, price_mode: form.price_mode, price: form.price_mode === "fixed" ? form.price : null, currency: form.price_mode === "fixed" ? form.currency : null };
+        if (specsResult) body.specs = specsResult.specs;
         response = isNew ? await post(`${ROOT}/products`, { ...body, public_key: form.public_key }, options) : await put(`${ROOT}/products/${id}`, { ...body, version: product.version }, options);
       }
       acceptMutationResponse(response);
@@ -73,7 +94,7 @@ function Editor({ id, categories, token, onClose, onSaved }) {
       setNotice("Product saved");
       onSaved(response.data);
     } catch (e) {
-      if (active.current) setError(errorMessage(e));
+      if (active.current) { setError(errorMessage(e)); setFieldErrors(validationErrors(e)); }
     } finally {
       inFlight.current = false;
       if (active.current) setBusy(false);
@@ -88,7 +109,7 @@ function Editor({ id, categories, token, onClose, onSaved }) {
         <div className="alageum-grid">
           <Field label="Public key"><input required maxLength={240} value={form.public_key} readOnly={!isNew} onChange={(e) => field("public_key", e.target.value)} /></Field>
           <Field label="Slug"><input required maxLength={240} value={form.slug} onChange={(e) => field("slug", e.target.value)} /></Field>
-          <Field label="Category"><select value={form.category_id} onChange={(e) => field("category_id", e.target.value)}>{categories.map((c) => <option key={c.id} value={c.id}>{nameOf(c)}{c.is_published ? "" : " (unpublished)"}</option>)}</select></Field>
+          <SpecField label="Category" path="category_id" errors={fieldErrors}><select value={form.category_id} onChange={(e) => field("category_id", e.target.value)}>{categories.map((c) => <option key={c.id} value={c.id}>{nameOf(c)}{c.is_published ? "" : " (unpublished)"}</option>)}</select></SpecField>
           <Field label="SKU"><input maxLength={120} value={form.sku} onChange={(e) => field("sku", e.target.value)} /></Field>
           <Field label="Status"><select value={form.status} onChange={(e) => field("status", e.target.value)}><option value="draft">Draft</option><option value="published">Published</option><option value="hidden">Hidden</option></select></Field>
           <Field label="Version"><input value={product.version || "New product"} readOnly /></Field>
@@ -101,10 +122,12 @@ function Editor({ id, categories, token, onClose, onSaved }) {
           <Field label="Price mode"><select value={form.price_mode} onChange={(e) => field("price_mode", e.target.value)}><option value="on_request">On request</option><option value="fixed">Fixed price</option></select></Field>
           {form.price_mode === "fixed" && <><Field label="Price"><input required inputMode="decimal" value={form.price} onChange={(e) => field("price", e.target.value)} /></Field><Field label="Currency"><input required maxLength={3} pattern="[A-Z]{3}" value={form.currency} onChange={(e) => field("currency", e.target.value.toUpperCase())} /></Field></>}
         </div>
+        <Specifications draft={specDraft} category={categories.find((c) => c.id === form.category_id)} errors={fieldErrors} onChange={(next) => { setSpecDraft(next); setSpecDirty(true); }} />
         <label className="alageum-checkbox"><input type="checkbox" checked={form.comparable} onChange={(e) => field("comparable", e.target.checked)} />Available for comparison</label>
-        {!isNew && <p className="alageum-muted">Public ID: {product.id}. Existing source evidence, specifications and media are preserved.</p>}
+        {!isNew && <p className="alageum-muted">Public ID: {product.id}. Source evidence, media and fields outside this editor are retained.</p>}
+        {!isNew && specDirty && <p className="alageum-muted">Save or reload your specification edits before using Hide product or Restore draft.</p>}
         <div className="alageum-actions"><button className="alageum-primary" type="submit">{busy ? "Saving…" : "Save product"}</button>
-          {!isNew && <button type="button" onClick={() => save(product.status === "hidden" ? "restore" : "hide")}>{product.status === "hidden" ? "Restore draft" : "Hide product"}</button>}
+          {!isNew && <button type="button" disabled={specDirty} onClick={() => save(product.status === "hidden" ? "restore" : "hide")}>{product.status === "hidden" ? "Restore draft" : "Hide product"}</button>}
           {!isNew && <button type="button" onClick={load}>Reload product</button>}
         </div>
       </fieldset>
