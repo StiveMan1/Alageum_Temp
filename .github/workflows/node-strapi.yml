@@ -187,7 +187,7 @@ jobs:
           curl --fail --silent --max-time 10 http://127.0.0.1:8016/_health > /dev/null
           curl --location --fail --silent --max-time 10 http://127.0.0.1:8016/cms > /dev/null
           cd frontend
-          npx playwright test --config=playwright.cms.config.js --max-failures=1
+          npx playwright test --config=playwright.cms.config.js
           npm run test:e2e:admin -- --max-failures=1
           npx playwright test --config=playwright.node.config.js --max-failures=1
           # The legacy interruption suite intentionally tests both demo and API

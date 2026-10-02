@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useId, useRef, useState } from "react";
 import { useAuth, useFetchClient } from "@strapi/strapi/admin";
 import { useSearchParams } from "react-router-dom";
 import "./catalog.css";
@@ -9,7 +9,8 @@ const LOCALES = [["ru", "RU"], ["kk", "KZ"], ["en", "EN"], ["zh", "CN"], ["uz", 
 const nameOf = (p) => p.translations?.ru?.name || Object.values(p.translations || {}).find((t) => t.name)?.name || p.public_key;
 
 function Field({ label, children }) {
-  return <label className="alageum-field"><span>{label}</span>{children}</label>;
+  const id = useId();
+  return <div className="alageum-field"><label htmlFor={id}>{label}</label>{React.cloneElement(children, { id })}</div>;
 }
 
 function Editor({ id, categories, token, onClose, onSaved }) {

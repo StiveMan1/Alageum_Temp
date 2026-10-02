@@ -107,7 +107,7 @@ until curl --fail --silent --connect-timeout 2 --max-time 5 "$E2E_API_URL/readin
 done
 curl --fail --silent --max-time 10 "http://127.0.0.1:$PORT/_health" >/dev/null
 curl --location --fail --silent --max-time 10 "http://127.0.0.1:$PORT/cms" >/dev/null
-npx playwright test --config=playwright.cms.config.js --max-failures=1 2>&1 | tee "$WORK/browser-cms.log"
+npx playwright test --config=playwright.cms.config.js 2>&1 | tee "$WORK/browser-cms.log"
 npm run test:e2e:admin -- --max-failures=1 2>&1 | tee "$WORK/browser-admin.log"
 npx playwright test --config=playwright.node.config.js --max-failures=1 2>&1 | tee "$WORK/browser-node-rfq.log"
 env -u E2E_QUOTES_BASE_URL NEXT_PUBLIC_CATALOG_SOURCE=static NODE_ENV=development E2E_QUOTES_PORT="$(free_port)" \
