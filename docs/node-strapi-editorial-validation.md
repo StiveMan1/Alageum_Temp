@@ -59,13 +59,40 @@ restriction was attempted.
 
 Separate `page-contracts` and `page-delivery` jobs use independent fresh
 PostgreSQL services and exact Page database names. Existing 36 catalog/RFQ browser
-cases remain selected by their unchanged dedicated configs. The RFQ capture step
+cases remain selected by their dedicated configs; two new desktop/mobile login
+hydration regressions bring that selection to 38 cases. The RFQ capture step
 now waits for its exact detail URL, unique heading, fonts and visible footer.
 The Page job retains successful PNG files and sanitized JSON/logs; native auth
 traces are disabled to avoid persisting login/session secrets. Every failure
 fails its job. New hosted jobs and screenshots must pass before functional
 acceptance. The dependency audit and production environment guard remain release
 blocks; no merge, deployment or production provisioning is authorized here.
+
+### First hosted run and scoped corrections
+
+At head `e11d74ec051ad54777c046d6c1099b268e9fd14b`,
+[run 36991430398](https://github.com/StiveMan1/Alageum_Temp/actions/runs/36991430398)
+passed Page contracts (12), the HTTP matrix (58), backend/frontend checks and
+the actual CMS/Next builds. Page browsers had four passes and one failure:
+the native Slate editor includes a sibling Drag control in its text. The test
+now checks the actual content paragraph, retaining exact saved JSON assertions.
+The lifecycle stopped before its first save; later native publication assertions
+and the hosted static-preview build were not reached in this run.
+
+The existing 10 CMS/admin/real-RFQ browser cases passed. The interruption suite
+had 25 clean passes and one retry-pass. Its retained trace showed an early login
+click caused native GET `/login?` without any authentication API request, losing
+the return URL. The login form now keeps its server-rendered controls disabled
+until hydration attaches handlers. New deterministic desktop/mobile cases hold
+JavaScript delivery, verify disabled controls and no submission, then release
+scripts and require one login plus the original inquiry destination. No sleeps,
+longer assertions, authentication retries or route allowlist changes are used.
+
+Retained public Page and real RFQ desktop/mobile PNGs were visually inspected:
+the shared header, full content, text wrapping and full footer are visible
+without horizontal clipping. Native Page publication/browser acceptance still
+requires a successful corrected run. The audit remains blocked at 3 high and
+13 moderate affected packages; the gate is unchanged.
 
 ## Repeatable commands
 
