@@ -96,7 +96,9 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   await page.getByLabel('Status', { exact: true }).selectOption('published');
   await mutation(page, saved.id, 'Save product');
   expect((await publicProduct(request, saved.id)).translations.ru.name).toBe(title);
-  await testInfo.attach('native-cms-guarded-editor', { body: await page.screenshot({ fullPage: true }), contentType: 'image/png' });
+  const screenshotPath = testInfo.outputPath('native-cms-guarded-editor.png');
+  await page.screenshot({ path: screenshotPath, fullPage: true });
+  await testInfo.attach('native-cms-guarded-editor', { path: screenshotPath, contentType: 'image/png' });
 });
 
 test('two native CMS sessions preserve a stale local edit and reject its version conflict', async ({ page, browser, request }) => {
