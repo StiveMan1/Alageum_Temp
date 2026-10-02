@@ -186,7 +186,7 @@ test('401 writes never retry and late CMS responses respect Close and browser hi
     } else await route.continue();
   });
   await mutation(page, product.id, 'Save product', '', 401);
-  await expect(page.getByRole('alert')).toContainText('Your CMS account does not have access to manage this catalog');
+  await expect(page.getByRole('region', { name: 'Catalog product editor', exact: true }).getByRole('alert')).toContainText('Your CMS account does not have access to manage this catalog');
   await expect(page.getByRole('button', { name: 'Save product', exact: true })).toBeEnabled();
   await expect(page.getByLabel('Name (RU)', { exact: true })).toHaveValue(draft);
   expect(writes).toBe(1);
