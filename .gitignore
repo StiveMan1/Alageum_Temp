@@ -49,3 +49,7 @@ backend-node/dependency-audit.json
 
 # Disposable reimplemented Page delivery evidence, never repository fixtures
 page-delivery-evidence/
+
+# Disposable company profile acceptance build and evidence
+frontend/.next-profile/
+profile-delivery-evidence/

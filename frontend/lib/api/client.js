@@ -1,4 +1,4 @@
-import { clearSession, getSession, setSession } from "./sessionTransport.js";
+import { clearSession, getSession, getSessionGeneration, setSession } from "./sessionTransport.js";
 
 export { clearSession, getSession, setSession } from "./sessionTransport.js";
 
@@ -17,9 +17,12 @@ export class ApiError extends Error {
 
 let refreshFlight = null;
 
-function sameSession(left, right = getSession()) {
+function captureSession() {
+  return { ...getSession(), sessionGeneration: getSessionGeneration() };
+}
+function sameSession(left, right = captureSession()) {
   return left.access_token === right.access_token && left.refresh_token === right.refresh_token &&
-    left.organization_id === right.organization_id;
+    left.organization_id === right.organization_id && left.sessionGeneration === right.sessionGeneration;
 }
 function sessionChanged() {
   return new ApiError(401, { error: { code: "session_changed", message: "Session changed while the request was pending" } });
@@ -41,15 +44,15 @@ async function rotateSession(session) {
     if (!sameSession(session)) throw sessionChanged();
     if (!response.ok) throw new ApiError(response.status, payload);
     const rotated = { ...payload, organization_id: session.organization_id };
-    setSession(rotated);
-    return rotated;
+    setSession(rotated, { preserveGeneration: true });
+    return { ...rotated, sessionGeneration: session.sessionGeneration };
   }).finally(() => { if (refreshFlight === flight) refreshFlight = null; });
   refreshFlight = flight;
   return flight.promise;
 }
 
 function expireSession(requestSession) {
-  const current = getSession();
+  const current = captureSession();
   // A delayed unauthorized response belongs only to the credentials it used.
   // It must not sign out an account that logged in while the request was pending.
   if (requestSession && !sameSession(requestSession, current)) return;
@@ -58,7 +61,7 @@ function expireSession(requestSession) {
 }
 
 export async function apiFetch(path, options = {}, retry = true) {
-  const session = getSession();
+  const session = captureSession();
   const headers = new Headers(options.headers || {});
   if (!(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
   if (session.access_token) headers.set("Authorization", `Bearer ${session.access_token}`);

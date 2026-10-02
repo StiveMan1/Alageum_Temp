@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { loginDestination } from "@/lib/api/loginRedirect";
 import { login } from "@/lib/api/auth";
@@ -21,13 +21,24 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const submitting = useRef(false);
+  const activeFlow = useRef(null);
+  useLayoutEffect(() => {
+    const flow = { controller: new AbortController() };
+    activeFlow.current = flow;
+    return () => { flow.controller.abort(); if (activeFlow.current === flow) activeFlow.current = null; };
+  }, []);
   async function submit(event) {
     event.preventDefault();
-    if (submitting.current) return;
+    const flow = activeFlow.current;
+    const current = () => flow && activeFlow.current === flow && !flow.controller.signal.aborted;
+    if (submitting.current || !current()) return;
     submitting.current = true; setPending(true); setError("");
-    try { setProfile(await login(email, password)); router.replace(loginDestination(new URLSearchParams(window.location.search).get("next"))); }
-    catch (reason) { setError(reason.message); }
-    finally { submitting.current = false; setPending(false); }
+    try {
+      const profile = await login(email, password, { signal: flow.controller.signal });
+      if (current()) { setProfile(profile); router.replace(loginDestination(new URLSearchParams(window.location.search).get("next"))); }
+    }
+    catch (reason) { if (current()) setError(reason.message); }
+    finally { if (current()) { submitting.current = false; setPending(false); } }
   }
   return (
     <section>

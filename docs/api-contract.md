@@ -32,3 +32,12 @@ organization-summary list are retained. See [catalogue RFQ boundary and guarante
 ## Node/Strapi compatibility phase
 
 `backend-node/` implements the catalog/auth/catalog-RFQ subset behind the same v1 wire shapes. Strapi native IDs remain internal; outward catalog UUIDs/public keys remain stable. Other v1 endpoints are not yet migrated and fail closed; no Python proxy or fallback is used. Native Strapi CMS administrator credentials do not authorize B2B routes. See [scope and rollout gates](node-strapi-migration.md) and [identity/RFQ boundary](node-auth-rfq-boundary.md).
+
+## Additive Node company profile
+
+`GET /organizations/current/profile` requires `organization.profile.read`;
+`PATCH /organizations/current/profile` requires that grant plus
+`organization.profile.update` and a current integer `version`. This Node-only
+addition leaves existing v1 responses unchanged. Optional business contact fields
+are unverified; no default role receives the new grants. See the
+[profile fields, clearing/no-op semantics and atomic authorization contract](company-profile.md).

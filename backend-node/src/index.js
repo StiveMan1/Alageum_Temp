@@ -2,6 +2,7 @@
 const authModule = require("./domain/auth");
 const quoteModule = require("./domain/quotes");
 const auditModule = require("./domain/audit");
+const organizationProfileModule = require("./domain/organization-profile");
 const { createCatalog } = require("./domain/catalog");
 const { createCmsCatalogAuthorizer } = require("./domain/cms-catalog");
 const { readCatalog } = require("./domain/catalog-source");
@@ -15,6 +16,7 @@ module.exports = {
     const db = strapi.db.connection,
       config = strapi.config.get("alageum");
     await authModule.ensureSchema(db);
+    await organizationProfileModule.ensureSchema(db);
     await quoteModule.ensureSchema(db);
     await auditModule.ensureSchema(db);
     await pageEditorial.completePageSchema(strapi);
@@ -35,7 +37,8 @@ module.exports = {
       authorizer: createCmsCatalogAuthorizer({ strapi }),
       audit: auditModule.audit,
     });
-    strapi.alageum = { auth, catalog, quotes, cmsCatalog };
+    const organizationProfile = organizationProfileModule.createOrganizationProfile({ db, auth, audit: auditModule.audit });
+    strapi.alageum = { auth, catalog, quotes, cmsCatalog, organizationProfile };
     if (config.importCatalog)
       strapi.log.info(
         "Reviewed catalog import: " +
