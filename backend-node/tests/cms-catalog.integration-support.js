@@ -558,6 +558,15 @@ async function runCmsCatalogTests(t, app, { category, businessToken }) {
       );
     },
   );
+  await require("./cms-specs.integration-support").runCmsSpecsTests(t, app, {
+    request,
+    base,
+    editor,
+    denied,
+    businessToken,
+    adminId: fixtures.editor.id,
+    valid,
+  });
   await t.test(
     "native CMS logout invalidates actual session and blocks subsequent plugin reads/writes",
     async () => {

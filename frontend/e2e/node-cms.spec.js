@@ -62,7 +62,59 @@ async function mutation(page, id, button, suffix = '', expected = 200) {
   return response.json();
 }
 
+async function addTechnicalRow(page, label, value, type = 'text', unit) {
+  const panel = page.locator('details.alageum-specifications');
+  if (!(await panel.evaluate(element => element.open))) await panel.locator(':scope > summary').click();
+  await panel.getByRole('button', { name: 'Add technical specifications row', exact: true }).click();
+  const row = panel.getByRole('group', { name: /^Technical specifications row/ }).last();
+  await row.getByLabel('Specification label', { exact: true }).fill(label);
+  await row.getByLabel('Specification value type', { exact: true }).selectOption(type);
+  await row.getByLabel('Specification value', { exact: true }).fill(value);
+  if (unit !== undefined) {
+    await row.getByLabel('Unit type', { exact: true }).selectOption(unit === null ? 'null' : 'text');
+    if (unit !== null) await row.getByLabel('Unit', { exact: true }).fill(unit);
+  }
+  return row;
+}
+
+async function captureSpecEvidence(page, testInfo, target, filename) {
+  // Capture the verified controls, not whichever scroll position a prior click
+  // happened to leave. The tall viewport must contain the complete target.
+  await page.evaluate(() => {
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  });
+  await target.evaluate(element => element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }));
+  await page.mouse.move(0, 0);
+  await expect(target).toBeVisible();
+  await expect(target).toBeInViewport({ ratio: 1 });
+  const screenshotPath = testInfo.outputPath(filename);
+  await page.screenshot({ path: screenshotPath, fullPage: false, animations: 'disabled', caret: 'hide' });
+  await testInfo.attach(filename, { path: screenshotPath, contentType: 'image/png' });
+}
+
+async function expectLiteralLines(value, literal) {
+  expect(await value.textContent()).toBe(literal);
+  await expect(value).toHaveCSS('white-space', 'pre-wrap');
+  await expect(value).toHaveCSS('overflow-wrap', 'anywhere');
+  const lines = await value.evaluate((element, expected) => {
+    const text = element.firstChild;
+    if (text?.nodeType !== Node.TEXT_NODE || text.textContent !== expected) throw new Error('Expected the unchanged literal text node');
+    const split = expected.indexOf('\n');
+    const measure = (start, end) => {
+      const range = document.createRange();
+      range.setStart(text, start); range.setEnd(text, end);
+      return [...range.getClientRects()].map(rect => ({ top: rect.top, bottom: rect.bottom, left: rect.left }));
+    };
+    return [measure(0, split), measure(split + 1, expected.length)];
+  }, literal);
+  expect(lines[0]).toHaveLength(1);
+  expect(lines[1]).toHaveLength(1);
+  expect(lines[1][0].top).toBeGreaterThan(lines[0][0].bottom - 1);
+  expect(Math.abs(lines[1][0].left - lines[0][0].left)).toBeLessThan(1);
+}
+
 test('native CMS login and guarded edits publish to the API and Next catalog', async ({ page, request }, testInfo) => {
+  await page.setViewportSize({ width: 1440, height: 1800 });
   const original = await publicProduct(request, 'tmg-400');
   await nativeLogin(page);
   await expect(page.getByRole('link', { name: 'ALAGEUM catalog', exact: true })).toBeVisible();
@@ -77,17 +129,96 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   await page.getByLabel('Name (RU)', { exact: true }).fill(title);
   await page.getByLabel('Description (RU)', { exact: true }).fill('Edited through the native guarded Strapi CMS');
   await page.getByLabel('Status', { exact: true }).selectOption('published');
+  const literalRow = await addTechnicalRow(page, 'CMS fixture literal', '0001,250–2,0', 'text', 'кВА');
+  await expect(page.getByRole('button', { name: 'Hide product', exact: true })).toBeDisabled();
+  await expect(page.getByText('Save or reload your specification edits before using Hide product or Restore draft.', { exact: true })).toBeVisible();
+  await literalRow.getByText('Source reference', { exact: true }).click();
+  await literalRow.getByLabel('Source page type', { exact: true }).selectOption('number');
+  await literalRow.getByLabel('Source page', { exact: true }).fill('32');
+  const multilineValue = '0007\nSecond literal source line';
+  const numberRow = await addTechnicalRow(page, 'CMS fixture number', '9007199254740993', 'number', null);
+  let attemptedSaves = 0;
+  const countSave = req => { if (req.url() === `${plugin}/products/${original.id}` && req.method() === 'PUT') attemptedSaves += 1; };
+  page.on('request', countSave);
+  await page.getByRole('button', { name: 'Save product', exact: true }).click();
+  await expect(numberRow.getByLabel('Specification value', { exact: true })).toHaveAttribute('aria-invalid', 'true');
+  await expect(numberRow.getByText('This number cannot be saved exactly. Choose Text to retain the source value', { exact: true })).toBeVisible();
+  expect(attemptedSaves).toBe(0);
+  expect((await publicProduct(request, original.id)).specs).toEqual(original.specs);
+  await numberRow.getByLabel('Specification value', { exact: true }).fill('12.5');
+  await addTechnicalRow(page, 'CMS fixture multiline', multilineValue);
+  await page.getByText('Configurations', { exact: true }).click();
+  await page.getByRole('button', { name: 'Add configuration', exact: true }).click();
+  const configuration = page.getByRole('group', { name: 'Configuration 1', exact: true });
+  await configuration.getByLabel('Configuration designation', { exact: true }).fill('CMS fixture configuration');
+  await configuration.getByRole('button', { name: 'Add configuration 1 specifications row', exact: true }).click();
+  const configRow = configuration.getByRole('group', { name: 'Configuration 1 specifications row 1', exact: true });
+  await configRow.getByLabel('Specification label', { exact: true }).fill('CMS fixture code');
+  await configRow.getByLabel('Specification value', { exact: true }).fill(multilineValue);
+  await expect(configRow.getByLabel('Specification value', { exact: true })).toHaveValue(multilineValue);
+  await configRow.getByLabel('Unit type', { exact: true }).selectOption('text');
+  await configRow.getByLabel('Unit', { exact: true }).fill('мм');
+  await configRow.getByText('Source reference', { exact: true }).click();
+  await configRow.getByLabel('Source page type', { exact: true }).selectOption('number');
+  await configRow.getByLabel('Source page', { exact: true }).fill('32');
+  await page.getByText('Specification notes', { exact: true }).click();
+  await page.getByRole('button', { name: 'Add specification note', exact: true }).click();
+  await page.getByLabel('Specification note 1', { exact: true }).fill('Disposable CMS test fixture');
   await mutation(page, original.id, 'Save product');
+  expect(attemptedSaves).toBe(1);
+  page.off('request', countSave);
   const saved = await publicProduct(request, original.id);
   expect(saved.public_key).toBe(original.public_key);
   expect(saved.translations.ru.name).toBe(title);
   expect(saved.version).toBe(original.version + 1);
+  expect(saved.specs).toEqual({ ...original.specs, technicalSpecs: [
+    { label: 'CMS fixture literal', value: '0001,250–2,0', unit: 'кВА', page: 32 },
+    { label: 'CMS fixture number', value: 12.5, unit: null },
+    { label: 'CMS fixture multiline', value: multilineValue },
+  ], configurations: [{ designation: 'CMS fixture configuration', specifications: [{ label: 'CMS fixture code', value: multilineValue, unit: 'мм', page: 32 }] }], notes: ['Disposable CMS test fixture'] });
+  expect(saved.provenance).toEqual(original.provenance);
+  expect(saved.media).toEqual(original.media);
   for (const language of Object.keys(original.translations).filter(value => value !== 'ru')) {
     expect(saved.translations[language]).toEqual(original.translations[language]);
   }
   await page.goto(`${frontend}/catalog/${original.public_key}?source=api`);
   await expect(page.getByRole('heading', { name: title, exact: true })).toBeVisible();
+  await expect(page.getByText('0001,250–2,0', { exact: true })).toBeVisible();
+  await expect(page.getByText('12.5', { exact: true })).toBeVisible();
+  await page.getByText('CMS fixture configuration', { exact: true }).click();
+  const publicConfiguration = page.locator('.product-panel details').filter({ has: page.getByText('CMS fixture configuration', { exact: true }) });
+  await expect(publicConfiguration.getByText(multilineValue, { exact: true })).toBeVisible();
+  await expectLiteralLines(publicConfiguration.locator('dd'), multilineValue);
+  const publicTechnicalRow = page.locator('.technical-specs > div').filter({ has: page.getByText('CMS fixture multiline', { exact: true }) });
+  await expectLiteralLines(publicTechnicalRow.locator('dd'), multilineValue);
+  await captureSpecEvidence(page, testInfo, page.locator('.product-panel'), 'public-detail-specifications.png');
+  await page.goto(`${frontend}/catalog/compare?source=api&ids=${original.public_key},tmg-630`);
+  await expect(page.locator('.comparison-table tbody th').filter({ hasText: /^CMS fixture literal, кВА$/ })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '0001,250–2,0', exact: true })).toBeVisible();
+  const multilineComparison = page.locator('.comparison-table tbody tr').filter({ has: page.getByText('CMS fixture multiline', { exact: true }) }).locator('td').first();
+  await expectLiteralLines(multilineComparison, multilineValue);
+  await captureSpecEvidence(page, testInfo, page.locator('.comparison-table'), 'public-comparison-specifications.png');
   await openProduct(page, saved);
+  await page.getByText('Structured specifications', { exact: true }).click();
+  const restoredLiteral = page.getByRole('group', { name: 'Technical specifications row 1', exact: true });
+  await expect(restoredLiteral.getByLabel('Specification value type', { exact: true })).toHaveValue('text');
+  await expect(restoredLiteral.getByLabel('Specification value', { exact: true })).toHaveValue('0001,250–2,0');
+  await expect(restoredLiteral.getByLabel('Unit', { exact: true })).toHaveValue('кВА');
+  await restoredLiteral.getByText('Source reference', { exact: true }).click();
+  await expect(restoredLiteral.getByLabel('Source page', { exact: true })).toHaveValue('32');
+  await captureSpecEvidence(page, testInfo, restoredLiteral, 'native-cms-literal-source-page.png');
+  const restoredNumber = page.getByRole('group', { name: 'Technical specifications row 2', exact: true });
+  await expect(restoredNumber.getByLabel('Specification value type', { exact: true })).toHaveValue('number');
+  await expect(restoredNumber.getByLabel('Specification value', { exact: true })).toHaveValue('12.5');
+  await expect(restoredNumber.getByLabel('Unit type', { exact: true })).toHaveValue('null');
+  await captureSpecEvidence(page, testInfo, restoredNumber, 'native-cms-numeric-null-unit.png');
+  await page.getByText('Configurations', { exact: true }).click();
+  const restoredConfigRow = page.getByRole('group', { name: 'Configuration 1 specifications row 1', exact: true });
+  await expect(restoredConfigRow.getByLabel('Specification value', { exact: true })).toHaveValue(multilineValue);
+  await expect(restoredConfigRow.getByLabel('Unit', { exact: true })).toHaveValue('мм');
+  await restoredConfigRow.getByText('Source reference', { exact: true }).click();
+  await expect(restoredConfigRow.getByLabel('Source page', { exact: true })).toHaveValue('32');
+  await captureSpecEvidence(page, testInfo, page.getByRole('group', { name: 'Configuration 1', exact: true }), 'native-cms-multiline-configuration.png');
   await mutation(page, saved.id, 'Hide product', '/hide');
   expect((await request.get(`${api}/catalog/products/${saved.id}`)).status()).toBe(404);
   await mutation(page, saved.id, 'Restore draft', '/restore');
@@ -95,7 +226,9 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   expect((await request.get(`${api}/catalog/products/${saved.id}`)).status()).toBe(404);
   await page.getByLabel('Status', { exact: true }).selectOption('published');
   await mutation(page, saved.id, 'Save product');
-  expect((await publicProduct(request, saved.id)).translations.ru.name).toBe(title);
+  const republished = await publicProduct(request, saved.id);
+  expect(republished.translations.ru.name).toBe(title);
+  expect(republished.specs).toEqual(saved.specs);
   const screenshotPath = testInfo.outputPath('native-cms-guarded-editor.png');
   await page.screenshot({ path: screenshotPath, fullPage: true });
   await testInfo.attach('native-cms-guarded-editor', { path: screenshotPath, contentType: 'image/png' });
@@ -112,7 +245,9 @@ test('two native CMS sessions preserve a stale local edit and reject its version
     await openProduct(other, original);
     const winner = `CMS winner ${Date.now()}`;
     await page.getByLabel('Name (RU)', { exact: true }).fill(winner);
+    await addTechnicalRow(page, 'CMS conflict fixture', '0002');
     await mutation(page, original.id, 'Save product');
+    const staleRow = await addTechnicalRow(other, 'CMS conflict fixture', '0003');
     await other.getByLabel('Name (RU)', { exact: true }).fill('Unsaved stale CMS draft');
     await mutation(other, original.id, 'Save product', '', 409);
     await expect(other.getByLabel('Name (RU)', { exact: true })).toHaveValue('Unsaved stale CMS draft');
@@ -120,6 +255,13 @@ test('two native CMS sessions preserve a stale local edit and reject its version
     const saved = await publicProduct(request, original.id);
     expect(saved.translations.ru.name).toBe(winner);
     expect(saved.version).toBe(original.version + 1);
+    expect(saved.specs.technicalSpecs).toEqual([{ label: 'CMS conflict fixture', value: '0002' }]);
+    await expect(staleRow.getByLabel('Specification value', { exact: true })).toHaveValue('0003');
+    await expect(other.getByRole('button', { name: 'Hide product', exact: true })).toBeDisabled();
+    await other.getByRole('button', { name: 'Reload product', exact: true }).click();
+    await expect(other.getByLabel('Version', { exact: true })).toHaveValue(String(saved.version));
+    await expect(other.getByRole('button', { name: 'Hide product', exact: true })).toBeEnabled();
+    await expect(other.getByRole('group', { name: 'Technical specifications row 1', exact: true }).getByLabel('Specification value', { exact: true })).toHaveValue('0002');
   } finally { await otherContext.close(); }
 });
 
@@ -129,10 +271,11 @@ test('a native administrator without the explicit catalog permission cannot read
   await expect(page.getByRole('link', { name: 'ALAGEUM catalog', exact: true })).toHaveCount(0);
   const headers = { Authorization: `Bearer ${token}` };
   expect((await request.get(`${plugin}/products`, { headers })).status()).toBe(403);
-  expect((await request.patch(`${plugin}/products/${product.id}`, { headers, data: { version: product.version, translations: { ru: { name: 'Denied CMS overwrite' } } } })).status()).toBe(403);
+  expect((await request.patch(`${plugin}/products/${product.id}`, { headers, data: { version: product.version, translations: { ru: { name: 'Denied CMS overwrite' } }, specs: { technicalSpecs: [{ label: 'Denied fixture', value: 'No write' }] } } })).status()).toBe(403);
   await page.goto(`${cms}/plugins/alageum-catalog`);
   await expect(page.getByRole('button', { name: 'Save product', exact: true })).toHaveCount(0);
   expect((await publicProduct(request, product.id)).translations).toEqual(product.translations);
+  expect((await publicProduct(request, product.id)).specs).toEqual(product.specs);
   // CMS administrator tokens are never accepted as business identities.
   expect((await request.get(`${api}/auth/me`, { headers })).status()).toBe(401);
 });
@@ -142,6 +285,7 @@ test('native read refresh rotates the session and preserves the unsaved CMS draf
   await nativeLogin(page);
   await openProduct(page, product);
   await page.getByLabel('Name (RU)', { exact: true }).fill('Unsaved draft survives native refresh');
+  const unsavedSpec = await addTechnicalRow(page, 'CMS refresh fixture', '001,50');
   const before = (await page.context().cookies(`${origin}/admin/access-token`)).find(cookie => cookie.name === 'strapi_admin_refresh');
   expect(before?.path).toBe('/');
   let interruptions = 0;
@@ -169,6 +313,8 @@ test('native read refresh rotates the session and preserves the unsaved CMS draf
   expect(after?.path).toBe('/');
   expect(after?.value).not.toBe(before?.value);
   await expect(page.getByLabel('Name (RU)', { exact: true })).toHaveValue('Unsaved draft survives native refresh');
+  await expect(unsavedSpec.getByLabel('Specification value', { exact: true })).toHaveValue('001,50');
+  expect((await publicProduct(request, product.id)).specs).toEqual(product.specs);
   await expect(page.getByLabel('Version', { exact: true })).toHaveValue(String(product.version));
   await expect(page.getByRole('button', { name: 'Save product', exact: true })).toBeEnabled();
   expect((await publicProduct(request, product.id)).translations).toEqual(product.translations);
@@ -180,6 +326,7 @@ test('401 writes never retry and late CMS responses respect Close and browser hi
   await openProduct(page, product);
   const draft = 'Private unsaved edit after an expired CMS write';
   await page.getByLabel('Name (RU)', { exact: true }).fill(draft);
+  const unauthorizedSpec = await addTechnicalRow(page, 'CMS expired-session fixture', '0007');
   let writes = 0;
   await page.route(`${plugin}/products/${product.id}`, async route => {
     if (route.request().method() === 'PUT') {
@@ -191,6 +338,8 @@ test('401 writes never retry and late CMS responses respect Close and browser hi
   await expect(page.getByRole('region', { name: 'Catalog product editor', exact: true }).getByRole('alert')).toContainText('Your CMS account does not have access to manage this catalog');
   await expect(page.getByRole('button', { name: 'Save product', exact: true })).toBeEnabled();
   await expect(page.getByLabel('Name (RU)', { exact: true })).toHaveValue(draft);
+  await expect(unauthorizedSpec.getByLabel('Specification value', { exact: true })).toHaveValue('0007');
+  expect((await publicProduct(request, product.id)).specs).toEqual(product.specs);
   expect(writes).toBe(1);
   expect((await publicProduct(request, product.id)).translations).toEqual(product.translations);
   await page.unroute(`${plugin}/products/${product.id}`);
