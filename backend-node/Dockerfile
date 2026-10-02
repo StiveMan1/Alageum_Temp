@@ -6,6 +6,8 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json ./
+COPY scripts/strapi-webpack-patch.js ./scripts/strapi-webpack-patch.js
+COPY patches/strapi-webpack-koa.json ./patches/strapi-webpack-koa.json
 RUN npm ci
 COPY . .
 ENV STRAPI_TELEMETRY_DISABLED=true STRAPI_HIDE_UPDATE_MESSAGE=true

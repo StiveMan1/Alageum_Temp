@@ -1,5 +1,11 @@
 # Node/Strapi phase-one security review
 
+The subsequent local [webpack compatibility candidate](node-strapi-webpack-compatibility.md)
+has a separate [fresh audit](../backend-node/docs/webpack-dependency-audit.json):
+15 moderate affected packages, 0 high/critical; the unchanged high-severity gate
+exits 0. Its application-owned patch passes local protocol/build/HTTP checks; real browser acceptance remains pending. The Vite
+checkpoint audit below remains retained as the before-state evidence.
+
 This local migration is **not production-ready**. `APP_ENV=production` remains
 fail-closed. Existing Python/Vercel preview operation is not evidence of a Node
 cutover. No external service, account, credential, deployment or data migration

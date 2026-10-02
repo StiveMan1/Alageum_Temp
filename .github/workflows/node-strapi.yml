@@ -52,6 +52,121 @@ jobs:
           path: backend-node/dependency-audit.json
           retention-days: 14
 
+  webpack-compatibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      APP_ENV: test
+      STRAPI_TELEMETRY_DISABLED: 'true'
+      STRAPI_HIDE_UPDATE_MESSAGE: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+      WEBPACK_COMPAT_HEAP_MB: '2048'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            backend-node/package-lock.json
+            frontend/package-lock.json
+      - name: Prepare isolated compatibility evidence and PostgreSQL tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          compat_root="$RUNNER_TEMP/webpack-compatibility"
+          compat_temp="$RUNNER_TEMP/webpack-compatibility-tmp"
+          mkdir -p "$compat_temp" "$compat_root" webpack-compatibility-evidence
+          printf 'WEBPACK_COMPAT_WORK_ROOT=%s\nTMPDIR=%s\n' "$compat_root" "$compat_temp" >> "$GITHUB_ENV"
+          pg_bin=$(pg_config --bindir)
+          for command in initdb pg_ctl createdb; do test -x "$pg_bin/$command"; done
+          printf 'PG_BIN=%s\n' "$pg_bin" >> "$GITHUB_ENV"
+      - name: Install locked candidate and verify both patched formats
+        timeout-minutes: 6
+        shell: bash
+        env:
+          NODE_OPTIONS: --max-old-space-size=768
+        run: |
+          set -euo pipefail
+          npm ci --prefix backend-node
+          npm ci --prefix frontend
+          npm run check --prefix backend-node
+          node backend-node/scripts/strapi-webpack-patch.js --apply
+          node backend-node/scripts/strapi-webpack-patch.js --check
+      - name: Verify all 42 middleware protocol and cleanup cases
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 150s node backend-node/scripts/probe-webpack-middleware.js --with-head-cleanup --write-results 2>&1 | tee webpack-compatibility-evidence/protocol.log
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const report = require('./backend-node/docs/webpack-protocol-head-cleanup-results.json');
+          assert.equal(report.passed, true);
+          assert.equal(report.checksPassed, 42);
+          assert.equal(report.checksFailed, 0);
+          assert.equal(report.fixtureRemoved, true);
+          NODE
+      - name: Install bounded official Chromium for compatibility acceptance
+        timeout-minutes: 5
+        working-directory: frontend
+        shell: bash
+        env:
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '60000'
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 270s npx --no-install playwright install --with-deps chromium 2>&1 | tee ../webpack-compatibility-evidence/chromium-install.log
+      - name: Verify compiled polyfill equivalence in a real browser
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 150s node backend-node/scripts/probe-webpack-browser-polyfills.js --write-report 2>&1 | tee webpack-compatibility-evidence/compiled-browser.log
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const report = require('./backend-node/docs/webpack-browser-polyfill-results.json');
+          assert.equal(report.status, 'passed');
+          assert.equal(report.chromium.accepted, true);
+          assert.equal(report.comparisons.micromatchPatternFilePairs, 3024);
+          assert.equal(report.comparisons.uploadAllowedDecisions, 112);
+          assert.equal(report.compilation.generatorFunction.moduleSyncWrapperAbsent, true);
+          assert.equal(report.cleanup.fixturesRemoved, true);
+          assert.equal(report.cleanup.portReleased, true);
+          NODE
+      - name: Verify actual webpack cold warm HMR and four scoped native CMS cases
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Reserve 60 seconds for bounded app/PG shutdown and evidence staging.
+          timeout --signal=TERM --kill-after=60s 520s bash backend-node/scripts/run-webpack-compat.sh --browser
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const root = process.env.WEBPACK_COMPAT_WORK_ROOT;
+          const runs = fs.readdirSync(root).filter(name => name.startsWith('run.'));
+          assert.equal(runs.length, 1, 'one complete isolated webpack run is required');
+          const directory = path.join(root, runs[0]);
+          const report = JSON.parse(fs.readFileSync(path.join(directory, 'acceptance.json')));
+          assert.deepEqual(report, { mode: '--browser', cold: true, warm: true, browserCases: 4 });
+          assert.ok(fs.existsSync(path.join(directory, 'publishable/sanitized.ok')));
+          NODE
+      - name: Retain compatibility JSON and sanitized logs and PNGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webpack-compatibility-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            webpack-compatibility-evidence/
+            backend-node/docs/webpack-protocol-head-cleanup-results.json
+            backend-node/docs/webpack-browser-polyfill-results.json
+            ${{ runner.temp }}/webpack-compatibility/run.*/publishable/
+            frontend/playwright-report/cms-results/**/*.png
+          retention-days: 14
+
   node-strapi:
     runs-on: ubuntu-latest
     timeout-minutes: 35
