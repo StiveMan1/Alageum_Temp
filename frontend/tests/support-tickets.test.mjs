@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createTicket, getTicketCategories, getTickets } from '../lib/api/support.js';
+import { loginDestination } from '../lib/api/loginRedirect.js';
 import { getSession, setSession } from '../lib/api/client.js';
 import { createTicketSubmission, initialTicketSubmission, supportAccess, supportReadError, validateTicket } from '../lib/support/model.js';
 
+const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
 const category = { id: '10000000-0000-4000-8000-000000000001', code: 'other', label: 'Fictitious category' };
 const draft = { category_id: category.id, subject: ' Fictitious subject ', message: ' Fictitious message\n' };
 const session = { access_token: 'fixture-a', refresh_token: 'fixture-ra', organization_id: 'fixture-organization-a' };
@@ -120,7 +122,7 @@ test('support reads pass cancellation and tenant headers through the shared tran
     setSession(session); const controller = new AbortController();
     assert.deepEqual(await getTicketCategories({ signal: controller.signal }), [category]);
     assert.deepEqual(await getTickets({ signal: controller.signal }), [summary]);
-    assert.deepEqual(calls.map(call => call.url), ['/api/v1/support/categories', '/api/v1/support/tickets']);
+    assert.deepEqual(calls.map(call => call.url), [`${apiBase}/support/categories`, `${apiBase}/support/tickets`]);
     for (const call of calls) { assert.equal(call.options.signal, controller.signal); assert.equal(call.options.headers.get('X-Organization-ID'), session.organization_id); }
   } finally { restore(); }
 });
@@ -201,4 +203,20 @@ test('support errors identify the failed permitted resource without presenting i
   assert.match(supportReadError({ status: 403 }, 'tickets'), /списку/);
   assert.match(supportReadError(new Error('offline'), 'categories'), /Не удалось загрузить/);
   assert.match(supportReadError({ status: 401 }, 'tickets'), /Войдите снова/);
+});
+
+test('login resumes the exact existing support path from the decoded next parameter', () => {
+  assert.equal(loginDestination('/b2b/support'), '/b2b/support');
+  const next = new URLSearchParams('next=%2Fb2b%2Fsupport').get('next');
+  assert.equal(loginDestination(next), '/b2b/support');
+});
+
+test('support login return allowlist still rejects external, modified and unknown destinations', () => {
+  for (const value of [
+    'https://example.invalid/b2b/support', '//example.invalid/b2b/support', 'javascript:alert(1)',
+    '/b2b/support?next=https://example.invalid', '/b2b/support?anything=1', '/b2b/support#anything',
+    '/b2b/support/', '/b2b/support/tickets', `/b2b/support/${category.id}`, '/b2b/support/../quotes',
+    '/b2b/unknown', '/B2B/SUPPORT', '%2Fb2b%2Fsupport', '/b2b%2Fsupport',
+    ' /b2b/support', '/b2b/support ', '/b2b/support\\example.invalid', null, undefined, [], {},
+  ]) assert.equal(loginDestination(value), '/b2b');
 });
