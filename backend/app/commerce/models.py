@@ -138,6 +138,12 @@ class QuoteRequest(UUIDMixin, TimestampMixin, Base):
     __tablename__ = "quote_requests"
     __table_args__ = (
         Index("ix_quote_requests_organization_created", "organization_id", "created_at"),
+        UniqueConstraint(
+            "organization_id",
+            "created_by_id",
+            "idempotency_key",
+            name="uq_quote_request_submission",
+        ),
     )
     organization_id: Mapped[uuid.UUID] = mapped_column(
         Uuid, ForeignKey("organizations.id"), index=True
@@ -146,7 +152,12 @@ class QuoteRequest(UUIDMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(60), default="submitted")
     comment: Mapped[str | None] = mapped_column(Text)
     external_id: Mapped[str | None] = mapped_column(String(200))
-    items: Mapped[list["QuoteRequestItem"]] = relationship(lazy="selectin")
+    # Nullable for pre-existing/AI mock requests; HTTP catalogue submissions require both.
+    idempotency_key: Mapped[uuid.UUID | None] = mapped_column(Uuid)
+    request_hash: Mapped[str | None] = mapped_column(String(64))
+    items: Mapped[list["QuoteRequestItem"]] = relationship(
+        lazy="selectin", order_by="(QuoteRequestItem.position, QuoteRequestItem.id)"
+    )
 
 
 class QuoteRequestItem(UUIDMixin, Base):
@@ -158,6 +169,8 @@ class QuoteRequestItem(UUIDMixin, Base):
     product_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, ForeignKey("catalog_products.id"))
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 3))
     parameters: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE, default=dict)
+    position: Mapped[int] = mapped_column(Integer, default=0)
+    product_snapshot: Mapped[dict[str, Any]] = mapped_column(JSON_TYPE, default=dict)
 
 
 class QuoteAttachment(Base):

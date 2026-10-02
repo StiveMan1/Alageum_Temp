@@ -39,3 +39,22 @@ default backend or E2E suite; it does not replace a production penetration test.
 | OPS-003 | Backup corruption/data loss | Archive is validated; restored seed passes smoke | CI/manual restore scenario | `scripts/backup.sh`, `scripts/restore.sh` | PASS |
 | PERF-001 | N+1 regression | Primary list query counts remain bounded | query baseline test | `backend/tests/test_operational.py` | PASS |
 | PAYLOAD-001 | Oversized body | Rejected with correlated 413 before parsing | request limit test | `backend/tests/test_system.py` | PASS |
+
+## Catalogue RFQ increment
+
+- RFQ-001: current-user/current-organization list and detail isolation, foreign IDs and missing
+  permissions: `backend/tests/test_quote_requests.py`
+- RFQ-002: server-owned immutable snapshots; forged fields, duplicate/unknown/hidden/draft products,
+  unpublished categories and invalid quantities reject the whole request: same backend test file
+- RFQ-003: concurrent repeated submissions produce one request and one audit event; reused key with
+  different content conflicts; failed transaction leaves no partial data: same test file, explicit
+  PostgreSQL CI pass (the two concurrency cases skip on default SQLite)
+- RFQ-004: login interruption, expired session, unknown network outcome, refresh/back/forward,
+  account scope, storage failure and mobile/keyboard cases: `frontend/e2e/quotes.spec.js`; corrupt
+  drafts and retry state also have pure unit coverage in `frontend/tests/quotes.test.mjs`
+- RFQ-005: actual authenticated live catalogue → persisted RFQ → reload detail in the existing
+  real-backend browser security journey: `frontend/e2e/security.spec.js`
+
+Browser assertions run under `.github/workflows/catalog-rfq.yml` with bounded dependency, browser
+installation, server readiness and test deadlines. Presence here is a coverage mapping; consult
+[catalogue RFQ validation](catalog-rfq-validation.md) for which checks actually ran.

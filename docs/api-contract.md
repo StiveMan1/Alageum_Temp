@@ -16,9 +16,19 @@ inventory and schema source of truth.
 - `401` means authentication/refresh is required, `403` missing permission, `404` missing or hidden
   foreign object, `409` state/idempotency/confirmation conflict, `413` configured payload limit,
   `422` validation, and `429` rate policy.
-- Frontend modules consume only Pydantic response schemas through `frontend/lib/api`; ORM models and
+- Frontend modules consume the frozen API response schemas through `frontend/lib/api`; ORM models and
   provider payloads are not public contracts.
 
 The current refresh token is isolated behind a browser transport module but remains DEV-only
 `sessionStorage`. Cookie/BFF, SameSite and CSRF details require the approved deployment topology.
 
+
+## Catalogue RFQ increment
+
+The additive catalogue workflow uses `POST /quotes/catalog` (required UUID `Idempotency-Key`),
+`GET /quotes?mine=true` and `GET /quotes/{id}`. The generic legacy `POST /quotes` and default
+organization-summary list are retained. See [catalogue RFQ boundary and guarantees](catalog-rfq.md).
+
+## Node/Strapi compatibility phase
+
+`backend-node/` implements the catalog/auth/catalog-RFQ subset behind the same v1 wire shapes. Strapi native IDs remain internal; outward catalog UUIDs/public keys remain stable. Other v1 endpoints are not yet migrated and fail closed; no Python proxy or fallback is used. Native Strapi CMS administrator credentials do not authorize B2B routes. See [scope and rollout gates](node-strapi-migration.md) and [identity/RFQ boundary](node-auth-rfq-boundary.md).

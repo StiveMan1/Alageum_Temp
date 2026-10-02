@@ -2,7 +2,7 @@ import uuid
 from decimal import Decimal
 from typing import Any
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Header, Request, Response
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +20,15 @@ from app.commerce.models import (
     TicketCategory,
     TicketMessage,
     TicketStatus,
+)
+from app.commerce.quotes import (
+    QuoteDetailOut,
+    QuoteIn,
+    QuoteOut,
+    own_quotes,
+    quote_detail,
+    quote_out,
+    submit_quote,
 )
 from app.core.database import get_session
 from app.core.errors import AppError
@@ -169,52 +178,80 @@ async def payments(
     )
 
 
-class QuoteItemIn(APIRequest):
-    product_id: uuid.UUID | None = None
-    quantity: Decimal = Field(gt=0)
-    parameters: dict[str, Any] = Field(default_factory=dict)
-
-
-class QuoteIn(APIRequest):
-    comment: str | None = Field(default=None, max_length=4000)
-    items: list[QuoteItemIn] = Field(min_length=1, max_length=100)
-
-
-class QuoteOut(BaseModel):
-    id: uuid.UUID
-    status: str
-    comment: str | None
-    item_count: int
-
-
 @quotes_router.get("", response_model=Page[QuoteOut])
 async def list_quotes(
+    response: Response,
+    mine: bool = False,
     page: PageParams = Depends(),
     context: AuthContext = Depends(require_permission("quote.read")),
     session: AsyncSession = Depends(get_session),
 ):
+    response.headers["Cache-Control"] = "private, no-store"
+    # Keep the existing organization-summary contract; the My requests UI explicitly uses mine.
+    query = select(QuoteRequest).where(QuoteRequest.organization_id == context.organization_id)
+    if mine:
+        query = query.where(QuoteRequest.created_by_id == context.user.id)
     items, total = await paginate(
         session,
-        select(QuoteRequest)
-        .where(QuoteRequest.organization_id == context.organization_id)
-        .options(selectinload(QuoteRequest.items))
-        .order_by(QuoteRequest.created_at.desc(), QuoteRequest.id),
+        query.options(selectinload(QuoteRequest.items).load_only(QuoteRequestItem.id)).order_by(
+            QuoteRequest.created_at.desc(), QuoteRequest.id
+        ),
         page,
     )
     return Page(
-        items=[
-            QuoteOut(id=x.id, status=x.status, comment=x.comment, item_count=len(x.items))
-            for x in items
-        ],
+        items=[quote_out(item) for item in items],
         page=page.page,
         page_size=page.page_size,
         total=total,
     )
 
 
-@quotes_router.post("", response_model=QuoteOut, status_code=201)
+@quotes_router.get("/{quote_id}", response_model=QuoteDetailOut)
+async def get_quote(
+    quote_id: uuid.UUID,
+    response: Response,
+    context: AuthContext = Depends(require_permission("quote.read")),
+    session: AsyncSession = Depends(get_session),
+):
+    response.headers["Cache-Control"] = "private, no-store"
+    quote = await session.scalar(own_quotes(context).where(QuoteRequest.id == quote_id))
+    if quote is None:
+        raise AppError("quote_not_found", "Request not found", 404)
+    return quote_detail(quote)
+
+
+@quotes_router.post("/catalog", response_model=QuoteDetailOut, status_code=201)
 async def create_quote(
     body: QuoteIn,
+    request: Request,
+    response: Response,
+    idempotency_key: uuid.UUID = Header(alias="Idempotency-Key"),
+    _: None = Depends(rate_limit(RateLimitPolicy.QUOTE_CREATE)),
+    context: AuthContext = Depends(require_permission("quote.create")),
+    session: AsyncSession = Depends(get_session),
+):
+    quote, created = await submit_quote(session, context, body, idempotency_key, request)
+    response.status_code = 201 if created else 200
+    response.headers["Cache-Control"] = "private, no-store"
+    response.headers["Location"] = f"/api/v1/quotes/{quote.id}"
+    return quote_detail(quote)
+
+
+# Pre-existing generic RFQ API remains compatible. Catalogue clients must use /quotes/catalog.
+class LegacyQuoteItemIn(APIRequest):
+    product_id: uuid.UUID | None = None
+    quantity: Decimal = Field(gt=0)
+    parameters: dict[str, Any] = Field(default_factory=dict)
+
+
+class LegacyQuoteIn(APIRequest):
+    comment: str | None = Field(default=None, max_length=4000)
+    items: list[LegacyQuoteItemIn] = Field(min_length=1, max_length=100)
+
+
+@quotes_router.post("", response_model=QuoteOut, status_code=201)
+async def create_legacy_quote(
+    body: LegacyQuoteIn,
     request: Request,
     _: None = Depends(rate_limit(RateLimitPolicy.QUOTE_CREATE)),
     context: AuthContext = Depends(require_permission("quote.create")),
@@ -225,12 +262,10 @@ async def create_quote(
         created_by_id=context.user.id,
         status="submitted",
         comment=body.comment,
+        items=[QuoteRequestItem(**item.model_dump()) for item in body.items],
     )
     session.add(quote)
     await session.flush()
-    session.add_all(
-        [QuoteRequestItem(quote_request_id=quote.id, **item.model_dump()) for item in body.items]
-    )
     await record_audit(
         session,
         request,
@@ -241,9 +276,7 @@ async def create_quote(
         str(quote.id),
     )
     await session.commit()
-    return QuoteOut(
-        id=quote.id, status=quote.status, comment=quote.comment, item_count=len(body.items)
-    )
+    return quote_out(quote)
 
 
 class TicketIn(APIRequest):

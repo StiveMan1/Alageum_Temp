@@ -72,11 +72,16 @@ test("foreign order and document are hidden", async ({ request }) => {
 
 test("RFQ and ticket creation through UI", async ({ page, request }) => {
   await browserLogin(page, request);
-  await page.goto("/b2b/quotes");
-  await page.getByLabel("Количество").fill("2");
-  await page.getByLabel("Комментарий").fill("Playwright RFQ");
-  await page.getByRole("button", { name: "Создать запрос" }).click();
-  await expect(page.getByRole("status")).toContainText("Запрос создан");
+  await page.goto("/catalog?source=api");
+  await page.getByRole("button", { name: "В подборку +", exact: true }).first().click();
+  await page.goto("/inquiry?source=api");
+  await page.getByRole("spinbutton").fill("2");
+  await page.getByLabel("Сообщение (необязательно)").fill("Playwright RFQ");
+  await page.getByRole("button", { name: "Сохранить запрос КП", exact: true }).click();
+  await expect(page).toHaveURL(/\/b2b\/quotes\/[0-9a-f-]+$/);
+  await expect(page.getByRole("status")).toContainText("Запрос сохранён в базе");
+  await page.reload();
+  await expect(page.getByText("Playwright RFQ", { exact: true })).toBeVisible();
   await page.goto("/b2b/support");
   await page.getByLabel("Категория").selectOption({ index: 1 });
   await page.getByLabel("Тема").fill("Playwright ticket");

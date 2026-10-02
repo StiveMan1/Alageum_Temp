@@ -15,7 +15,8 @@
     "test:e2e:admin": "playwright test --config=playwright.admin.config.js",
     "test:e2e:vercel": "playwright test --config=playwright.vercel.config.js",
     "test:e2e:company": "playwright test --config=playwright.company.config.js",
-    "audit:company": "node scripts/audit-company-pages.mjs"
+    "audit:company": "node scripts/audit-company-pages.mjs",
+    "test:e2e:quotes": "playwright test --config=playwright.quotes.config.js"
   },
   "dependencies": {
     "next": "16.3.8",

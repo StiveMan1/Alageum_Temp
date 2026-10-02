@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "alageum_pages",
+  "info": {
+    "singularName": "page",
+    "pluralName": "pages",
+    "displayName": "Page"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {
+    "content-manager": {
+      "visible": true
+    },
+    "content-type-builder": {
+      "visible": true
+    }
+  },
+  "attributes": {
+    "slug": {
+      "type": "uid",
+      "required": true
+    },
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "locale_code": {
+      "type": "enumeration",
+      "enum": [
+        "ru",
+        "kk",
+        "en",
+        "zh",
+        "uz"
+      ],
+      "default": "ru"
+    },
+    "body": {
+      "type": "blocks"
+    },
+    "seo_title": {
+      "type": "string"
+    },
+    "seo_description": {
+      "type": "text"
+    },
+    "published": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

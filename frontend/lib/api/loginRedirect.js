@@ -1,0 +1,6 @@
+// Fixed application destinations only: never honor arbitrary URL/JS redirects.
+export function loginDestination(value) {
+  if (['/admin/catalog', '/b2b', '/b2b/quotes', '/inquiry?source=api'].includes(value)) return value;
+  if (typeof value === 'string' && /^\/b2b\/quotes\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) return value;
+  return '/b2b';
+}

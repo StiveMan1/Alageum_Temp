@@ -1,0 +1,33 @@
+"use strict";
+const routes = [
+  ["GET", "/health", "health"],
+  ["GET", "/readiness", "health"],
+  ["POST", "/auth/login", "login"],
+  ["POST", "/auth/refresh", "refresh"],
+  ["POST", "/auth/logout", "logout"],
+  ["GET", "/auth/me", "me"],
+  ["GET", "/organizations", "organizations"],
+  ["GET", "/catalog/categories", "categories"],
+  ["GET", "/catalog/products", "products"],
+  ["GET", "/catalog/products/:id", "product"],
+  ["POST", "/catalog/compare", "compare"],
+  ["GET", "/catalog/filters", "filters"],
+  ["GET", "/admin/catalog/categories", "adminCategories"],
+  ["GET", "/admin/catalog/products", "adminProducts"],
+  ["POST", "/admin/catalog/products", "createProduct"],
+  ["GET", "/admin/catalog/products/:id", "adminProduct"],
+  ["PATCH", "/admin/catalog/products/:id", "updateProduct"],
+  ["POST", "/admin/catalog/products/:id/hide", "hideProduct"],
+  ["POST", "/admin/catalog/products/:id/restore", "restoreProduct"],
+  ["POST", "/quotes/catalog", "createQuote"],
+  ["GET", "/quotes", "quotes"],
+  ["GET", "/quotes/:id", "quote"],
+];
+module.exports = {
+  routes: routes.map(([method, path, action]) => ({
+    method,
+    path,
+    handler: `compat.${action}`,
+    config: { auth: false },
+  })),
+};

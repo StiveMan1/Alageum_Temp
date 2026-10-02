@@ -1,5 +1,7 @@
 # Architecture map
 
+> The required target is now Node.js + Strapi + PostgreSQL with the existing Next.js frontend. This document describes the preserved legacy foundation; see [the bounded migration and cutover gaps](node-strapi-migration.md) for the new architecture.
+
 ALAGEUM is a modular monolith: one FastAPI deployment and one PostgreSQL database with explicit
 domain packages. This avoids distributed-system cost while preserving extractable boundaries.
 
