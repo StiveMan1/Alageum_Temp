@@ -206,6 +206,16 @@ test('zero memberships stays recoverable and cancel clears the incomplete login'
 });
 
 test('explicit switch keeps profile context and injected loaded order list/detail never crosses tenants', async ({ page }) => {
+  // This isolated lifecycle test supplies the order.read UI permission in its
+  // named /me fixture. Real database roles remain profile-only; selection and
+  // organization checks still use the actual authenticated /me response.
+  await page.route(meEndpoint, async route => {
+    if (route.request().method() === 'OPTIONS') return route.continue();
+    const actual = await route.fetch();
+    const body = await actual.json();
+    if (!actual.ok()) return route.fulfill({ response: actual });
+    return route.fulfill({ response: actual, json: { ...body, permissions: [...body.permissions, 'order.read'] } });
+  });
   await login(page);
   const reads = []; page.on('request', request => { if (request.url() === profileEndpoint) reads.push(request.headers()['x-organization-id']); });
   await switchTo(page, b);
@@ -217,13 +227,12 @@ test('explicit switch keeps profile context and injected loaded order list/detai
   await switchTo(page, a);
   expect(await storedOrganization(page)).toBe(a);
 
-  // Named frontend lifecycle injection only: no order is created and the real
-  // fixture roles still have profile grants only. Selection remains real /me.
+  // Named frontend lifecycle injection only: no order is created.
   const orderId = '00000000-0000-4000-8000-000000000071';
   const title = 'Fictitious previous-organization order';
-  const previousOrder = { id: orderId, number: title, amount: '1.00', currency: 'KZT', status: 'fixture', items: [{ id: 'fixture-line', description: 'Previous tenant line', quantity: 1 }] };
+  const previousOrder = { id: orderId, external_id: null, number: title, amount: '1.00', currency: 'KZT', status: 'fixture', items: [{ id: '00000000-0000-4000-8000-000000000072', description: 'Previous tenant line', quantity: '1.000', unit_price: null, configuration: {} }] };
   const detailHeaders = [];
-  await page.route(`${api}/orders`, route => reply(route, { items: route.request().headers()['x-organization-id'] === a ? [previousOrder] : [], total: route.request().headers()['x-organization-id'] === a ? 1 : 0 }));
+  await page.route(`${api}/orders`, route => reply(route, { items: route.request().headers()['x-organization-id'] === a ? [previousOrder] : [], page: 1, page_size: 20, total: route.request().headers()['x-organization-id'] === a ? 1 : 0 }));
   await page.route(`${api}/orders/${orderId}`, route => {
     const id = route.request().headers()['x-organization-id'];
     if (route.request().method() !== 'OPTIONS') detailHeaders.push(id);
@@ -238,11 +247,11 @@ test('explicit switch keeps profile context and injected loaded order list/detai
   await switchTo(page, a);
   await page.getByRole('link').filter({ has: page.getByRole('heading', { name: title, exact: true }) }).click();
   await expect(page.getByRole('heading', { name: `Заказ ${title}`, exact: true })).toBeVisible();
-  await expect(page.getByText('Previous tenant line — 1', { exact: true })).toBeVisible();
+  await expect(page.getByText('Previous tenant line — 1.000', { exact: true })).toBeVisible();
   await switchTo(page, b);
   await expect(page).toHaveURL(/\/b2b\/orders$/);
   await expect(page.getByRole('heading', { name: `Заказ ${title}`, exact: true })).toHaveCount(0);
-  await expect(page.getByText('Previous tenant line — 1', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Previous tenant line — 1.000', { exact: true })).toHaveCount(0);
   expect(detailHeaders).toContain(a); expect(detailHeaders).not.toContain(b);
 });
 

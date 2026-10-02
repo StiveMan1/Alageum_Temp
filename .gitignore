@@ -61,3 +61,7 @@ organization-delivery-evidence/
 # Disposable customer support acceptance build and evidence
 frontend/.next-support/
 support-delivery-evidence/
+
+# Disposable customer order acceptance build and evidence
+frontend/.next-orders/
+orders-delivery-evidence/
