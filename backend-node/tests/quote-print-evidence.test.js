@@ -40,3 +40,26 @@ test("artifact copying happens only after full validation, including a cleanup-f
     assert.equal(JSON.parse(readFileSync(join(f.published, "quote-print-results.json"), "utf8")).cleanup, "failed");
   } finally { rmSync(f.root, { recursive: true, force: true }); }
 });
+
+test("support summary uses its own allowlisted name and remains fail-closed", () => {
+  const f = fixture();
+  try {
+    writeFileSync(join(f.staging, "browser-results.json"), '{"secret":"fixture-secret"}');
+    assert.equal(publishVerifiedEvidence({ ...f, reportName: "results.json", report: { status: "passed" }, sanitize: () => { throw new Error("Fictitious sanitizer failure"); } }), false);
+    assert.deepEqual(readdirSync(f.published), ["results.json"]);
+    assert.equal(JSON.parse(readFileSync(join(f.published, "results.json"), "utf8")).status, "failed");
+    assert.throws(() => publishVerifiedEvidence({ ...f, reportName: "../outside.json" }), /Unsupported evidence summary/);
+  } finally { rmSync(f.root, { recursive: true, force: true }); }
+});
+
+test("support publishes a sanitized success under results.json without a print summary", () => {
+  const f = fixture();
+  try {
+    const source = join(f.staging, "browser-results.json");
+    writeFileSync(source, '{"secret":"fixture-secret"}');
+    assert.equal(publishVerifiedEvidence({ ...f, reportName: "results.json", report: { status: "passed", browserTests: 20 }, sanitize: () => writeFileSync(source, f.redact(readFileSync(source, "utf8"))) }), true);
+    assert.deepEqual(readdirSync(f.published).sort(), ["browser-results.json", "results.json"]);
+    assert.deepEqual(JSON.parse(readFileSync(join(f.published, "results.json"), "utf8")), { status: "passed", browserTests: 20 });
+    assert.doesNotMatch(readFileSync(join(f.published, "browser-results.json"), "utf8"), /fixture-secret/);
+  } finally { rmSync(f.root, { recursive: true, force: true }); }
+});

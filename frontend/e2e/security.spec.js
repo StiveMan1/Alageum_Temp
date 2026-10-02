@@ -87,7 +87,7 @@ test("RFQ and ticket creation through UI", async ({ page, request }) => {
   await page.getByLabel("Тема").fill("Playwright ticket");
   await page.getByLabel("Сообщение").fill("Deterministic E2E message");
   await page.getByRole("button", { name: "Создать обращение" }).click();
-  await expect(page.getByRole("status")).toContainText("Обращение создано");
+  await expect(page.getByRole("form", { name: "Новое обращение", exact: true }).getByRole("status")).toContainText("Обращение создано");
 });
 
 test("AI read isolation and scoped write confirmation", async ({ request }) => {

@@ -12,6 +12,16 @@ module.exports = () => {
     if (apiPath.startsWith("/api/v1/") || apiPath === "/api/v1")
       ctx.set("Cache-Control", "no-store");
     try {
+      if (ctx.method === "POST" && apiPath === "/api/v1/support/tickets") {
+        // FastAPI TicketIn consumes JSON (including absent Content-Type and
+        // application/*+json), never form fields or uploaded files. Reject before
+        // Strapi's multipart parser can write temporary uploads.
+        ctx.set("Cache-Control", "private, no-store");
+        const contentType = (ctx.get("Content-Type") || "").split(";", 1)[0].trim().toLowerCase();
+        if (contentType && contentType !== "application/json" && !/^application\/[^\s;]+\+json$/.test(contentType))
+          throw new AppError("validation_error", "Invalid request", 422);
+        if (contentType !== "application/json") ctx.request.headers["content-type"] = "application/json";
+      }
       if (ctx.method === "POST" && apiPath === "/api/v1/auth/login")
         loginLimit(ctx.ip);
       await next();

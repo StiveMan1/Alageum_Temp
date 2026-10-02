@@ -8,7 +8,8 @@ Next.js application remains the frontend. Its Dockerfile still uses Node.js 22;
 the migration CI validates both applications on Node.js 24.
 
 The implemented boundary covers the compatibility catalog API, catalog editor,
-demo B2B identity/organization access and catalog RFQ persistence. The Strapi CMS
+demo B2B identity/organization access, catalog RFQ persistence and the bounded
+[three-route customer support API](node-support-tickets.md). The Strapi CMS
 is served at `/cms`; the existing Next catalog editor stays at `/admin/catalog`.
 These are distinct interfaces and authentication systems. Strapi administrators
 are not B2B demo users. The native CMS uses its own administrator registration
@@ -46,7 +47,7 @@ is only an additional guard: operators must still verify the host, database,
 owner and backup target before startup.
 
 Strapi owns its native tables in the new database's `public` schema. Custom B2B
-identity, session, quote and audit tables are managed by the Node domain layer in
+identity, session, quote, support and audit tables are managed by the Node domain layer in
 the separate `b2b` schema. This is not permission to attach the old database, move
 its tables, or run Strapi synchronization there. No legacy customer data is
 migrated by this foundation.

@@ -66,3 +66,19 @@ The runner prints the sanitized evidence directory. Share only its sanitized
 logs/results and explicitly captured fictitious saved-state PNGs; never raw
 databases, credentials, cookies, tokens or network traces. See
 [`docs/company-profile.md`](../../docs/company-profile.md) for contract and limits.
+
+## Separate customer support fixtures
+
+`bash backend-node/scripts/run-support-tests.sh --browser` creates a new loopback
+PostgreSQL cluster and the exact `alageum_strapi_support_test` database. Before
+constructing Strapi it rejects wrong/shared/nonfresh databases; fixtures refuse
+reseeding and never widen default roles. All users and ticket text are fictitious.
+
+Acceptance consists of 21 real HTTP/PostgreSQL checks, a dedicated `.next-support`
+production build and 20 desktop/mobile browser cases with four explicit PNGs.
+`--backend-only` is a local diagnostic mode and is forbidden in CI. The runner
+prints a sanitized evidence directory; only that directory's sanitized reports,
+logs and explicit PNGs may be shared. Never share the sibling database cluster,
+credentials or browser authentication traces. See
+[`docs/node-support-tickets.md`](../../docs/node-support-tickets.md) for the
+three-route boundary, non-idempotent submission behavior and exact evidence gate.

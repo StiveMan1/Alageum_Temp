@@ -8,6 +8,7 @@ import OrganizationChooser, { organizationDestination } from "./OrganizationChoo
 import { loginDestination } from "@/lib/api/loginRedirect";
 import { getSession } from "@/lib/api/client";
 import { getSessionGeneration, subscribeSession } from "@/lib/api/sessionTransport";
+import { supportAccess } from "@/lib/support/model";
 import styles from "./OrganizationChooser.module.css";
 
 const links = [
@@ -46,7 +47,7 @@ export default function B2BNav() {
       </button>}
       {!loading && !tokenPresent && <Link className="button" href={`/login?next=${encodeURIComponent(loginDestination(pathname))}`}>Войти</Link>}
     </section>
-    {profile && links.filter(([, , permission]) => !permission || hasPermission(permission)).map(([href, label]) => (
+    {profile && links.filter(([href, , permission]) => href === '/b2b/support' ? supportAccess(profile.permissions).visible : !permission || hasPermission(permission)).map(([href, label]) => (
       <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}>{label}</Link>
     ))}
     {choice && <OrganizationChooser modal expectedGeneration={choice.generation} currentOrganizationId={profile?.organization?.id} onCancel={close} onSelected={selected} returnFocusRef={trigger} />}
