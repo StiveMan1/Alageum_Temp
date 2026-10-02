@@ -155,6 +155,13 @@ jobs:
       - name: Build frontend against Node API
         working-directory: frontend
         run: npm run build
+      - name: Build isolated production frontend for interruption cases
+        timeout-minutes: 6
+        working-directory: frontend
+        run: npm run build
+        env:
+          ALAGEUM_QUOTES_BUILD: '1'
+          NEXT_PUBLIC_CATALOG_SOURCE: static
       - name: Install Chromium
         timeout-minutes: 5
         env:
@@ -192,8 +199,9 @@ jobs:
           npx playwright test --config=playwright.node.config.js --max-failures=1
           # The legacy interruption suite intentionally tests both demo and API
           # source modes. The live API-default build disallows static overrides.
-          # Its config starts a separate static-default development server.
-          env -u E2E_QUOTES_BASE_URL NEXT_PUBLIC_CATALOG_SOURCE=static NODE_ENV=development \
+          # Its config starts the separate static-default production build;
+          # development Fast Refresh must not reload an in-flight RFQ.
+          env -u E2E_QUOTES_BASE_URL E2E_QUOTES_PRODUCTION=1 NEXT_PUBLIC_CATALOG_SOURCE=static NODE_ENV=production \
             npm run test:e2e:quotes -- --max-failures=3
         env:
           NODE_ENV: production

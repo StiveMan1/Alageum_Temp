@@ -94,6 +94,31 @@ without horizontal clipping. Native Page publication/browser acceptance still
 requires a successful corrected run. The audit remains blocked at 3 high and
 13 moderate affected packages; the gate is unchanged.
 
+### Corrected native Page acceptance and production interruption runner
+
+At head `936da692fedc0dbc8606c6d9ffbcec7cbb7051c0`,
+[run 36992974841](https://github.com/StiveMan1/Alageum_Temp/actions/runs/36992974841)
+passed all five Page browsers without retries, all 13 native delivery groups,
+58 fault-matrix cases, Page contracts and the explicit static-preview build.
+Native editor/private-draft and separate-publisher/republished screenshots were
+inspected alongside complete public desktop/mobile captures. The native images
+cover the editor viewport, not the entire long Content Manager form.
+
+Both new login hydration cases passed. The Node job's development interruption
+suite had 27 clean passes and one retry at a different point: a successful 201
+RFQ POST was followed by a detail RSC request, then a full document reload to the
+inquiry while Fast Refresh was rebuilding. No save error or explicit runtime
+exception was reported; development reload causation remains an inference.
+The same 28 cases passed cleanly in the separate production RFQ workflow.
+
+The Node job now builds a separate static-default production application in
+`.next-quotes` and selects it with `ALAGEUM_QUOTES_BUILD=1`. The normal API-default
+`.next` build remains separate. `E2E_QUOTES_PRODUCTION=1` starts that production
+server for the identical interruption cases; assertion timeouts, retries and
+flow assertions are unchanged. Ordinary local development remains available.
+This runner correction requires its own hosted result; the prior retry is not
+counted as a clean pass. The dependency audit remains enforced.
+
 ## Repeatable commands
 
 Backend: `npm run check`, then
