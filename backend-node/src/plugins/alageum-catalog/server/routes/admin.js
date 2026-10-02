@@ -18,6 +18,8 @@ module.exports = {
     route("GET", "/products", "list"),
     route("POST", "/products", "create"),
     route("GET", "/products/:id", "get"),
+    route("GET", "/products/:id/media-options", "mediaOptions"),
+    route("GET", "/products/:id/media-preview/:entryId", "mediaPreview"),
     route("PATCH", "/products/:id", "update"),
     route("PUT", "/products/:id", "update"),
     route("POST", "/products/:id/hide", "hide"),

@@ -4,7 +4,8 @@ const { validate: isUUID, v5: uuid5 } = require("uuid");
 const { AppError } = require("./errors");
 const { assertActiveContext } = require("./auth");
 const v = require("./catalog-validation");
-const NAMESPACE = "541788ee-fbf0-4d85-9d33-e593b82f303c";
+const nativeMedia = require("./catalog-media");
+const { NAMESPACE, importedProductId } = require("./catalog-identity");
 const CATEGORIES = {
   transformers: "Трансформаторы",
   switchgear: "Коммутация и распределение",
@@ -297,6 +298,7 @@ function createCatalog({ db, auth, audit, authorizer }) {
   async function create(ctx) {
     const a = await manager(ctx);
     const data = v.parse(v.create, ctx.request.body);
+    if (authorizer) nativeMedia.validateNativeMedia({ source_data: {}, media: [] }, data.media);
     ctx.body = await unique(() =>
       db.transaction(async (tx) => {
         const active = await writeAuthorization(tx, a);
@@ -362,6 +364,8 @@ function createCatalog({ db, auth, audit, authorizer }) {
             409,
             { current_version: row.version },
           );
+        if (authorizer && Object.hasOwn(changes, "media"))
+          nativeMedia.validateNativeMedia(row, changes.media);
         if (action === "restore" && row.status !== "hidden")
           throw new AppError(
             "catalog_not_hidden",
@@ -426,6 +430,23 @@ function createCatalog({ db, auth, audit, authorizer }) {
         .where("p.comparable", true)
     ).map((r) => productOut(r, { public_key: r.category_public_key }));
   }
+  async function readNativeMedia(ctx, asPreview = false) {
+    if (!authorizer) throw new AppError("permission_denied", "Native CMS access required", 403);
+    const a = await manager(ctx);
+    const id = v.parse(v.uuid, ctx.params.id);
+    await db.transaction(async tx => {
+      await writeAuthorization(tx, a);
+      const row = await table(tx).where({ transport_id: id }).forShare().first();
+      if (!row) throw new AppError("product_not_found", "Product not found", 404);
+      if (asPreview) {
+        const value = nativeMedia.preview(row, ctx.params.entryId);
+        ctx.set("Content-Type", value.mime);
+        ctx.set("X-Content-Type-Options", "nosniff");
+        ctx.set("Cache-Control", "private, no-store");
+        ctx.body = value.bytes;
+      } else ctx.body = nativeMedia.options(row);
+    });
+  }
   async function getForQuote(tx, ids) {
     const rows = await publicQuery(tx)
       .whereIn("p.transport_id", ids)
@@ -473,7 +494,7 @@ function createCatalog({ db, auth, audit, authorizer }) {
           cat[key] = row;
         }
         for (const [i, r] of records.entries()) {
-          const id = uuid5(`product:${r.id}`, NAMESPACE);
+          const id = importedProductId(r.id);
           const exists = await table(tx).where({ public_key: r.id }).first();
           if (exists) {
             if (exists.transport_id !== id)
@@ -525,6 +546,8 @@ function createCatalog({ db, auth, audit, authorizer }) {
     update,
     compare,
     getForQuote,
+    mediaOptions: (ctx) => readNativeMedia(ctx),
+    mediaPreview: (ctx) => readNativeMedia(ctx, true),
     importRecords,
   };
 }

@@ -31,6 +31,16 @@
 .alageum-spec-cell { min-width: 0; }
 .alageum-field-error { color: #b42318; font-size: 13px; font-weight: 500; }
 .alageum-field [aria-invalid="true"] { border-color: #b42318; }
+.alageum-media h3 { font-size: 18px; font-weight: 600; margin: 18px 0 8px; }
+.alageum-catalog .alageum-media-row, .alageum-media-choice { border: 1px solid var(--ac-border); border-radius: 6px; padding: 16px; margin: 16px 0; }
+.alageum-media-row legend { padding: 0 6px; font-weight: 600; }
+.alageum-media-meta { display: grid; grid-template-columns: minmax(100px, 170px) minmax(0, 1fr); gap: 5px 12px; margin: 0 0 16px; }
+.alageum-media-meta dt { color: var(--ac-muted); }
+.alageum-media-meta dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.alageum-media-note { border-left: 3px solid #8a65cc; padding: 8px 12px; }
+.alageum-media-preview { margin: 20px 0; padding: 16px; border: 1px solid var(--ac-border); border-radius: 6px; }
+.alageum-media-preview img { display: block; width: auto; height: auto; max-width: 100%; max-height: 520px; margin: 0 auto 12px; object-fit: contain; }
+.alageum-media-preview figcaption { color: var(--ac-muted); font-size: 13px; }
 .alageum-table-wrap { overflow-x: auto; margin-top: 16px; border: 1px solid var(--ac-border); border-radius: 7px; background: var(--ac-panel); }
 .alageum-catalog table { width: 100%; border-collapse: collapse; text-align: left; }
 .alageum-catalog th, .alageum-catalog td { padding: 14px 16px; border-bottom: 1px solid var(--ac-border); vertical-align: top; }

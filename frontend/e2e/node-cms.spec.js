@@ -62,6 +62,165 @@ async function mutation(page, id, button, suffix = '', expected = 200) {
   return response.json();
 }
 
+async function openMedia(page) {
+  const panel = page.locator('details.alageum-media');
+  if (!(await panel.evaluate(element => element.open))) await panel.locator(':scope > summary').click();
+  await expect(panel.getByRole('status')).toHaveCount(0);
+  return panel;
+}
+async function mediaAlt(page, text) {
+  const panel = await openMedia(page);
+  await panel.getByLabel('Alternative text state for attachment 1', { exact: true }).selectOption('text');
+  const field = panel.getByLabel('Alternative text for attachment 1', { exact: true });
+  await field.fill(text);
+  return field;
+}
+async function nativeProduct(request, token, id) {
+  if (!/^[a-f0-9-]{36}$/i.test(id)) id = (await publicProduct(request, id)).id;
+  const response = await request.get(`${plugin}/products/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+  expect(response.status()).toBe(200);
+  return response.json();
+}
+async function restoreMedia(request, token, product, media = product.media) {
+  const current = await nativeProduct(request, token, product.id);
+  const response = await request.put(`${plugin}/products/${product.id}`, { headers: { Authorization: `Bearer ${token}` }, data: { version: current.version, media } });
+  expect(response.status()).toBe(200);
+  return response.json();
+}
+async function expectRealProductImage(page, path, alt, caption) {
+  await expect(page.locator('.product-visual-stack')).toBeVisible();
+  // Reviewed 3D constructions keep the source image in an ordinary disclosure.
+  // Open it before checking the real lazy-loaded image and visible disclaimer.
+  const original = page.locator('details.product-original-illustration');
+  if (await original.count()) {
+    if (!(await original.evaluate(element => element.open))) await original.locator(':scope > summary').click();
+  }
+  const visual = page.locator('.product-visual');
+  const image = visual.locator('img');
+  await expect(image).toHaveCount(1);
+  await expect(image).toHaveAttribute('alt', alt);
+  await expect.poll(() => image.evaluate(element => element.complete && element.naturalWidth > 0)).toBe(true);
+  expect(await image.evaluate(element => {
+    const url = new URL(element.currentSrc, location.href);
+    return url.pathname === '/_next/image' ? url.searchParams.get('url') : url.pathname;
+  })).toBe(path);
+  await expect(visual.getByText(caption, { exact: true })).toBeVisible();
+  return visual;
+}
+
+async function exerciseMediaEditor(page, request, token, testInfo) {
+  const original = await nativeProduct(request, token, 'kso-366');
+  try {
+    await openProduct(page, original);
+    let panel = await openMedia(page);
+    const optionsResponse = await request.get(`${plugin}/products/${original.id}/media-options`, { headers: { Authorization: `Bearer ${token}` } });
+    expect(optionsResponse.status()).toBe(200);
+    const options = await optionsResponse.json();
+    expect(options.reviewed).toEqual(original.media);
+    await page.evaluate(() => {
+      window.__cmsMediaRevocations = [];
+      const revoke = URL.revokeObjectURL.bind(URL);
+      URL.revokeObjectURL = value => { window.__cmsMediaRevocations.push(value); revoke(value); };
+    });
+    const previewResponse = page.waitForResponse(response => response.url() === `${plugin}/products/${original.id}/media-preview/${options.entries[0].id}`);
+    await panel.getByRole('button', { name: 'Preview attachment 1', exact: true }).click();
+    const preview = await previewResponse;
+    expect(preview.status()).toBe(200);
+    expect(preview.headers()['content-type']).toBe('image/webp');
+    expect(preview.headers()['x-content-type-options']).toBe('nosniff');
+    expect(preview.headers()['cache-control']).toBe('private, no-store');
+    expect(new URL(preview.url()).search).toBe('');
+    expect((await preview.request().allHeaders()).authorization).toMatch(/^Bearer /);
+    const previewImage = panel.getByRole('img', { name: 'Reviewed product crop, source pages 23', exact: true });
+    await expect(previewImage).toHaveAttribute('src', /^blob:/);
+    await expect.poll(() => previewImage.evaluate(element => element.complete && element.naturalWidth > 0)).toBe(true);
+    const cmsDocument = await request.get(`${cms}/plugins/alageum-catalog`);
+    expect(cmsDocument.headers()['content-security-policy']).toMatch(/img-src[^;]*\bblob:/);
+    await captureSpecEvidence(page, testInfo, panel.getByRole('figure', { name: 'Reviewed image preview', exact: true }), 'native-cms-authenticated-media-preview.png');
+
+    await panel.getByLabel('Alternative text state for attachment 1', { exact: true }).selectOption('null');
+    await expect(page.getByRole('button', { name: 'Hide product', exact: true })).toBeDisabled();
+    await mutation(page, original.id, 'Save product');
+    expect((await publicProduct(request, original.id)).media[0].alt).toBeNull();
+    panel = await openMedia(page);
+    await panel.getByLabel('Alternative text state for attachment 1', { exact: true }).selectOption('absent');
+    await mutation(page, original.id, 'Save product');
+    expect(Object.hasOwn((await publicProduct(request, original.id)).media[0], 'alt')).toBe(false);
+    await mediaAlt(page, '');
+    await mutation(page, original.id, 'Save product');
+    expect((await publicProduct(request, original.id)).media[0].alt).toBe('');
+    const alt = 'CMS reviewed crop: descriptive alt is independent of the source disclaimer';
+    await mediaAlt(page, alt);
+    await mutation(page, original.id, 'Save product');
+    const saved = await nativeProduct(request, token, original.id);
+    for (const field of ['id', 'public_key', 'slug', 'source_data', 'provenance', 'specs', 'translations', 'price', 'currency']) expect(saved[field]).toEqual(original[field]);
+    panel = await openMedia(page);
+    await panel.getByRole('button', { name: 'Preview attachment 1', exact: true }).click();
+    await expect(previewImage).toHaveAttribute('src', /^blob:/);
+    const blob = await previewImage.getAttribute('src');
+    expect(await page.evaluate(value => window.__cmsMediaRevocations.includes(value), blob)).toBe(false);
+    await page.getByRole('button', { name: 'Close editor', exact: true }).click();
+    await expect.poll(() => page.evaluate(value => window.__cmsMediaRevocations.includes(value), blob)).toBe(true);
+    await expect(page.getByRole('figure', { name: 'Reviewed image preview', exact: true })).toHaveCount(0);
+    await page.goto(`${frontend}/catalog/${original.public_key}?source=api`);
+    const visual = await expectRealProductImage(page, original.media[0].path, alt, 'Иллюстрация серии из исходного каталога; не фотография конкретного исполнения');
+    await captureSpecEvidence(page, testInfo, visual, 'public-reviewed-crop-alt-and-disclaimer.png');
+    await openProduct(page, saved);
+    panel = await openMedia(page);
+    await panel.getByRole('button', { name: 'Remove attachment 1', exact: true }).click();
+    await expect(panel.getByText('No attachments', { exact: true })).toBeVisible();
+    await mutation(page, original.id, 'Save product');
+    expect((await publicProduct(request, original.id)).media).toEqual([]);
+    await page.goto(`${frontend}/catalog/${original.public_key}?source=api`);
+    await expect(page.locator('.product-visual-stack')).toBeVisible();
+    await expect(page.locator('.product-visual img')).toHaveCount(0);
+    await openProduct(page, await nativeProduct(request, token, original.id));
+    panel = await openMedia(page);
+    await panel.getByRole('button', { name: 'Attach reviewed image', exact: true }).click();
+    await mutation(page, original.id, 'Save product');
+    expect((await publicProduct(request, original.id)).media).toEqual(options.reviewed);
+    await mediaAlt(page, 'Unsaved alternative text discarded by explicit restoration');
+    await panel.getByRole('button', { name: 'Restore reviewed media', exact: true }).click();
+    await expect(panel.getByLabel('Alternative text for attachment 1', { exact: true })).toHaveValue(options.reviewed[0].alt);
+    await mutation(page, original.id, 'Save product');
+  } finally { await restoreMedia(request, token, original); }
+
+  const exception = await nativeProduct(request, token, 'cat-bktp-modular-v001');
+  const optionsResponse = await request.get(`${plugin}/products/${exception.id}/media-options`, { headers: { Authorization: `Bearer ${token}` } });
+  expect(optionsResponse.status()).toBe(200);
+  const options = await optionsResponse.json();
+  expect(options.baseline_override).toBe(true);
+  await page.goto(`${frontend}/catalog/${exception.public_key}?source=api`);
+  await expectRealProductImage(page, '/catalog-source/page-038.webp', options.reviewed[0].alt, 'Страница 38 исходного каталога; не фотография изделия');
+  expect((await nativeProduct(request, token, exception.id)).media).toEqual(exception.media);
+  try {
+    await openProduct(page, exception);
+    const panel = await openMedia(page);
+    await expect(panel.getByRole('group', { name: 'Attachment 1', exact: true }).getByText('/catalog-products/cat-bktp-modular.webp', { exact: true })).toBeVisible();
+    await expect(panel.getByText('Alternative text (read-only)', { exact: true })).toBeVisible();
+    await expect(panel.getByLabel('Alternative text for attachment 1', { exact: true })).toHaveCount(0);
+    await panel.getByRole('button', { name: 'Preview reviewed image', exact: true }).click();
+    const scan = panel.getByRole('img', { name: 'Reviewed full source page scan, source pages 38', exact: true });
+    await expect.poll(() => scan.evaluate(element => element.complete && element.naturalWidth > 0)).toBe(true);
+    await captureSpecEvidence(page, testInfo, panel.getByRole('figure', { name: 'Reviewed image preview', exact: true }), 'native-cms-reviewed-page38-preview.png');
+    await panel.getByRole('button', { name: 'Restore reviewed media', exact: true }).click();
+    const customAlt = 'Custom accessible text for the reviewed source scan';
+    await mediaAlt(page, customAlt);
+    await mutation(page, exception.id, 'Save product');
+    const saved = await nativeProduct(request, token, exception.id);
+    expect(saved.media).toEqual([{ ...options.reviewed[0], alt: customAlt }]);
+    expect(saved.provenance).toEqual(exception.provenance);
+    expect(saved.source_data).toEqual(exception.source_data);
+    await page.goto(`${frontend}/catalog/${exception.public_key}?source=api`);
+    const visual = await expectRealProductImage(page, '/catalog-source/page-038.webp', customAlt, 'Страница 38 исходного каталога; не фотография изделия');
+    await captureSpecEvidence(page, testInfo, visual, 'public-source-scan-alt-and-page38-disclaimer.png');
+  } finally {
+    // Explicit reviewed restoration is permanent: native APIs correctly refuse
+    // to re-add the old page39 attachment after it has been removed.
+    await restoreMedia(request, token, exception, options.reviewed);
+  }
+}
+
 async function addTechnicalRow(page, label, value, type = 'text', unit) {
   const panel = page.locator('details.alageum-specifications');
   if (!(await panel.evaluate(element => element.open))) await panel.locator(':scope > summary').click();
@@ -114,9 +273,10 @@ async function expectLiteralLines(value, literal) {
 }
 
 test('native CMS login and guarded edits publish to the API and Next catalog', async ({ page, request }, testInfo) => {
+  test.setTimeout(120_000);
   await page.setViewportSize({ width: 1440, height: 1800 });
   const original = await publicProduct(request, 'tmg-400');
-  await nativeLogin(page);
+  const token = await nativeLogin(page);
   await expect(page.getByRole('link', { name: 'ALAGEUM catalog', exact: true })).toBeVisible();
   const cookies = await page.context().cookies(`${origin}/admin/access-token`);
   const refreshCookie = cookies.find(cookie => cookie.name === 'strapi_admin_refresh');
@@ -131,14 +291,14 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   await page.getByLabel('Status', { exact: true }).selectOption('published');
   const literalRow = await addTechnicalRow(page, 'CMS fixture literal', '0001,250–2,0', 'text', 'кВА');
   await expect(page.getByRole('button', { name: 'Hide product', exact: true })).toBeDisabled();
-  await expect(page.getByText('Save or reload your specification edits before using Hide product or Restore draft.', { exact: true })).toBeVisible();
+  await expect(page.getByText('Save or reload your specification and media edits before using Hide product or Restore draft.', { exact: true })).toBeVisible();
   await literalRow.getByText('Source reference', { exact: true }).click();
   await literalRow.getByLabel('Source page type', { exact: true }).selectOption('number');
   await literalRow.getByLabel('Source page', { exact: true }).fill('32');
   const multilineValue = '0007\nSecond literal source line';
   const numberRow = await addTechnicalRow(page, 'CMS fixture number', '9007199254740993', 'number', null);
   let attemptedSaves = 0;
-  const countSave = req => { if (req.url() === `${plugin}/products/${original.id}` && req.method() === 'PUT') attemptedSaves += 1; };
+  const countSave = req => { if (req.url() === `${plugin}/products/${original.id}` && req.method() === 'PUT') { attemptedSaves += 1; expect(Object.hasOwn(req.postDataJSON(), 'media')).toBe(false); } };
   page.on('request', countSave);
   await page.getByRole('button', { name: 'Save product', exact: true }).click();
   await expect(numberRow.getByLabel('Specification value', { exact: true })).toHaveAttribute('aria-invalid', 'true');
@@ -232,11 +392,13 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   const screenshotPath = testInfo.outputPath('native-cms-guarded-editor.png');
   await page.screenshot({ path: screenshotPath, fullPage: true });
   await testInfo.attach('native-cms-guarded-editor', { path: screenshotPath, contentType: 'image/png' });
+  await exerciseMediaEditor(page, request, token, testInfo);
 });
 
 test('two native CMS sessions preserve a stale local edit and reject its version conflict', async ({ page, browser, request }) => {
+  test.setTimeout(90_000);
   const original = await publicProduct(request, 'tmg-630');
-  await nativeLogin(page);
+  const token = await nativeLogin(page);
   await openProduct(page, original);
   const otherContext = await browser.newContext();
   try {
@@ -262,6 +424,26 @@ test('two native CMS sessions preserve a stale local edit and reject its version
     await expect(other.getByLabel('Version', { exact: true })).toHaveValue(String(saved.version));
     await expect(other.getByRole('button', { name: 'Hide product', exact: true })).toBeEnabled();
     await expect(other.getByRole('group', { name: 'Technical specifications row 1', exact: true }).getByLabel('Specification value', { exact: true })).toHaveValue('0002');
+    const mediaProduct = await nativeProduct(request, token, 'kso-292');
+    try {
+      await openProduct(page, mediaProduct);
+      await openProduct(other, mediaProduct);
+      await mediaAlt(page, 'Winning reviewed media description');
+      const staleMedia = await mediaAlt(other, 'Unsaved reviewed media description');
+      await mutation(page, mediaProduct.id, 'Save product');
+      await mutation(other, mediaProduct.id, 'Save product', '', 409);
+      await expect(staleMedia).toHaveValue('Unsaved reviewed media description');
+      await expect(other.getByRole('button', { name: 'Hide product', exact: true })).toBeDisabled();
+      await expect(other.locator('details.alageum-media > summary')).toHaveText('Product media · Unsaved changes');
+      const mediaSaved = await publicProduct(request, mediaProduct.id);
+      expect(mediaSaved.media).toEqual([{ ...mediaProduct.media[0], alt: 'Winning reviewed media description' }]);
+      expect(mediaSaved.version).toBe(mediaProduct.version + 1);
+      await other.getByRole('button', { name: 'Reload product', exact: true }).click();
+      await expect(other.getByLabel('Version', { exact: true })).toHaveValue(String(mediaSaved.version));
+      await openMedia(other);
+      await expect(staleMedia).toHaveValue('Winning reviewed media description');
+      await expect(other.locator('details.alageum-media > summary')).toHaveText('Product media');
+    } finally { await restoreMedia(request, token, mediaProduct); }
   } finally { await otherContext.close(); }
 });
 
@@ -271,6 +453,9 @@ test('a native administrator without the explicit catalog permission cannot read
   await expect(page.getByRole('link', { name: 'ALAGEUM catalog', exact: true })).toHaveCount(0);
   const headers = { Authorization: `Bearer ${token}` };
   expect((await request.get(`${plugin}/products`, { headers })).status()).toBe(403);
+  expect((await request.get(`${plugin}/products/${product.id}/media-options`, { headers })).status()).toBe(403);
+  expect((await request.get(`${plugin}/products/${product.id}/media-preview/${'0'.repeat(64)}`, { headers })).status()).toBe(403);
+  expect((await request.put(`${plugin}/products/${product.id}`, { headers, data: { version: product.version, media: [] } })).status()).toBe(403);
   expect((await request.patch(`${plugin}/products/${product.id}`, { headers, data: { version: product.version, translations: { ru: { name: 'Denied CMS overwrite' } }, specs: { technicalSpecs: [{ label: 'Denied fixture', value: 'No write' }] } } })).status()).toBe(403);
   await page.goto(`${cms}/plugins/alageum-catalog`);
   await expect(page.getByRole('button', { name: 'Save product', exact: true })).toHaveCount(0);
@@ -281,11 +466,12 @@ test('a native administrator without the explicit catalog permission cannot read
 });
 
 test('native read refresh rotates the session and preserves the unsaved CMS draft', async ({ page, request }) => {
-  const product = await publicProduct(request, 'tmg-1000');
+  const product = await publicProduct(request, 'kso-2-10');
   await nativeLogin(page);
   await openProduct(page, product);
   await page.getByLabel('Name (RU)', { exact: true }).fill('Unsaved draft survives native refresh');
   const unsavedSpec = await addTechnicalRow(page, 'CMS refresh fixture', '001,50');
+  const unsavedMedia = await mediaAlt(page, 'Unsaved media survives native refresh');
   const before = (await page.context().cookies(`${origin}/admin/access-token`)).find(cookie => cookie.name === 'strapi_admin_refresh');
   expect(before?.path).toBe('/');
   let interruptions = 0;
@@ -314,6 +500,9 @@ test('native read refresh rotates the session and preserves the unsaved CMS draf
   expect(after?.value).not.toBe(before?.value);
   await expect(page.getByLabel('Name (RU)', { exact: true })).toHaveValue('Unsaved draft survives native refresh');
   await expect(unsavedSpec.getByLabel('Specification value', { exact: true })).toHaveValue('001,50');
+  await expect(unsavedMedia).toHaveValue('Unsaved media survives native refresh');
+  await expect(page.locator('details.alageum-media > summary')).toHaveText('Product media · Unsaved changes');
+  expect((await publicProduct(request, product.id)).media).toEqual(product.media);
   expect((await publicProduct(request, product.id)).specs).toEqual(product.specs);
   await expect(page.getByLabel('Version', { exact: true })).toHaveValue(String(product.version));
   await expect(page.getByRole('button', { name: 'Save product', exact: true })).toBeEnabled();
@@ -321,6 +510,7 @@ test('native read refresh rotates the session and preserves the unsaved CMS draf
 });
 
 test('401 writes never retry and late CMS responses respect Close and browser history', async ({ page, request }) => {
+  test.setTimeout(90_000);
   const product = await publicProduct(request, 'tmg-1000');
   await nativeLogin(page);
   await openProduct(page, product);
@@ -343,6 +533,26 @@ test('401 writes never retry and late CMS responses respect Close and browser hi
   expect(writes).toBe(1);
   expect((await publicProduct(request, product.id)).translations).toEqual(product.translations);
   await page.unroute(`${plugin}/products/${product.id}`);
+
+  const mediaProduct = await publicProduct(request, 'kso-2-10');
+  await openProduct(page, mediaProduct);
+  const unauthorizedMedia = await mediaAlt(page, 'Unsaved media after an expired native write');
+  let mediaWrites = 0;
+  await page.route(`${plugin}/products/${mediaProduct.id}`, async route => {
+    if (route.request().method() === 'PUT') {
+      mediaWrites += 1;
+      expect(route.request().postDataJSON().media).toEqual([{ ...mediaProduct.media[0], alt: 'Unsaved media after an expired native write' }]);
+      await route.fulfill({ status: 401, contentType: 'application/json', body: JSON.stringify({ error: { status: 401, name: 'UnauthorizedError', message: 'Deterministic expired native media mutation', details: {} } }) });
+    } else await route.continue();
+  });
+  await mutation(page, mediaProduct.id, 'Save product', '', 401);
+  await expect(unauthorizedMedia).toHaveValue('Unsaved media after an expired native write');
+  await expect(page.getByRole('button', { name: 'Hide product', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Save product', exact: true })).toBeEnabled();
+  expect((await publicProduct(request, mediaProduct.id)).media).toEqual(mediaProduct.media);
+  expect(mediaWrites).toBe(1);
+  await page.unroute(`${plugin}/products/${mediaProduct.id}`);
+  await openProduct(page, product);
 
   // Reuse this native session to remain inside the native 5-login rate limit.
   // Delays wrap real server responses; neither detail nor save data is invented.

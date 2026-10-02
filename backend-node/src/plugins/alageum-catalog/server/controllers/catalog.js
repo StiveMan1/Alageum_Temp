@@ -28,5 +28,7 @@ module.exports = ({ strapi }) => {
     update: handler("update"),
     hide: handler("update", "hide"),
     restore: handler("update", "restore"),
+    mediaOptions: handler("mediaOptions"),
+    mediaPreview: handler("mediaPreview"),
   };
 };
