@@ -31,7 +31,7 @@ async function loginSlot() {
   loginTimes.push(Date.now());
 }
 
-test.beforeAll(() => {
+test.beforeAll(async ({}, testInfo) => {
   expect(process.env.APP_ENV, 'Use backend-node/scripts/run-support-tests.sh').toBe('test');
   expect(process.env.ALAGEUM_TEST_SUPPORT_FIXTURES).toBe('1');
   expect(Boolean(process.env.E2E_SUPPORT_PASSWORD && process.env.E2E_SUPPORT_PASSWORD.length >= 40)).toBe(true);
@@ -44,6 +44,11 @@ test.beforeAll(() => {
   }
   for (const id of [a, b]) expect(id).toMatch(/^[a-f0-9-]{36}$/);
   expect(a).not.toBe(b);
+  // A replacement worker loses loginTimes, while the backend retains its real
+  // 20/minute window. With workers=1, clear that window before every later
+  // worker (including mobile) starts; the first worker has the runner cooldown.
+  // This wait never retries a rejected login or changes the backend limiter.
+  if (testInfo.workerIndex > 0) await new Promise(resolve => setTimeout(resolve, 61050));
 });
 
 async function login(page, kind = 'editor') {
@@ -334,7 +339,7 @@ for (const boundary of ['organization', 'new login']) test(`late category and ti
   await expect(form(page).getByRole('combobox')).toBeEnabled(); await expect(list(page)).toHaveAttribute('aria-busy', 'false');
   const current = await list(page).innerText();
   await lateCategories.release(); await lateList.release();
-  await expect(active(page)).toContainText(b); await expect(list(page)).toHaveText(current);
+  await expect(active(page)).toContainText(b); await expect(list(page)).toHaveText(current, { useInnerText: true });
   await expect(form(page).getByRole('alert')).toHaveCount(0);
 });
 
