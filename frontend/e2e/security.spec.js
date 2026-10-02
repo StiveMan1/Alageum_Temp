@@ -46,7 +46,7 @@ test("login through UI", async ({ page }) => {
   await page.goto("/login");
   await page.getByRole("button", { name: "Войти" }).click();
   await expect(page).toHaveURL(/\/b2b$/);
-  await expect(page.getByText("Demo Industrial Company")).toBeVisible();
+  await expect(page.getByTestId("active-organization").getByText("Demo Industrial Company", { exact: true })).toBeVisible();
 });
 
 test("foreign order and document are hidden", async ({ request }) => {

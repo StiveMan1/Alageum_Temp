@@ -65,6 +65,19 @@ allows ordinary token refresh within that context. Mutation methods never trigge
 automatic 401 refresh/replay. A successful server write from the old organization
 may remain saved, but cannot repaint or navigate the new organization's UI.
 
+The catalogue RFQ has one deliberately narrower accepted-receipt path: a successful
+quote POST returning 201-created or 200-replay may record only its validated quote UUID against the original
+owner/organization and exact idempotency-attempt key before the shared response
+guard rejects a stale continuation. The full old response is never returned to
+the new flow. A replaced or reset attempt is untouched, including after a
+same-account re-login; failed/unauthorized responses never record a receipt or
+replay a write. This preserves recovery of an already accepted RFQ without
+overwriting the current owner's private draft or navigating to the old record.
+The RFQ UI lifetime additionally follows the existing login-aware auth scope;
+ordinary refresh preserves it, while same-account re-login invalidates even an
+error continuation before React unmounts the old form. Disposing that UI flow does
+not suppress the original attempt's minimal accepted receipt.
+
 Optional company business contacts remain unverified and require the existing
 explicit profile-read permission. Profile PATCH still requires both read and update.
 No default or real role receives those permissions; no contacts are copied between
@@ -107,7 +120,7 @@ server grants. Local Chromium is blocked by the executor socket
 policy; listing tests does not constitute a browser pass. Hosted desktop/mobile
 execution and review of successful screenshots are required before acceptance.
 
-Local checkpoint: backend 88/88, frontend 215/215 unit tests, full PostgreSQL 74/74,
+Local checkpoint: backend 88/88, frontend 230/230 unit tests, full PostgreSQL 74/74,
 frontend lint and production organization Next build passed. Dedicated real HTTP
 verification passed 7/7 groups; its raw task-created cluster and password file were
 confirmed removed after shutdown. Hosted runs add production build and browser

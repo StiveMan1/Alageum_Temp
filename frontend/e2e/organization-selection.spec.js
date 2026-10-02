@@ -170,6 +170,22 @@ test('responsive active organization: a single membership opens the requested pr
   await expect(chooser(page)).toHaveCount(0);
   await expect(active(page)).toContainText(fixtureName);
   expect(await storedOrganization(page)).toBe(a);
+  // Reset this saved screenshot fixture after earlier tests may have changed A.
+  // Keep the real optimistic version and current authenticated fixture grants.
+  const before = await readProfile(page, a);
+  expect(before.status).toBe(200); expect(before.body.organization_id).toBe(a);
+  const screenshotContact = `Fictitious contact for ${a}`;
+  const saved = await page.evaluate(async ({ url, organization, version, businessContact }) => {
+    const session = JSON.parse(sessionStorage.getItem('alageum_session') || '{}');
+    if (session.organization_id !== organization) throw new Error('Screenshot fixture organization changed');
+    const response = await fetch(url, { method: 'PATCH', headers: { Authorization: `Bearer ${session.access_token}`, 'X-Organization-ID': organization, 'Content-Type': 'application/json' }, body: JSON.stringify({ version, business_contact_name: businessContact }) });
+    return { status: response.status, body: await response.json() };
+  }, { url: profileEndpoint, organization: a, version: before.body.version, businessContact: screenshotContact });
+  expect(saved.status).toBe(200); expect(saved.body).toMatchObject({ organization_id: a, business_contact_name: screenshotContact });
+  await page.reload();
+  await expect(personal(page)).toContainText(email('single'));
+  await expect(active(page)).toContainText(a);
+  await expect(company(page)).toContainText(screenshotContact);
   await expectReachable(trigger(page));
   await screenshot(page, testInfo, 'active-single-organization');
   await page.reload();
@@ -393,7 +409,9 @@ test('invalid credentials expose no membership choices and anonymous public page
   await page.getByLabel('Пароль', { exact: true }).fill('Fictitious wrong password 123!');
   const failed = page.waitForResponse(response => response.url() === `${api}/auth/login`);
   await page.getByRole('button', { name: 'Войти', exact: true }).click(); expect((await failed).status()).toBe(401);
-  await expect(page.getByRole('alert')).toBeVisible(); await expect(chooser(page)).toHaveCount(0);
+  const loginError = page.locator('form').filter({ has: page.getByLabel('Email', { exact: true }) }).getByRole('alert');
+  await expect(loginError).toHaveText('Email or password is incorrect');
+  await expect(loginError).toBeVisible(); await expect(chooser(page)).toHaveCount(0);
   expect(await page.evaluate(() => sessionStorage.getItem('alageum_session'))).toBeNull();
   let privateReads = 0;
   page.on('request', request => { if (request.url().startsWith(organizationsEndpoint) || request.url() === meEndpoint) privateReads++; });
@@ -435,11 +453,15 @@ test('injected accepted RFQ reply cannot navigate after a real organization swit
   await page.goto('/inquiry?source=api');
   await page.getByLabel('Сообщение (необязательно)', { exact: true }).fill('Fictitious previous organization RFQ');
   await page.getByRole('button', { name: 'Сохранить запрос КП', exact: true }).click(); await started.promise;
+  const originalDraftKeys = await page.evaluate(organization => Object.keys(sessionStorage).filter(key => key.startsWith(`alageum.quote.draft.v1:${organization}:`)), a);
+  expect(originalDraftKeys).toHaveLength(1);
+  const [originalDraftKey] = originalDraftKeys;
   await page.getByRole('link', { name: 'Мои запросы →', exact: true }).click();
   await expect(page).toHaveURL(/\/b2b\/quotes$/);
   await switchTo(page, b);
   const late = page.waitForResponse(response => response.url() === `${api}/quotes/catalog` && response.status() === 201);
   release.resolve(); await finished.promise; await (await late).finished();
+  await expect.poll(() => page.evaluate(key => JSON.parse(sessionStorage.getItem(key)).attempt.quoteId, originalDraftKey)).toBe(quoteId);
   await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   await expect(page).toHaveURL(/\/b2b\/quotes$/);
   await expect(active(page)).toContainText(b);

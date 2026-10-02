@@ -65,7 +65,7 @@ function expireSession(requestSession) {
   if (typeof window !== "undefined") window.dispatchEvent(new Event("alageum:session-expired"));
 }
 
-async function request(path, options = {}, retry = true, candidateOrganizationId) {
+async function request(path, options = {}, retry = true, candidateOrganizationId, onAcceptedQuoteReceipt) {
   const session = captureSession();
   const headers = new Headers(options.headers || {});
   if (!(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
@@ -90,6 +90,15 @@ async function request(path, options = {}, retry = true, candidateOrganizationId
   if (response.status === 401 && authenticatedRead) expireSession(session);
   const payload = response.status === 204 ? null : await response.json().catch(() => ({}));
   if (!response.ok) throw new ApiError(response.status, payload);
+  if (onAcceptedQuoteReceipt) {
+    // The sole accepted-receipt exception belongs to the fixed quote POST below.
+    // Persist only its validated ID into the ORIGINAL scoped attempt. Never pass
+    // old private response fields through to an active-context continuation.
+    if (![200, 201].includes(response.status) || typeof payload?.id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(payload.id)) {
+      throw new ApiError(502, { error: { code: 'invalid_quote_receipt', message: 'Не удалось подтвердить номер сохранённого запроса.' } });
+    }
+    onAcceptedQuoteReceipt(payload.id);
+  }
   // An already accepted mutation cannot be undone, but its old-context success
   // must never navigate, repaint or unlock actions in the newly selected tenant.
   // Candidate /me reads compare the ORIGINAL context, not their candidate header.
@@ -102,6 +111,17 @@ export const apiFetch = (path, options = {}, retry = true) => request(path, opti
 // Only this read may override the active tenant header. Validate first; the auth
 // coordinator commits a selection later without temporarily changing the session.
 export const readOrganizationContext = (organizationId, signal) => request('/auth/me', { signal }, true, organizationId);
+
+// Unlike an ordinary response callback, this hook only records an accepted UUID.
+// The response itself still fails the common context guard after a tenant/login
+// change. No mutation refresh/replay or generic stale-response opt-out exists.
+export const createQuoteRequest = (data, idempotencyKey, onAcceptedReceipt) => request('/quotes/catalog', {
+  method: 'POST', headers: { 'Idempotency-Key': idempotencyKey }, body: JSON.stringify(data),
+}, false, undefined, quoteId => {
+  // A storage failure must not turn an acknowledged server save into a replay.
+  // The original durable attempt/key remains available for explicit recovery.
+  try { onAcceptedReceipt?.(quoteId); } catch { /* Keep the accepted response semantics. */ }
+});
 
 export async function apiPage(path, options = {}) {
   const payload = await apiFetch(path, options);

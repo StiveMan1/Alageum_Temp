@@ -73,7 +73,7 @@ async function api(path, { actor, organization, method = "GET", data, expected =
   if (path === "/organizations/current/profile" || (response.ok && ["/organizations", "/auth/"].some(prefix => path.startsWith(prefix)))) assert.match(response.headers.get("cache-control") || "", /private.*no-store/, "Private responses must be non-cacheable");
   return response.status === 204 ? null : response.json();
 }
-async function interrupted(signal) { report.status = "failed"; report.error = `Interrupted by ${signal}`; await cleanup(); sanitizeBrowserArtifacts(); save(); nativeLog.end(); process.exit(1); }
+async function interrupted(signal) { report.status = "failed"; if (report.browser === "running") report.browser = "failed"; report.error = `Interrupted by ${signal}`; await cleanup(); sanitizeBrowserArtifacts(); save(); nativeLog.end(); process.exit(1); }
 for (const signal of ["SIGTERM", "SIGINT"]) process.once(signal, () => { void interrupted(signal); });
 const deadline = setTimeout(() => { void interrupted("runner deadline"); }, 900000);
 
@@ -200,7 +200,7 @@ const deadline = setTimeout(() => { void interrupted("runner deadline"); }, 9000
       });
     } else report.browser = "not-run: explicit --backend-only";
     report.status = "passed";
-  } catch (error) { report.status = "failed"; report.error = redact(error.message); process.exitCode = 1; }
+  } catch (error) { report.status = "failed"; if (report.browser === "running") report.browser = "failed"; report.error = redact(error.message); process.exitCode = 1; }
   finally {
     try { await cleanup(); sanitizeBrowserArtifacts(); } catch { report.status = "failed"; report.cleanup = "failed"; process.exitCode = 1; }
     clearTimeout(deadline); report.finishedAt = new Date().toISOString(); save(); nativeLog.end();
