@@ -92,6 +92,27 @@ async function captureSpecEvidence(page, testInfo, target, filename) {
   await testInfo.attach(filename, { path: screenshotPath, contentType: 'image/png' });
 }
 
+async function expectLiteralLines(value, literal) {
+  expect(await value.textContent()).toBe(literal);
+  await expect(value).toHaveCSS('white-space', 'pre-wrap');
+  await expect(value).toHaveCSS('overflow-wrap', 'anywhere');
+  const lines = await value.evaluate((element, expected) => {
+    const text = element.firstChild;
+    if (text?.nodeType !== Node.TEXT_NODE || text.textContent !== expected) throw new Error('Expected the unchanged literal text node');
+    const split = expected.indexOf('\n');
+    const measure = (start, end) => {
+      const range = document.createRange();
+      range.setStart(text, start); range.setEnd(text, end);
+      return [...range.getClientRects()].map(rect => ({ top: rect.top, bottom: rect.bottom, left: rect.left }));
+    };
+    return [measure(0, split), measure(split + 1, expected.length)];
+  }, literal);
+  expect(lines[0]).toHaveLength(1);
+  expect(lines[1]).toHaveLength(1);
+  expect(lines[1][0].top).toBeGreaterThan(lines[0][0].bottom - 1);
+  expect(Math.abs(lines[1][0].left - lines[0][0].left)).toBeLessThan(1);
+}
+
 test('native CMS login and guarded edits publish to the API and Next catalog', async ({ page, request }, testInfo) => {
   await page.setViewportSize({ width: 1440, height: 1800 });
   const original = await publicProduct(request, 'tmg-400');
@@ -114,6 +135,7 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   await literalRow.getByText('Source reference', { exact: true }).click();
   await literalRow.getByLabel('Source page type', { exact: true }).selectOption('number');
   await literalRow.getByLabel('Source page', { exact: true }).fill('32');
+  const multilineValue = '0007\nSecond literal source line';
   const numberRow = await addTechnicalRow(page, 'CMS fixture number', '9007199254740993', 'number', null);
   let attemptedSaves = 0;
   const countSave = req => { if (req.url() === `${plugin}/products/${original.id}` && req.method() === 'PUT') attemptedSaves += 1; };
@@ -124,6 +146,7 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   expect(attemptedSaves).toBe(0);
   expect((await publicProduct(request, original.id)).specs).toEqual(original.specs);
   await numberRow.getByLabel('Specification value', { exact: true }).fill('12.5');
+  await addTechnicalRow(page, 'CMS fixture multiline', multilineValue);
   await page.getByText('Configurations', { exact: true }).click();
   await page.getByRole('button', { name: 'Add configuration', exact: true }).click();
   const configuration = page.getByRole('group', { name: 'Configuration 1', exact: true });
@@ -131,7 +154,6 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   await configuration.getByRole('button', { name: 'Add configuration 1 specifications row', exact: true }).click();
   const configRow = configuration.getByRole('group', { name: 'Configuration 1 specifications row 1', exact: true });
   await configRow.getByLabel('Specification label', { exact: true }).fill('CMS fixture code');
-  const multilineValue = '0007\nSecond literal source line';
   await configRow.getByLabel('Specification value', { exact: true }).fill(multilineValue);
   await expect(configRow.getByLabel('Specification value', { exact: true })).toHaveValue(multilineValue);
   await configRow.getByLabel('Unit type', { exact: true }).selectOption('text');
@@ -152,6 +174,7 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   expect(saved.specs).toEqual({ ...original.specs, technicalSpecs: [
     { label: 'CMS fixture literal', value: '0001,250–2,0', unit: 'кВА', page: 32 },
     { label: 'CMS fixture number', value: 12.5, unit: null },
+    { label: 'CMS fixture multiline', value: multilineValue },
   ], configurations: [{ designation: 'CMS fixture configuration', specifications: [{ label: 'CMS fixture code', value: multilineValue, unit: 'мм', page: 32 }] }], notes: ['Disposable CMS test fixture'] });
   expect(saved.provenance).toEqual(original.provenance);
   expect(saved.media).toEqual(original.media);
@@ -163,11 +186,17 @@ test('native CMS login and guarded edits publish to the API and Next catalog', a
   await expect(page.getByText('0001,250–2,0', { exact: true })).toBeVisible();
   await expect(page.getByText('12.5', { exact: true })).toBeVisible();
   await page.getByText('CMS fixture configuration', { exact: true }).click();
-  await expect(page.getByText(multilineValue, { exact: true })).toBeVisible();
+  const publicConfiguration = page.locator('.product-panel details').filter({ has: page.getByText('CMS fixture configuration', { exact: true }) });
+  await expect(publicConfiguration.getByText(multilineValue, { exact: true })).toBeVisible();
+  await expectLiteralLines(publicConfiguration.locator('dd'), multilineValue);
+  const publicTechnicalRow = page.locator('.technical-specs > div').filter({ has: page.getByText('CMS fixture multiline', { exact: true }) });
+  await expectLiteralLines(publicTechnicalRow.locator('dd'), multilineValue);
   await captureSpecEvidence(page, testInfo, page.locator('.product-panel'), 'public-detail-specifications.png');
   await page.goto(`${frontend}/catalog/compare?source=api&ids=${original.public_key},tmg-630`);
   await expect(page.locator('.comparison-table tbody th').filter({ hasText: /^CMS fixture literal, кВА$/ })).toBeVisible();
   await expect(page.getByRole('cell', { name: '0001,250–2,0', exact: true })).toBeVisible();
+  const multilineComparison = page.locator('.comparison-table tbody tr').filter({ has: page.getByText('CMS fixture multiline', { exact: true }) }).locator('td').first();
+  await expectLiteralLines(multilineComparison, multilineValue);
   await captureSpecEvidence(page, testInfo, page.locator('.comparison-table'), 'public-comparison-specifications.png');
   await openProduct(page, saved);
   await page.getByText('Structured specifications', { exact: true }).click();

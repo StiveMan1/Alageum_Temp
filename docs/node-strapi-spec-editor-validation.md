@@ -1,21 +1,16 @@
 # Native catalog specification editor validation
 
-## Hosted functional acceptance and pending visual evidence
+## Hosted accepted baseline and pending literal-line presentation fix
 
-PR9 hosted acceptance is green at exact commit
-`a40d3242d7fe3a64df3195a489c9b90a93bf87ea` (tree
-`d46b6526be5a9c5d3314021569d56f728652d37a`): **55 backend units, 52 PostgreSQL
-integrations, 150 frontend units, all 43 default browser cases and all four
-optional-webpack CMS browser cases passed without retries**. The dependency
-audit reports **0 high and 15 moderate** findings. This supersedes the pending
-hosted status of the earlier local feature checkpoints described below.
+All workflows passed at exact hosted commit
+`48084bf605d929b1897661fb937ef849f418ecfc` (tree
+`a1289b81a52a4e61fc8e71a37dba55f8a6749a7b`), including **all 43 default browser
+cases and all four optional-webpack CMS cases without retries**. The earlier
+feature head `a40d3242d7fe3a64df3195a489c9b90a93bf87ea` passed **55 backend units,
+52 PostgreSQL integrations and 150 frontend units**; its audit reported **0 high
+and 15 moderate** findings. Those functional assertions remain intact.
 
-The retained `native-cms-guarded-editor.png` shows the bottom of the editor;
-it does not establish visual acceptance of the typed specification controls.
-The current screenshot-only checkpoint adds five captures after the relevant
-saved/reloaded or public assertions, using a 1440 × 1800 desktop viewport,
-cleared focus, deliberate target-centered scrolling and a full-visibility
-assertion before each PNG:
+All five retained captures at 48084bf6 were visually inspected:
 
 - `native-cms-literal-source-page.png`
 - `native-cms-numeric-null-unit.png`
@@ -23,14 +18,34 @@ assertion before each PNG:
 - `public-detail-specifications.png`
 - `public-comparison-specifications.png`
 
-They use the existing CMS test output directory under
-`frontend/playwright-report/cms-results/`, with native test attachments. Existing
-workflow artifact paths already retain these PNGs; privacy allowlists, workflow,
-application behavior and dependencies are unchanged. Current functional
-assertions are retained. **This new screenshot checkpoint awaits a hosted run
-and pixel inspection; the green a40d3242 run does not verify the new captures.**
-The screenshot checkpoint passes frontend lint, JavaScript syntax and whitespace
-checks, and discovery still selects all five native CMS cases with zero retries.
+The native forms clearly show the saved typed values and source metadata.
+Inspection found that normal HTML whitespace collapsed the public configuration
+value `0007\nSecond literal source line` onto one displayed line, despite exact
+storage and API roundtrips. Thus that hosted success did not establish correct
+public presentation of literal line breaks.
+
+The focused correction at source commit
+`6bed31304cb9537a69468a152cfca67bc21586d1` (tree
+`2cd0932b68657f71919172d4df6abfe0d1554829`) applies one shared
+`catalog-spec-text` class to literal labels, values, units and configuration
+designations in live and shared static detail/comparison rendering. `pre-wrap`
+preserves line breaks; `overflow-wrap: anywhere` and `min-width: 0` permit long
+values to wrap. Ordinary prose and price cells are unchanged. Existing escaped
+React text, exact values and data contracts are untouched; there is no HTML
+insertion, dependency, schema or workflow change.
+
+The existing native browser case reuses the LF-containing fixture in technical
+and configuration values. Before retained detail/comparison captures it checks
+exact DOM text, computed whitespace/wrapping styles, and DOM Range geometry
+showing both source lines in separate rendered positions. No new login, suite,
+retry or timeout relaxation was added. The five existing PNG paths and artifact
+privacy allowlists are unchanged.
+
+Local verification of the focused correction: frontend lint, **150 unit tests**,
+JavaScript syntax/whitespace, five-case native browser discovery and production
+Next API build all pass. The production CSS contains the shared literal-text
+rule. **The new line-break/layout assertions and updated PNGs await a hosted run
+and visual inspection; the green 48084bf6 result does not verify this correction.**
 
 ## Earlier local combined verification
 
@@ -106,9 +121,9 @@ report was restored byte-for-byte.
 
 The cloud executor's previously verified Unix-socket restriction blocks local
 Chromium. No browser was launched or alternate route attempted for this slice.
-Browser test discovery is not browser execution. Hosted a40d3242 acceptance above
-establishes the functional browser pass; the new screenshot captures remain
-unrun locally and await their own hosted evidence.
+Browser test discovery is not browser execution. Hosted 48084bf6 acceptance above
+establishes the functional browser pass and reviewed baseline captures; the new
+line-break/layout assertions remain unrun locally and await hosted evidence.
 
 The existing native flows now additionally check:
 
