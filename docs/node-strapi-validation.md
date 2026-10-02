@@ -10,7 +10,7 @@ its exact published commit; configured jobs alone are not evidence of a pass.
 - Clean locked installation and full valid npm dependency tree; the scoped
   Nodemailer 10.0.13 override was checked through Strapi's actual mail provider
   using an in-memory transport with file/URL attachments still denied
-- Backend syntax and **29/29 unit/security checks**, including native CMS permission,
+- Backend syntax and **31/31 unit/security checks**, including native CMS permission,
   refresh-chain validation, UI request guards and disposable fixture isolation
 - **45/45 real PostgreSQL/Strapi integration checks**, no skips. These include the
   previous **34/34** catalog/auth/RFQ checks and actual native CMS HTTP sessions
@@ -41,12 +41,28 @@ and a Next production build with the Node API/live catalog configuration
 (**287 pages**). The current CMS changes require their own complete administrator
 build and browser acceptance; earlier builds do not count for them.
 
+## Hosted verification and fixture correction
+
+[GitHub run 36978704755](https://github.com/StiveMan1/Alageum_Temp/actions/runs/36978704755)
+validated remote commit `f2b2c9b21be9f2c3d714bfc6c8b1ef22c9fec189`: full Strapi CMS
+build, 45 PostgreSQL/Strapi tests, 132 frontend units, lint, 287-page Next build and
+Chromium installation passed. The initial browser step stopped before app startup
+because Strapi's unawaited administrator metrics read raced fixture shutdown.
+No browser case ran in that attempt. The audit gate failed as expected.
+
+The fixture CLI now drains its native metrics work before destroying Strapi and
+propagates any rejection. Two focused regression tests cover the drain and error
+path. A new isolated `--fixtures-only` local run created both native accounts and
+exited cleanly with the actual Strapi/PostgreSQL runtime. No telemetry, permission
+or application checks are disabled. Hosted browser acceptance must be repeated
+on this correction.
+
 ## CMS and browser verification still required
 
 The earlier final-lock Strapi build could not complete in this sandbox: 2 GiB
 heap attempts exited137, and a 1 GiB single-thread attempt exhausted the V8 heap
-(exit134). The current CMS plugin has not been represented as a passed full local
-build. Hosted CI retains the complete `npm run build` gate with no weakening.
+(exit134). The full build was subsequently established by the hosted run above. Hosted CI
+retains the complete `npm run build` gate with no weakening.
 
 Earlier Chromium startup failed before any action with
 `process_singleton_posix.cc: socket() ... Operation not permitted`. No browser

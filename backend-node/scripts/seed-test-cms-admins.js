@@ -97,7 +97,37 @@ async function seedTestCmsAdmins(strapi, env = process.env) {
   };
 }
 
-module.exports = { ACTION, EMAILS, validateFixtureEnvironment, seedTestCmsAdmins };
+// Pinned Strapi user.create fires this native metric without awaiting it. The
+// metric performs database reads even when telemetry is disabled. Track only
+// this fixture-triggered work so app.destroy cannot close the pool underneath it.
+// No metric is suppressed; failures are observed and propagated after draining.
+async function drainNativeAdminMetrics(strapi, work) {
+  const metrics = strapi.admin.services.metrics;
+  const original = metrics.sendDidInviteUser;
+  const pending = new Set();
+  const failures = [];
+  metrics.sendDidInviteUser = (...args) => {
+    const task = Promise.resolve().then(() => original.apply(metrics, args));
+    pending.add(task);
+    task.then(() => pending.delete(task), error => {
+      pending.delete(task);
+      failures.push(error);
+    });
+    return task;
+  };
+  let result, failure;
+  try { result = await work(); }
+  catch (error) { failure = error; }
+  finally {
+    while (pending.size) await Promise.allSettled([...pending]);
+    metrics.sendDidInviteUser = original;
+  }
+  if (failure) throw failure;
+  if (failures.length) throw failures[0];
+  return result;
+}
+
+module.exports = { ACTION, EMAILS, validateFixtureEnvironment, seedTestCmsAdmins, drainNativeAdminMetrics };
 
 if (require.main === module) {
   (async () => {
@@ -107,7 +137,7 @@ if (require.main === module) {
     });
     try {
       await app.load();
-      const result = await seedTestCmsAdmins(app);
+      const result = await drainNativeAdminMetrics(app, () => seedTestCmsAdmins(app));
       console.log(JSON.stringify({ fixture: "disposable-native-cms", ...result }));
     } finally {
       await app.destroy();

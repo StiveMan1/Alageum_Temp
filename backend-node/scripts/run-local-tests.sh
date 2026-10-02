@@ -5,8 +5,8 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 MODE=${1:---all}
 case "$MODE" in
-  --all|--backend-only|--integration-only) ;;
-  *) echo "Usage: $0 [--all|--backend-only|--integration-only]" >&2; exit 2 ;;
+  --all|--backend-only|--integration-only|--fixtures-only) ;;
+  *) echo "Usage: $0 [--all|--backend-only|--integration-only|--fixtures-only]" >&2; exit 2 ;;
 esac
 if [[ $(node -p 'process.versions.node.split(".")[0]') != 24 ]]; then
   echo 'Node.js 24 is required.' >&2; exit 2
@@ -75,6 +75,10 @@ for key in E2E_CMS_EDITOR_PASSWORD E2E_CMS_DENIED_PASSWORD; do
   export "$key=Aa1!$(node -p 'require("node:crypto").randomBytes(24).toString("hex")')"
 done
 cd "$ROOT/backend-node"
+if [[ "$MODE" == --fixtures-only ]]; then
+  DATABASE_URL="$ALAGEUM_CMS_BROWSER_DATABASE_URL" node scripts/seed-test-cms-admins.js 2>&1 | tee "$WORK/cms-fixtures.log"
+  exit 0
+fi
 if [[ "$MODE" != --integration-only ]]; then
   npm run check 2>&1 | tee "$WORK/backend-check.log"
 fi

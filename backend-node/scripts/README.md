@@ -33,3 +33,9 @@ node --test tests/cms-fixtures.test.js
 ```
 
 They are also included in the normal `npm run check` / `npm test` glob.
+
+The fixture CLI awaits native administrator metrics started by user creation
+before closing Strapi. This prevents an unawaited count query from racing pool
+shutdown, even when telemetry is disabled; metric failures still propagate.
+`run-local-tests.sh --fixtures-only` verifies the actual CLI in a new isolated
+cluster without building or launching the browser.

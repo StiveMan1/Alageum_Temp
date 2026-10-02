@@ -1,7 +1,7 @@
 "use strict";
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { ACTION, validateFixtureEnvironment, seedTestCmsAdmins } = require("../scripts/seed-test-cms-admins");
+const { ACTION, validateFixtureEnvironment, seedTestCmsAdmins, drainNativeAdminMetrics } = require("../scripts/seed-test-cms-admins");
 const valid = () => ({
   APP_ENV: "test", ALAGEUM_TEST_ADMIN_FIXTURES: "1",
   DATABASE_URL: "postgresql://local@127.0.0.1:5432/alageum_strapi_browser_test",
@@ -57,4 +57,27 @@ test("CMS cookie covers the native /admin API and /cms UI without disabling Secu
   const config = require("../config/admin")({ env: () => "x".repeat(40) });
   assert.equal(config.url, "/cms");
   assert.deepEqual(config.auth.cookie, { path: "/", sameSite: "lax" });
+});
+test("fixture shutdown waits for unawaited native metrics and restores the service", async () => {
+  let release, finished = false, reads = 0;
+  const original = async () => { await new Promise(resolve => { release = resolve; }); ++reads; };
+  const app = { admin: { services: { metrics: { sendDidInviteUser: original } } } };
+  const draining = drainNativeAdminMetrics(app, async () => {
+    app.admin.services.metrics.sendDidInviteUser(); // Mirrors Strapi user.create.
+    return "fixtures-created";
+  }).then(result => { finished = true; return result; });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(finished, false);
+  release();
+  assert.equal(await draining, "fixtures-created");
+  assert.equal(reads, 1);
+  assert.equal(app.admin.services.metrics.sendDidInviteUser, original);
+});
+test("fixture metric rejections are propagated without an unhandled rejection", async () => {
+  const original = async () => { throw new Error("native metric read failed"); };
+  const app = { admin: { services: { metrics: { sendDidInviteUser: original } } } };
+  await assert.rejects(drainNativeAdminMetrics(app, async () => {
+    app.admin.services.metrics.sendDidInviteUser();
+  }), /native metric read failed/);
+  assert.equal(app.admin.services.metrics.sendDidInviteUser, original);
 });
