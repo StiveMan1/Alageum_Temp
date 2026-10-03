@@ -569,7 +569,7 @@ test(
       },
     );
     await t.test(
-      "owner and tenant isolation protect detail and history; keys are owner/tenant scoped",
+      "detail and explicit mine remain owner scoped while default history shares tenant summaries",
       async () => {
         await assert.rejects(
           quotes.detail(
@@ -622,14 +622,95 @@ test(
           buyerList.body.items.some((item) => item.id === other.quote.id),
           false,
         );
-        await assert.rejects(
-          quotes.list(ctx(null, bearer(buyerPair))),
-          code("validation_error"),
-        );
-        await assert.rejects(
-          quotes.list(ctx(null, bearer(buyerPair), { mine: "false" })),
-          code("validation_error"),
-        );
+        for (const query of [{}, { mine: "false" }]) {
+          const request = ctx(null, bearer(adminPair), query);
+          await quotes.list(request);
+          assert.ok(request.body.items.some((item) => item.id === first.quote.id));
+          assert.equal(request.body.items.find((item) => item.id === first.quote.id).comment, "Test RFQ");
+          assert.equal(request.body.items.some((item) => item.id === other.quote.id), false);
+          assert.deepEqual(Object.keys(request.body).sort(), ["items", "page", "page_size", "total"]);
+          for (const item of request.body.items)
+            assert.deepEqual(Object.keys(item).sort(), ["comment", "created_at", "id", "item_count", "status"]);
+        }
+      },
+    );
+    await t.test(
+      "list and detail recheck authority after request authorization, without read writes",
+      async () => {
+        const member = await table(db, "memberships").where({ id: buyer.membership.id }).first();
+        const role = await table(db, "roles").where({ id: member.role_id }).first();
+        const before = await Promise.all(["quote_requests", "quote_request_items", "audit_events", "refresh_sessions"].map((name) => count(name)));
+        for (const [name, id, patch, restore, expected] of [
+          ["users", buyer.user.id, { is_active: false }, { is_active: true }, "authentication_required"],
+          ["memberships", member.id, { is_active: false }, { is_active: true }, "organization_access_denied"],
+          ["organizations", buyer.organization_id, { is_active: false }, { is_active: true }, "organization_access_denied"],
+          ["roles", role.id, { permissions: "[]" }, { permissions: JSON.stringify(role.permissions) }, "permission_denied"],
+          ["roles", role.id, { organization_id: DEMO.organizationB, code: "rfq_moved_fixture" }, { organization_id: role.organization_id, code: role.code }, "organization_access_denied"],
+        ]) for (const method of ["list", "detail"]) {
+          const raced = createQuotes({ db, catalog, audit, auth: {
+            permission: async () => {
+              await table(db, name).where({ id }).update(patch);
+              return buyer;
+            },
+          } });
+          const request = ctx(null, bearer(buyerPair), {}, { id: first.quote.id });
+          try {
+            await assert.rejects(raced[method](request), code(expected));
+            assert.equal(request.responseHeaders["Cache-Control"], "private, no-store");
+            assert.equal(request.body, undefined);
+          } finally { await table(db, name).where({ id }).update(restore); }
+        }
+        assert.deepEqual(await Promise.all(["quote_requests", "quote_request_items", "audit_events", "refresh_sessions"].map((name) => count(name))), before);
+      },
+    );
+    await t.test(
+      "accepted RFQ list and detail hold caller authority locks through read commit",
+      async () => {
+        const role = await table(db, "roles").where({ id: buyer.membership.role.id }).first();
+        for (const method of ["list", "detail"]) for (const [name, id, patch, restore, expected] of [
+          ["users", buyer.user.id, { is_active: false }, { is_active: true }, "authentication_required"],
+          ["memberships", buyer.membership.id, { is_active: false }, { is_active: true }, "organization_access_denied"],
+          ["organizations", buyer.organization_id, { is_active: false }, { is_active: true }, "organization_access_denied"],
+          ["roles", role.id, { permissions: "[]" }, { permissions: JSON.stringify(role.permissions) }, "permission_denied"],
+        ]) {
+          let release, entered;
+          const barrier = new Promise((resolve) => { release = resolve; });
+          const ready = new Promise((resolve) => { entered = resolve; });
+          const held = createQuotes({ catalog, audit, auth, db: {
+            transaction: (work) => db.transaction(async (tx) => {
+              const result = await work(tx);
+              entered();
+              await barrier;
+              return result;
+            }),
+          } });
+          const request = ctx(null, bearer(buyerPair), {}, { id: first.quote.id });
+          const reading = held[method](request), watchdog = setTimeout(release, 12000);
+          let revoke;
+          try {
+            await Promise.race([ready, reading.then(() => { throw new Error("Read finished before lock barrier"); })]);
+            revoke = table(db, name).where({ id }).update(patch).then(() => {});
+            const deadline = Date.now() + 8000;
+            let blocked = false;
+            while (Date.now() < deadline) {
+              const waiting = await db.raw("SELECT 1 FROM pg_stat_activity WHERE datname=current_database() AND wait_event_type='Lock' AND query LIKE ?", [`update%${name}%`]);
+              if (waiting.rows.length) { blocked = true; break; }
+              await new Promise((resolve) => setTimeout(resolve, 20));
+            }
+            assert.equal(blocked, true, `${method}: ${name} revocation waits for read commit`);
+            release();
+            await reading;
+            await revoke;
+            assert.equal(request.status, 200);
+            await assert.rejects(quotes[method](ctx(null, bearer(buyerPair), {}, { id: first.quote.id })), code(expected));
+          } finally {
+            release();
+            await reading;
+            if (revoke) await revoke;
+            clearTimeout(watchdog);
+            await table(db, name).where({ id }).update(restore);
+          }
+        }
       },
     );
     await t.test(

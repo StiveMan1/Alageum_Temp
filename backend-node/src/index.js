@@ -9,11 +9,13 @@ const auditModule = require("./domain/audit");
 const organizationProfileModule = require("./domain/organization-profile");
 const organizationMembersModule = require("./domain/organization-members");
 const { createCatalog } = require("./domain/catalog");
+const catalogFiltersModule = require("./domain/catalog-filters");
 const { createCmsCatalogAuthorizer } = require("./domain/cms-catalog");
 const { readCatalog } = require("./domain/catalog-source");
 const pageEditorial = require("./domain/page-editorial");
 module.exports = {
   async register({ strapi }) {
+    await catalogFiltersModule.preflightSchema(strapi.db.connection);
     await documentsModule.preflightSchema(strapi.db.connection);
     await invoicesModule.preflightSchema(strapi.db.connection);
     await pageEditorial.preflightPages(strapi);
@@ -30,13 +32,15 @@ module.exports = {
     await ordersModule.ensureSchema(db);
     await invoicesModule.ensureSchema(db);
     await documentsModule.ensureSchema(db);
+    await catalogFiltersModule.ensureSchema(db);
     await pageEditorial.completePageSchema(strapi);
     const auth = authModule.createAuth({
       db,
       config,
       audit: auditModule.audit,
     });
-    const catalog = createCatalog({ db, auth, audit: auditModule.audit });
+    const catalog = createCatalog({ db, auth, audit: auditModule.audit, compatibilityReads: true });
+    const catalogFilters = catalogFiltersModule.createCatalogFilters({ db });
     const quotes = quoteModule.createQuotes({
       db,
       auth,
@@ -54,7 +58,7 @@ module.exports = {
     const orders = ordersModule.createOrders({ db, auth, audit: auditModule.audit });
     const invoices = invoicesModule.createInvoices({ db, auth });
     const documents = documentsModule.createDocuments({ db, auth, audit: auditModule.audit });
-    strapi.alageum = { auth, catalog, quotes, cmsCatalog, organizationProfile, organizationMembers, support, orders, invoices, documents };
+    strapi.alageum = { auth, catalog, catalogFilters, quotes, cmsCatalog, organizationProfile, organizationMembers, support, orders, invoices, documents };
     if (config.importCatalog)
       strapi.log.info(
         "Reviewed catalog import: " +

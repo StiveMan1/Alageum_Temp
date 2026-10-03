@@ -1,6 +1,4 @@
 "use strict";
-const { AppError } = require("../../../domain/errors");
-const { pagination } = require("../../../domain/catalog");
 module.exports = ({ strapi }) => ({
   async health(ctx) {
     await strapi.db.connection.raw("SELECT 1");
@@ -22,13 +20,7 @@ module.exports = ({ strapi }) => ({
   products: (ctx) => strapi.alageum.catalog.list(ctx),
   product: (ctx) => strapi.alageum.catalog.get(ctx),
   compare: (ctx) => strapi.alageum.catalog.compare(ctx),
-  async filters(ctx) {
-    require("../../../domain/catalog-validation").parse(
-      require("../../../domain/catalog-validation").uuid,
-      ctx.query.category_id,
-    );
-    ctx.body = { items: [], ...pagination(ctx.query), total: 0 };
-  },
+  filters: (ctx) => strapi.alageum.catalogFilters.list(ctx),
   adminCategories: (ctx) => strapi.alageum.catalog.categoryList(ctx, true),
   adminProducts: (ctx) => strapi.alageum.catalog.list(ctx, true),
   adminProduct: (ctx) => strapi.alageum.catalog.get(ctx, true),

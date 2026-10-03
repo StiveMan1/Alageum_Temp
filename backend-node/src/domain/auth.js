@@ -4,6 +4,7 @@ const { createHash, randomBytes, randomUUID } = require("node:crypto");
 const jwt = require("jsonwebtoken");
 const argon2 = require("argon2");
 const { AppError } = require("./errors");
+const { pagination, requestPagination } = require("./legacy-query");
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PLATFORM_PERMISSIONS = new Set(["catalog.manage"]);
@@ -32,18 +33,6 @@ function uuid(value, name = "ID") {
   if (typeof value !== "string" || !UUID.test(value))
     fail(`${name} must be a UUID`);
   return value.toLowerCase();
-}
-function pagination(query = {}) {
-  const positive = (value, fallback, max, label) => {
-    if (value === undefined) return fallback;
-    if (!/^[1-9]\d*$/.test(String(value)) || Number(value) > max)
-      fail(`Invalid ${label}`);
-    return Number(value);
-  };
-  return {
-    page: positive(query.page, 1, 1000000, "page"),
-    page_size: positive(query.page_size, 20, 100, "page_size"),
-  };
 }
 function header(ctx, name) {
   return typeof ctx.get === "function"
@@ -554,7 +543,7 @@ function createAuth({ db, config, audit }) {
   }
   async function organizations(ctx) {
     const user = await currentUser(ctx);
-    const page = pagination(ctx.query);
+    const page = requestPagination(ctx);
     const memberships = await table(db, "memberships")
       .where({ user_id: user.id, is_active: true })
       .orderBy("created_at")
@@ -582,11 +571,11 @@ function createAuth({ db, config, audit }) {
         });
     }
     ctx.body = {
-      items: items.slice(
-        (page.page - 1) * page.page_size,
-        page.page * page.page_size,
-      ),
-      ...page,
+      items: page.offset >= BigInt(items.length)
+        ? []
+        : items.slice(Number(page.offset), Number(page.offset) + page.page_size),
+      page: page.page,
+      page_size: page.page_size,
       total: items.length,
     };
     privateResponse(ctx);

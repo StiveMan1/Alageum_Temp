@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { randomUUID } from 'node:crypto';
 
 // No route interception: this test requires the running Node/Strapi backend and
 // its isolated seeded PostgreSQL database. Mocked interruption cases remain in
@@ -78,4 +79,71 @@ test('real Node RFQ survives anonymous handoff, save, retry, reload and own list
   const screenshotPath = testInfo.outputPath('node-rfq-saved.png');
   await page.screenshot({ path: screenshotPath, fullPage: true, animations: 'disabled' });
   await testInfo.attach('node-rfq-saved', { path: screenshotPath, contentType: 'image/png' });
+});
+
+test('organization summary compatibility keeps customer history and printable detail owner-only', async ({ page, request }, testInfo) => {
+  async function login(email) {
+    const response = await request.post(`${api}/auth/login`, { data: { email, password: 'ChangeMe123!' } });
+    expect(response.status()).toBe(200);
+    return (await response.json()).access_token;
+  }
+  const ownerToken = await login('buyer@demo.example');
+  const peerToken = await login('admin@demo.example');
+  const productResponse = await request.get(`${api}/catalog/products/tmg-400`);
+  expect(productResponse.status()).toBe(200);
+  const product = await productResponse.json();
+  async function save(token, label) {
+    const response = await request.post(`${api}/quotes/catalog`, {
+      headers: { Authorization: `Bearer ${token}`, 'Idempotency-Key': randomUUID() },
+      data: { comment: `Fictitious ${label} ${testInfo.project.name} ${randomUUID()}`, items: [{ product_id: product.id, quantity: '1.000' }] },
+    });
+    expect(response.status()).toBe(201);
+    return response.json();
+  }
+  const own = await save(ownerToken, 'own request');
+  const peer = await save(peerToken, 'peer summary comment');
+  const ownerHeaders = { Authorization: `Bearer ${ownerToken}` };
+  const summaries = await request.get(`${api}/quotes`, { headers: ownerHeaders });
+  expect(summaries.status()).toBe(200);
+  const summary = (await summaries.json()).items.find(item => item.id === peer.id);
+  expect(summary).toBeTruthy();
+  expect(Object.keys(summary).sort()).toEqual(['comment', 'created_at', 'id', 'item_count', 'status']);
+  expect(summary.comment).toBe(peer.comment);
+  const peerDetail = await request.get(`${api}/quotes/${peer.id}`, { headers: ownerHeaders });
+  expect(peerDetail.status()).toBe(404);
+
+  const listRequests = [];
+  page.on('request', outbound => {
+    const url = new URL(outbound.url());
+    if (outbound.method() === 'GET' && url.href.startsWith(api) && url.pathname.endsWith('/quotes')) listRequests.push(url);
+  });
+  await page.goto('/login?next=%2Fb2b%2Fquotes');
+  await page.getByLabel('Email', { exact: true }).fill('buyer@demo.example');
+  await page.getByLabel('Пароль', { exact: true }).fill('ChangeMe123!');
+  await page.getByRole('button', { name: 'Войти', exact: true }).click();
+  await expect(page).toHaveURL(/\/b2b\/quotes$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Мои запросы КП', exact: true })).toBeVisible();
+  await expect(page.getByText(own.comment, { exact: true })).toBeVisible();
+  await expect(page.getByText(peer.comment, { exact: true })).toHaveCount(0);
+  expect(listRequests.length).toBeGreaterThan(0);
+  for (const url of listRequests) {
+    expect(url.searchParams.get('mine')).toBe('true');
+    expect(url.searchParams.get('page_size')).toBe('20');
+  }
+  await page.screenshot({ path: testInfo.outputPath('node-rfq-own-history.png'), fullPage: true, animations: 'disabled' });
+
+  await page.goto(`/b2b/quotes/${peer.id}`);
+  await expect(page.locator('.quotes-page').getByRole('alert')).toContainText('Запрос не найден');
+  await expect(page.getByText(peer.comment, { exact: true })).toHaveCount(0);
+  await page.goto(`/b2b/quotes/${peer.id}/print`);
+  await expect(page.locator('.quotes-page').getByRole('alert')).toContainText('Запрос не найден');
+  await expect(page.locator('[data-quote-print-document]')).toHaveCount(0);
+  await expect(page.locator('[data-quote-print-paper]')).not.toHaveAttribute('data-authorized', 'true');
+  await page.screenshot({ path: testInfo.outputPath('node-rfq-peer-print-denied.png'), fullPage: true, animations: 'disabled' });
+  await page.goBack();
+  await expect(page.locator('.quotes-page').getByRole('alert')).toContainText('Запрос не найден');
+  await page.goBack();
+  await expect(page.getByText(own.comment, { exact: true })).toBeVisible();
+  await expect(page.getByText(peer.comment, { exact: true })).toHaveCount(0);
+  for (const url of listRequests) expect(url.searchParams.get('mine')).toBe('true');
 });

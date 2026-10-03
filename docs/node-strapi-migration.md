@@ -246,6 +246,8 @@ See [the security review and current dependency gate](node-strapi-security-revie
 
 See [checkpoint validation](node-strapi-validation.md) for exact passed, failed, and never-run checks on this local implementation.
 
+The subsequent [legacy read-contract corrections and route ledger](node-legacy-read-compatibility.md) distinguish route presence from behavioral acceptance, document the seven pagination/filter/RFQ corrections, and retain the finite missing-route and production-readiness backlog.
+
 
 ## Reimplemented editorial Page slice
 

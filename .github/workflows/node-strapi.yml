@@ -16,6 +16,7 @@ on:
       - 'docs/node-document-metadata.md'
       - 'docs/node-organization-members.md'
       - 'docs/node-session-read-invalidation.md'
+      - 'docs/node-legacy-read-compatibility.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -35,6 +36,7 @@ on:
       - 'docs/node-document-metadata.md'
       - 'docs/node-organization-members.md'
       - 'docs/node-session-read-invalidation.md'
+      - 'docs/node-legacy-read-compatibility.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -343,7 +345,22 @@ jobs:
           cd frontend
           npx playwright test --config=playwright.cms.config.js
           npm run test:e2e:admin -- --max-failures=1
-          npx playwright test --config=playwright.node.config.js --max-failures=1
+          PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/node-rfq-cases.json npx playwright test --config=playwright.node.config.js --max-failures=1 --reporter=github,json
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('playwright-report/node-rfq-cases.json'));
+          const cases = [];
+          function visit(suite) {
+            for (const spec of suite.specs || []) for (const test of spec.tests || []) cases.push(test);
+            for (const child of suite.suites || []) visit(child);
+          }
+          for (const suite of report.suites) visit(suite);
+          assert.equal(cases.length, 4);
+          assert.equal(report.stats.expected, 4);
+          for (const field of ['unexpected', 'skipped', 'flaky']) assert.equal(report.stats[field], 0);
+          assert.ok(cases.every(test => test.expectedStatus === 'passed' && test.results.length === 1 && test.results[0].status === 'passed' && test.results[0].retry === 0));
+          NODE
           # The legacy interruption suite intentionally tests both demo and API
           # source modes. The live API-default build disallows static overrides.
           # Its config starts the separate static-default production build;

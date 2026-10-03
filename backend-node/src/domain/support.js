@@ -2,6 +2,7 @@
 
 const { randomUUID } = require("node:crypto");
 const { AppError } = require("./errors");
+const { pagination, requestPagination } = require("./legacy-query");
 const { table, privateResponse, assertActiveContext } = require("./auth");
 const READ = "ticket.read", CREATE = "ticket.create";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -44,42 +45,6 @@ function validateTicket(input) {
   for (const key of Object.keys(input)) if (!FIELDS.includes(key)) errors.push(issue("extra_forbidden", ["body", key], "Extra inputs are not permitted", input[key]));
   if (errors.length) invalid(errors);
   return { category_id: categoryUuid(input.category_id), subject: input.subject, message: input.message };
-}
-
-// The legacy FastAPI route ignores unknown query keys, uses the last duplicate
-// scalar, accepts integer strings such as +01 / 1.0 / 1_000, and clamps size.
-// BigInt prevents overflow while deciding that a far-away page is empty; rawJSON
-// preserves the original integer on the wire even beyond JS's safe range.
-function pagination(query = {}) {
-  const errors = [];
-  const positive = (raw, fallback, field) => {
-    const value = Array.isArray(raw) ? raw.at(-1) : raw;
-    if (value === undefined) return fallback;
-    const text = typeof value === "string" ? value.replace(/^\p{White_Space}+|\p{White_Space}+$/gu, "") : String(value);
-    const normalized = text.replace(/^([+-]?)0[0_]*(?=[1-9])/, "$1");
-    if (typeof value !== "string" || !/^[+-]?\d(?:_?\d)*(?:\.0+)?$/.test(normalized)) {
-      errors.push(issue("int_parsing", ["query", field], "Input should be a valid integer, unable to parse string as an integer", value)); return fallback;
-    }
-    const integer = normalized.replaceAll("_", "").replace(/\.0+$/, "");
-    if (integer.replace(/^[+-]?0*/, "").length > 4300) {
-      const bare = /^\d+(?:\.0+)?$/.test(text);
-      errors.push(issue(bare ? "int_parsing_size" : "int_parsing", ["query", field], bare ? "Unable to parse input string as an integer, exceeded maximum size" : "Input should be a valid integer, unable to parse string as an integer", value)); return fallback;
-    }
-    const parsed = BigInt(integer);
-    if (parsed < 1n) errors.push(issue("greater_than_equal", ["query", field], "Input should be greater than or equal to 1", value));
-    return parsed;
-  };
-  const pageValue = positive(query.page, 1n, "page"), sizeValue = positive(query.page_size, 50n, "page_size");
-  if (errors.length) invalid(errors);
-  const page_size = Number(sizeValue > 100n ? 100n : sizeValue);
-  return { page: pageValue <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(pageValue) : JSON.rawJSON(pageValue.toString()), page_size, offset: (pageValue - 1n) * BigInt(page_size) };
-}
-
-function requestPagination(ctx) {
-  if (typeof ctx.querystring !== "string") return pagination(ctx.query);
-  // Strapi's nested qs parser changes bracket keys and truncates after 1000
-  // parameters. FastAPI only consumes the last exact scalar query key.
-  return pagination(Object.fromEntries([...new URLSearchParams(ctx.querystring)].filter(([key]) => key === "page" || key === "page_size")));
 }
 
 const shape = {
