@@ -133,15 +133,15 @@ test('organization summary compatibility keeps customer history and printable de
   await page.screenshot({ path: testInfo.outputPath('node-rfq-own-history.png'), fullPage: true, animations: 'disabled' });
 
   await page.goto(`/b2b/quotes/${peer.id}`);
-  await expect(page.getByRole('alert')).toContainText('Запрос не найден');
+  await expect(page.locator('.quotes-page').getByRole('alert')).toContainText('Запрос не найден');
   await expect(page.getByText(peer.comment, { exact: true })).toHaveCount(0);
   await page.goto(`/b2b/quotes/${peer.id}/print`);
-  await expect(page.getByRole('alert')).toContainText('Запрос не найден');
+  await expect(page.locator('.quotes-page').getByRole('alert')).toContainText('Запрос не найден');
   await expect(page.locator('[data-quote-print-document]')).toHaveCount(0);
   await expect(page.locator('[data-quote-print-paper]')).not.toHaveAttribute('data-authorized', 'true');
   await page.screenshot({ path: testInfo.outputPath('node-rfq-peer-print-denied.png'), fullPage: true, animations: 'disabled' });
   await page.goBack();
-  await expect(page.getByRole('alert')).toContainText('Запрос не найден');
+  await expect(page.locator('.quotes-page').getByRole('alert')).toContainText('Запрос не найден');
   await page.goBack();
   await expect(page.getByText(own.comment, { exact: true })).toBeVisible();
   await expect(page.getByText(peer.comment, { exact: true })).toHaveCount(0);
