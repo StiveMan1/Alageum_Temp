@@ -98,3 +98,27 @@ directory, whose stable report is `results.json`; never raw databases, credentia
 or browser authentication traces. See
 [`docs/node-invoice-metadata.md`](../../docs/node-invoice-metadata.md) for the
 six-field read-only contract, schema preflight and evidence gate.
+
+## Separate document metadata fixtures
+
+`bash backend-node/scripts/run-document-tests.sh --browser` creates a fresh
+loopback PostgreSQL cluster with exactly `alageum_strapi_document_test`, refusing
+reused/non-test/remote inputs before Strapi starts. It inserts only fictitious
+document/type/version/file metadata and six least-privilege B2B users. No bytes,
+providers, signed URLs or real documents are created or fetched.
+
+The runner requires 24 backend checks of real HTTP/PostgreSQL list/detail behavior, tenant isolation,
+shared authority locks, precise audit boundaries, metadata constraints and drift.
+It removes document/version uniqueness to prove actual pre-sync startup refusal,
+explicitly restores that fixture constraint, and verifies a complete restart.
+Browser acceptance requires all 26 runner checks: those 24 backend checks, an
+isolated `.next-document` production build and all 26 browser cases (13 desktop
+and 13 mobile), with exactly six list/empty/retry PNGs.
+`--backend-only` is local diagnostic mode and is forbidden in CI.
+
+Publish only sanitized `alageum-document-tests.*/evidence`, whose stable report is
+`results.json`; never raw databases, credentials or authentication traces. The
+existing dependency security gate remains blocked; functional acceptance does
+not approve a production cutover. See
+[`docs/node-document-metadata.md`](../../docs/node-document-metadata.md) for the
+seven-field metadata contract, audit schema limits and evidence requirements.
