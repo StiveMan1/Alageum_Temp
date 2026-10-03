@@ -13,12 +13,15 @@ export function createInvoiceRead({ load, isCurrent, onChange }) {
   let controller = null, disposed = false;
   return {
     async reload() {
-      if (disposed || !isCurrent()) return;
+      if (disposed) return;
+      // Even an obsolete scope must lose old data and request ownership.
       controller?.abort();
+      controller = null;
+      onChange(initialInvoiceRead());
+      if (!isCurrent()) return;
       const request = new AbortController();
       controller = request;
       const current = () => !disposed && !request.signal.aborted && controller === request && isCurrent();
-      onChange(initialInvoiceRead());
       try {
         const value = await load({ signal: request.signal });
         if (current()) onChange({ status: 'ready', value, error: null });

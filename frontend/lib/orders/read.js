@@ -15,12 +15,15 @@ export function createOrderRead({ load, isCurrent, onChange }) {
   let controller = null, disposed = false;
   return {
     async reload() {
-      if (disposed || !isCurrent()) return;
+      if (disposed) return;
+      // Even an obsolete scope must lose old data and request ownership.
       controller?.abort();
+      controller = null;
+      onChange(initialOrderRead());
+      if (!isCurrent()) return;
       const request = new AbortController();
       controller = request;
       const current = () => !disposed && !request.signal.aborted && controller === request && isCurrent();
-      onChange(initialOrderRead());
       try {
         const value = await load({ signal: request.signal });
         if (current()) onChange({ status: 'ready', value, error: null });

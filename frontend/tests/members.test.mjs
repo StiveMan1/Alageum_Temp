@@ -154,8 +154,8 @@ test('disposed pages and lost permission scopes cannot publish or retry pending 
     const reading = flow.reload();
     if (dispose) flow.dispose(); else current = false;
     if (fail) pending.reject(new Error('late error')); else pending.resolve(page);
-    await reading; await flow.reload(); assert.equal(history.length, 1); assert.equal(calls, 1);
-    if (dispose) assert.equal(signal.aborted, true);
+    await reading; await flow.reload(); assert.equal(history.length, dispose ? 1 : 2); assert.equal(calls, 1);
+    assert.equal(signal.aborted, true);
   }
 });
 

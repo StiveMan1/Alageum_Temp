@@ -100,10 +100,13 @@ full backend and PostgreSQL regressions additionally verify unchanged default
 admin/accountant/denied-role behavior.
 
 Browser acceptance requires all 21 runner checks: the 19 backend checks, a
-production `.next-invoice` build and 24 browser cases (12 each for
+production `.next-invoice` build and 28 browser cases (14 each for
 `invoices-desktop` and `invoices-mobile`). The cases cover permission, empty,
 error/retry, malformed DTO, null/count compatibility, refresh/expiry, login and
-organization interruptions, and Back/Forward races. The dedicated config is
+organization interruptions, Back/Forward races, and controlled persisted-pageshow
+reconciliation after an unannounced tenant change or logout. These controlled
+events are not native BFCache or first-paint privacy evidence; see
+[`node-session-read-invalidation.md`](node-session-read-invalidation.md). The dedicated config is
 excluded from broad/default and Vercel discovery, whose count remains 58.
 The real 20/minute login limiter stays active, with fixture cooldown and a
 61-second replacement/mobile-worker cooldown. There is no auth bypass or retry.

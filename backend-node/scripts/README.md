@@ -45,7 +45,7 @@ cluster without building or launching the browser.
 `bash backend-node/scripts/run-profile-tests.sh --browser` (from repository root)
 creates a new local PostgreSQL cluster and the exact `alageum_strapi_profile_test`
 database, starts actual Strapi, creates only fictitious B2B profile users, builds
-Next into `.next-profile`, and runs the explicit 16-case desktop/mobile profile
+Next into `.next-profile`, and runs the explicit 17-case desktop/mobile profile
 suite. Set `PG_BIN` to the installed PostgreSQL 16+ binaries and use Node 24 with
 locked dependencies and Playwright Chromium already installed. The runner ignores
 the caller's database URL and generates fresh runtime secrets/passwords.
@@ -91,7 +91,7 @@ reused/non-test/remote inputs before Strapi startup, and inserts only fictitious
 invoice metadata. No real financial feed or default-role provisioning is added.
 
 Acceptance requires 19 backend/HTTP/PostgreSQL checks, an isolated `.next-invoice`
-production build, and 24 browser cases (12 desktop + 12 mobile), with exactly six
+production build, and 28 browser cases (14 desktop + 14 mobile), with exactly six
 explicit list/empty/retry PNGs. `--backend-only` is local diagnostic mode and is
 forbidden in CI. Publish only the sanitized `alageum-invoice-tests.*/evidence`
 directory, whose stable report is `results.json`; never raw databases, credentials

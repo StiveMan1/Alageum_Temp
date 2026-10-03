@@ -21,11 +21,16 @@ export function getSessionGeneration() {
 }
 
 export function subscribeSession(listener) {
+  // A restored document may have missed a session notification while inactive.
+  // Let the existing snapshot fingerprint decide whether its boundary changed.
+  const restored = event => { if (event.persisted) listener(event); };
   window.addEventListener("alageum:session-changed", listener);
   window.addEventListener("storage", listener);
+  window.addEventListener("pageshow", restored);
   return () => {
     window.removeEventListener("alageum:session-changed", listener);
     window.removeEventListener("storage", listener);
+    window.removeEventListener("pageshow", restored);
   };
 }
 

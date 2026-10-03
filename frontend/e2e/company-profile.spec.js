@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 // Dedicated real Strapi/PostgreSQL fixture suite. Interceptions below delay real
 // replies or inject a named failure; the primary save/reload has no interception.
 // Credentials and tokens stay in memory. Trace/video/automatic screenshots are off.
+// Controlled pageshow is synthetic: pinned Playwright disables Chromium BFCache.
 const api = process.env.E2E_PROFILE_API_URL?.replace(/\/$/, '');
 const endpoint = `${api}/organizations/current/profile`;
 const emails = Object.fromEntries(['editor', 'readonly', 'updateonly', 'denied', 'other', 'multi'].map(kind => [kind, `profile-${kind}@fixture.invalid`]));
@@ -195,6 +196,38 @@ test('repeated clicks create one write while pending', async ({ page }) => {
   expect(held.count()).toBe(1); await held.release();
   await expect(company(page).getByRole('status')).toContainText('Профиль компании сохранён');
   expect(held.count()).toBe(1);
+});
+
+test('same-session controlled persisted pageshow preserves an unsaved company draft without mutation replay', async ({ page }) => {
+  await login(page); await edit(page).click();
+  const requests = [], mutations = [];
+  page.on('request', request => {
+    if (request.url() === endpoint && ['GET', 'PATCH'].includes(request.method())) requests.push(request.method());
+    if (request.url().startsWith(`${api}/`) && ['POST', 'PATCH'].includes(request.method())) mutations.push({ method: request.method(), url: request.url() });
+  });
+  await field(page, names.name).fill('Fictitious saved before controlled pageshow');
+  const savedReply = response(page, 'PATCH'); await save(page).click();
+  const saved = await savedReply; expect(saved.status()).toBe(200);
+  const snapshot = await saved.json();
+  await expect(company(page).getByRole('status')).toContainText('Профиль компании сохранён');
+  await edit(page).click();
+  await field(page, names.name).fill('Fictitious unsaved controlled pageshow draft');
+  await field(page, names.business_contact_name).fill('Fictitious unsaved draft contact');
+  await page.evaluate(() => {
+    // Synthetic lifecycle signal with identical storage, not native BFCache.
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
+  await expect(field(page, names.name)).toHaveValue('Fictitious unsaved controlled pageshow draft');
+  await expect(field(page, names.business_contact_name)).toHaveValue('Fictitious unsaved draft contact');
+  await expect(save(page)).toBeEnabled();
+  await expect(company(page)).toHaveAttribute('aria-busy', 'false');
+  expect(requests).toEqual(['PATCH']);
+  expect(mutations).toEqual([{ method: 'PATCH', url: endpoint }]);
+  expect((await readCurrent(page)).body).toEqual(snapshot);
+  expect(requests).toEqual(['PATCH', 'GET']);
+  expect(mutations).toEqual([{ method: 'PATCH', url: endpoint }]);
+  await expect(field(page, names.name)).toHaveValue('Fictitious unsaved controlled pageshow draft');
 });
 
 test('cancel discards draft and late write cannot close a newer edit', async ({ page }) => {
