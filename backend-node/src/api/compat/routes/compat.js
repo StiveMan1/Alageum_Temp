@@ -7,6 +7,7 @@ const routes = [
   ["POST", "/auth/logout", "logout"],
   ["GET", "/auth/me", "me"],
   ["GET", "/organizations", "organizations"],
+  ["GET", "/organizations/members", "organizationMembers"],
   ["GET", "/organizations/current/profile", "organizationProfile"],
   ["PATCH", "/organizations/current/profile", "updateOrganizationProfile"],
   ["GET", "/catalog/categories", "categories"],

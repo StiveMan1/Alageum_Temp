@@ -2,7 +2,7 @@
 const nextConfig = {
   // Keep the static-default interruption test build separate from the live
   // API-default application build. Both are real production Next builds.
-  distDir: process.env.ALAGEUM_DOCUMENT_BUILD === "1" ? ".next-document" : process.env.ALAGEUM_INVOICE_BUILD === "1" ? ".next-invoice" : process.env.ALAGEUM_ORDERS_BUILD === "1" ? ".next-orders" : process.env.ALAGEUM_SUPPORT_BUILD === "1" ? ".next-support" : process.env.ALAGEUM_ORGANIZATION_BUILD === "1" ? ".next-organization" : process.env.ALAGEUM_PROFILE_BUILD === "1" ? ".next-profile" : process.env.ALAGEUM_QUOTES_BUILD === "1" ? ".next-quotes" : ".next",
+  distDir: process.env.ALAGEUM_MEMBER_BUILD === "1" ? ".next-member" : process.env.ALAGEUM_DOCUMENT_BUILD === "1" ? ".next-document" : process.env.ALAGEUM_INVOICE_BUILD === "1" ? ".next-invoice" : process.env.ALAGEUM_ORDERS_BUILD === "1" ? ".next-orders" : process.env.ALAGEUM_SUPPORT_BUILD === "1" ? ".next-support" : process.env.ALAGEUM_ORGANIZATION_BUILD === "1" ? ".next-organization" : process.env.ALAGEUM_PROFILE_BUILD === "1" ? ".next-profile" : process.env.ALAGEUM_QUOTES_BUILD === "1" ? ".next-quotes" : ".next",
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,

@@ -9,7 +9,8 @@ the migration CI validates both applications on Node.js 24.
 
 The implemented boundary covers the compatibility catalog API, catalog editor,
 demo B2B identity/organization access, catalog RFQ persistence and the bounded
-[three-route customer support API](node-support-tickets.md). The Strapi CMS
+[three-route customer support API](node-support-tickets.md) and
+[read-only organization members](node-organization-members.md). The Strapi CMS
 is served at `/cms`; the existing Next catalog editor stays at `/admin/catalog`.
 These are distinct interfaces and authentication systems. Strapi administrators
 are not B2B demo users. The native CMS uses its own administrator registration

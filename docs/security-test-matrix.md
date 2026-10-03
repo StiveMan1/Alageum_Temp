@@ -58,3 +58,17 @@ default backend or E2E suite; it does not replace a production penetration test.
 Browser assertions run under `.github/workflows/catalog-rfq.yml` with bounded dependency, browser
 installation, server readiness and test deadlines. Presence here is a coverage mapping; consult
 [catalogue RFQ validation](catalog-rfq-validation.md) for which checks actually ran.
+
+## Node organization member reads
+
+See [the bounded member contract](node-organization-members.md) for the exact
+GET-only scope. The dedicated runner covers selected-tenant isolation, exact
+manage-users authorization, private headers, no CMS identity crossover, fresh
+and held caller authority locks, legacy pagination and inactive/global target
+parity. Cross-tenant target roles and missing/malformed relationship projections
+fail the affected page generically without identity/foreign-label disclosure.
+Every read path preserves identity, session, audit and business rows; no schema
+repair, role grants or writes are introduced. The fixture browser suite checks
+permission-gated navigation, strict DTO errors, history/paging, stale tenant and
+session responses, canceled selection, and escaped mobile/desktop presentation.
+Functional checks do not clear the existing blocked dependency security gate.
