@@ -1,4 +1,5 @@
 "use strict";
+const { recoverQuoteJsonScalar } = require("../src/domain/quote-body");
 module.exports = ({ env }) => [
   "strapi::logger",
   "strapi::errors",
@@ -29,6 +30,7 @@ module.exports = ({ env }) => [
       formLimit: "1mb",
       textLimit: "1mb",
       formidable: { maxFileSize: 1024 * 1024 },
+      onError: recoverQuoteJsonScalar,
     },
   },
   "strapi::session",

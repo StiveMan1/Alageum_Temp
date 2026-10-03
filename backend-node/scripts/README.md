@@ -1,5 +1,22 @@
 # Disposable verification fixtures
 
+## Isolated catalog quote quota
+
+`bash backend-node/scripts/run-quote-limit-tests.sh` creates its own loopback
+cluster and exact `alageum_strapi_quote_limit_test` database. Use Node 24, locked
+backend dependencies and PostgreSQL 16+ in `PG_BIN`. It refuses reused databases
+before Strapi initialization, clears inherited libpq connection overrides and
+uses only generated disposable secrets and fictitious actors.
+
+The runtime uses real source socket addresses and waits for the real 60-second
+window. It never raises, clears or replaces the application's default quota.
+Only the printed `alageum-quote-limit-tests.*/evidence` directory is publishable;
+application, confirmed cluster removal and private-fixture cleanup must all pass.
+The separate hosted browser case uses the already-built frontend/backend after
+the existing Node RFQ suite. See
+[`docs/node-quote-throttle.md`](../../docs/node-quote-throttle.md) for its exact
+scope, response contract and remaining production limitations.
+
 ## Isolated system reads and database outage
 
 `bash backend-node/scripts/run-system-tests.sh` runs all 23 system HTTP/PostgreSQL

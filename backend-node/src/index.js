@@ -5,6 +5,7 @@ const ordersModule = require("./domain/orders");
 const invoicesModule = require("./domain/invoices");
 const documentsModule = require("./domain/documents");
 const quoteModule = require("./domain/quotes");
+const { createQuoteRateLimiter } = require("./domain/quote-rate-limit");
 const auditModule = require("./domain/audit");
 const organizationProfileModule = require("./domain/organization-profile");
 const organizationMembersModule = require("./domain/organization-members");
@@ -49,6 +50,9 @@ module.exports = {
       catalog,
       audit: auditModule.audit,
     });
+    // One policy instance for quote creation; a future generic adapter must use
+    // this same bucket. No external quota override or reset surface is exposed.
+    const quoteCreateLimit = createQuoteRateLimiter();
     const cmsCatalog = createCatalog({
       db,
       authorizer: createCmsCatalogAuthorizer({ strapi }),
@@ -61,7 +65,7 @@ module.exports = {
     const invoices = invoicesModule.createInvoices({ db, auth });
     const documents = documentsModule.createDocuments({ db, auth, audit: auditModule.audit });
     const system = systemModule.createSystem({ db, metrics: strapi.alageumMetrics, environment: config.env });
-    strapi.alageum = { auth, catalog, catalogFilters, quotes, cmsCatalog, organizationProfile, organizationMembers, support, orders, invoices, documents, system };
+    strapi.alageum = { auth, catalog, catalogFilters, quotes, quoteCreateLimit, cmsCatalog, organizationProfile, organizationMembers, support, orders, invoices, documents, system };
     if (config.importCatalog)
       strapi.log.info(
         "Reviewed catalog import: " +
