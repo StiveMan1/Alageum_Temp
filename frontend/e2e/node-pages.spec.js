@@ -75,7 +75,8 @@ async function writeDraft(page, title, body) {
   await bodyField(page).click();
   await bodyField(page).press('ControlOrMeta+A');
   await bodyField(page).pressSequentially(body);
-  // Strapi 5.56 flushes its debounced Slate form state on blur.
+  // Strapi paragraphs consume Tab. The title fill below moves focus outside
+  // Blocks; the save helper verifies the actual submitted form state as well.
   await bodyField(page).press('Tab');
   await titleField(page).fill(title);
   // Native drag controls are siblings of the paragraph inside Slate. Assert
@@ -89,6 +90,7 @@ async function saveDraft(page, expected, documentId) {
   await action(page, 'Save').click();
   const response = await saved;
   expect(response.status()).toBe(documentId ? 200 : 201);
+  expect(response.request().postDataJSON(), 'Native Page must submit the complete entered Blocks body').toMatchObject(expected);
   const { data } = await response.json();
   expect(data).toMatchObject({ ...expected, publishedAt: null });
   expect(data.documentId).toMatch(/^[a-z0-9]+$/);

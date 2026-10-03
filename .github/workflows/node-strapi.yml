@@ -18,6 +18,7 @@ on:
       - 'docs/node-session-read-invalidation.md'
       - 'docs/node-legacy-read-compatibility.md'
       - 'docs/node-system-reads.md'
+      - 'docs/node-quote-throttle.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -39,6 +40,7 @@ on:
       - 'docs/node-session-read-invalidation.md'
       - 'docs/node-legacy-read-compatibility.md'
       - 'docs/node-system-reads.md'
+      - 'docs/node-quote-throttle.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -52,6 +54,65 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  quote-throttle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend-node/package-lock.json
+      - name: Install locked backend dependencies
+        working-directory: backend-node
+        run: npm ci
+      - name: Prepare isolated quote throttle runtime and PostgreSQL tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/quote-throttle"
+          printf 'TMPDIR=%s\n' "$RUNNER_TEMP/quote-throttle" >> "$GITHUB_ENV"
+          pg_bin=$(pg_config --bindir)
+          for command in initdb pg_ctl createdb; do test -x "$pg_bin/$command"; done
+          printf 'PG_BIN=%s\n' "$pg_bin" >> "$GITHUB_ENV"
+      - name: Verify actual quote quotas socket identity expiry and persistence
+        timeout-minutes: 7
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=45s 340s bash backend-node/scripts/run-quote-limit-tests.sh
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const runs = fs.readdirSync(process.env.TMPDIR).filter(name => name.startsWith('alageum-quote-limit-tests.'));
+          assert.equal(runs.length, 1);
+          const directory = path.join(process.env.TMPDIR, runs[0], 'evidence');
+          const report = JSON.parse(fs.readFileSync(path.join(directory, 'results.json')));
+          assert.equal(report.kind, 'isolated-catalog-quote-throttle');
+          assert.equal(report.status, 'passed');
+          assert.equal(report.backendChecks, 11);
+          assert.equal(report.checks.length, 11);
+          assert.ok(report.checks.every(check => check.status === 'passed'));
+          for (const key of ['cleanup', 'clusterCleanup', 'privateFixtureCleanup']) assert.equal(report[key], 'passed');
+          assert.ok(report.realWindowElapsedMs >= 60000);
+          assert.equal(report.createdQuotes, 14);
+          assert.equal(report.quoteAuditEvents, 14);
+          assert.equal(report.httpRequests, report.generatedRequestIds);
+          assert.deepEqual(fs.readdirSync(directory).sort(), ['results.json', 'strapi.log']);
+          assert.equal(Object.hasOwn(report, 'evidence'), false);
+          NODE
+      - name: Retain sanitized quote throttle evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: quote-throttle-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/quote-throttle/alageum-quote-limit-tests.*/evidence/
+          retention-days: 14
+
   system-reads:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -355,6 +416,15 @@ jobs:
         run: |
           npm run lint
           NEXT_PUBLIC_CATALOG_SOURCE=static npm run test:unit
+          mkdir -p playwright-report
+          npx --no-install playwright test --list > playwright-report/legacy-discovery.log
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const discovery = fs.readFileSync('playwright-report/legacy-discovery.log', 'utf8');
+          assert.match(discovery, /Total: [1-9]\d* tests/);
+          assert.doesNotMatch(discovery, /node-quote-throttle\.spec\.js/);
+          NODE
       - name: Build frontend against Node API
         working-directory: frontend
         run: npm run build
@@ -424,6 +494,38 @@ jobs:
           assert.equal(report.stats.expected, 4);
           for (const field of ['unexpected', 'skipped', 'flaky']) assert.equal(report.stats[field], 0);
           assert.ok(cases.every(test => test.expectedStatus === 'passed' && test.results.length === 1 && test.results[0].status === 'passed' && test.results[0].retry === 0));
+          NODE
+          npx --no-install playwright test --config=playwright.quote-throttle.config.js --max-failures=1
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('playwright-report/quote-throttle-cases.json'));
+          const cases = [];
+          function visit(suite) {
+            for (const spec of suite.specs || []) for (const test of spec.tests || []) cases.push(test);
+            for (const child of suite.suites || []) visit(child);
+          }
+          for (const suite of report.suites) visit(suite);
+          assert.equal(cases.length, 1);
+          assert.equal(report.stats.expected, 1);
+          for (const field of ['unexpected', 'skipped', 'flaky']) assert.equal(report.stats[field], 0);
+          const test = cases[0];
+          assert.equal(test.expectedStatus, 'passed');
+          assert.equal(test.results.length, 1);
+          const result = test.results[0];
+          assert.equal(result.status, 'passed');
+          assert.equal(result.retry, 0);
+          assert.deepEqual(result.attachments.map(item => item.name).sort(), ['node-quote-throttle-evidence', 'node-quote-throttle-mobile-error', 'node-quote-throttle-safe-error', 'node-quote-throttle-saved']);
+          const evidence = JSON.parse(fs.readFileSync(result.attachments.find(item => item.name === 'node-quote-throttle-evidence').path));
+          assert.equal(evidence.status, 'passed');
+          assert.equal(evidence.realWindowMs, 60000);
+          assert.ok(evidence.elapsedMs >= 60000);
+          assert.equal(evidence.loginStatus, 200);
+          assert.equal(evidence.rejectedStatus, 429);
+          assert.equal(evidence.explicitRetryStatus, 201);
+          assert.equal(evidence.replayStatus, 200);
+          assert.equal(evidence.browserQuotePosts, 2);
+          assert.equal(evidence.newOwnQuotes, 1);
           NODE
           # The legacy interruption suite intentionally tests both demo and API
           # source modes. The live API-default build disallows static overrides.

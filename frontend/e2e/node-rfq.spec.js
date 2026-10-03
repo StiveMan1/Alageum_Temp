@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
+import { prepareTopCapture } from './helpers/prepare-top-capture';
 
 // No route interception: this test requires the running Node/Strapi backend and
 // its isolated seeded PostgreSQL database. Mocked interruption cases remain in
@@ -66,16 +67,9 @@ test('real Node RFQ survives anonymous handoff, save, retry, reload and own list
   await expect(detailHeading).toHaveCount(1);
   await expect(detailHeading).toBeVisible();
   await expect(page.getByText(comment, { exact: true })).toBeVisible();
-  await page.evaluate(() => document.fonts.ready);
   await expect(page.getByRole('contentinfo')).toBeVisible();
-  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
   // Capture the completed flow from a deterministic viewport and focus state.
-  await page.evaluate(() => {
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  });
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
-  await expect(page.getByRole('banner')).toBeInViewport();
+  await prepareTopCapture(page);
   const screenshotPath = testInfo.outputPath('node-rfq-saved.png');
   await page.screenshot({ path: screenshotPath, fullPage: true, animations: 'disabled' });
   await testInfo.attach('node-rfq-saved', { path: screenshotPath, contentType: 'image/png' });

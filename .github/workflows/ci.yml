@@ -40,6 +40,8 @@ jobs:
         run: python ../backend-node/tests/reference/generate_legacy_query.py --check
       - name: Reproduce frozen system DTO and metric reference vectors
         run: python ../backend-node/tests/reference/generate_legacy_system.py --check
+      - name: Reproduce frozen quote-create limiter reference vectors
+        run: python ../backend-node/tests/reference/generate_legacy_quote_limit.py --check
       - run: pytest --cov=app --cov-report=term-missing
       - run: alembic upgrade head
       - run: alembic downgrade base
