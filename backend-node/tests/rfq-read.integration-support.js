@@ -52,14 +52,14 @@ module.exports = async function verifyRfqRead({ app, base, t }) {
       const creator = index < 60 ? (index % 2 ? "peer" : "owner") : ["inactive", "former", "multi", "other", "other", "multi"][index - 60];
       const date = index < 10 ? "2026-03-01T12:00:00.123Z" : "2026-01-01T00:00:00.000Z";
       const quote = {
-        id: randomUUID(), organization_id: orgs[organization], created_by_id: users[creator],
+        id: randomUUID(), organization_id: orgs[organization], created_by_id: users[creator], mode: "catalog",
         status: "submitted", comment: index === 2 ? null : index === 4 ? "" : `Fictitious saved ${creator} comment ${index}`,
         idempotency_key: randomUUID(), request_hash: "f".repeat(64), created_at: date, updated_at: date,
       };
       quoteRows.push(quote);
       const itemCount = index === 0 ? 2 : index % 4;
       for (let position = 0; position < itemCount; position++) itemRows.push({
-        id: randomUUID(), quote_request_id: quote.id, product_id: randomUUID(), position,
+        id: randomUUID(), quote_request_id: quote.id, product_id: randomUUID(), position, mode: "catalog", parameters: "{}",
         quantity: index === 0 && position === 0 ? "999999999999999.999" : "2.500",
         product_snapshot: JSON.stringify(position === 0 ? {} : { sku: "Persisted historical SKU", translations: { en: { name: "Saved partial snapshot" } } }),
       });
@@ -67,7 +67,9 @@ module.exports = async function verifyRfqRead({ app, base, t }) {
     await table(tx, "quote_requests").insert(quoteRows);
     await table(tx, "quote_request_items").insert(itemRows);
   });
-  // These are valid fresh Node rows. Nullable legacy IDs, duplicate positions and
+  // These are source-defined catalog fixtures, including historical snapshot
+  // shapes for read fallback coverage. Their explicit mode is not a data import.
+  // Nullable legacy IDs, duplicate positions and
   // other incompatible legacy storage shapes are deliberately not fabricated.
   const config = app.config.get("alageum"), now = Math.floor(Date.now() / 1000);
   const tokens = Object.fromEntries(Object.entries(users).map(([key, id]) => [key, jwt.sign({

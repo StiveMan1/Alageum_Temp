@@ -65,8 +65,8 @@ async function seedFixtures(app) {
     await table(tx, "orders").insert({ id: ids.order, organization_id: ids.organization, status_id: ids.orderStatus, number: "SYSTEM-ORDER", currency: "KZT", amount: "12.34", ...stamp });
     await table(tx, "order_items").insert({ id: randomUUID(), order_id: ids.order, description: "Synthetic item", quantity: "1.000", unit_price: "12.34", configuration: "{}" });
     await table(tx, "invoices").insert({ id: ids.invoice, organization_id: ids.organization, order_id: ids.order, number: "SYSTEM-INVOICE", amount: "12.34", currency: "KZT", status: "fixture", source: "fixture", ...stamp });
-    await table(tx, "quote_requests").insert({ id: ids.quote, organization_id: ids.organization, created_by_id: ids.user, idempotency_key: randomUUID(), request_hash: "0".repeat(64) });
-    await table(tx, "quote_request_items").insert({ id: randomUUID(), quote_request_id: ids.quote, product_id: randomUUID(), quantity: "1.000", position: 0, product_snapshot: "{}" });
+    await table(tx, "quote_requests").insert({ id: ids.quote, organization_id: ids.organization, created_by_id: ids.user, mode: "catalog", idempotency_key: randomUUID(), request_hash: "0".repeat(64) });
+    await table(tx, "quote_request_items").insert({ id: randomUUID(), quote_request_id: ids.quote, product_id: randomUUID(), mode: "catalog", parameters: "{}", quantity: "1.000", position: 0, product_snapshot: "{}" });
     await table(tx, "document_types").insert({ id: ids.documentType, code: "system_fixture", name: "Synthetic", is_active: true });
     await table(tx, "documents").insert({ id: ids.document, organization_id: ids.organization, type_id: ids.documentType, title: "Synthetic document", source: "fixture", ...stamp });
     await table(tx, "file_objects").insert({ id: ids.file, organization_id: ids.organization, storage_key: "system-fixture-no-file", original_name: "fixture.txt", content_type: "text/plain", size_bytes: 0, checksum_sha256: "0".repeat(64), storage_backend: "fixture", ...stamp });

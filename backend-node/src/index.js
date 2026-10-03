@@ -5,6 +5,7 @@ const ordersModule = require("./domain/orders");
 const invoicesModule = require("./domain/invoices");
 const documentsModule = require("./domain/documents");
 const quoteModule = require("./domain/quotes");
+const quoteSchema = require("./domain/quote-schema");
 const { createQuoteRateLimiter } = require("./domain/quote-rate-limit");
 const auditModule = require("./domain/audit");
 const organizationProfileModule = require("./domain/organization-profile");
@@ -17,19 +18,31 @@ const pageEditorial = require("./domain/page-editorial");
 const systemModule = require("./domain/system");
 module.exports = {
   async register({ strapi }) {
-    await catalogFiltersModule.preflightSchema(strapi.db.connection);
-    await documentsModule.preflightSchema(strapi.db.connection);
-    await invoicesModule.preflightSchema(strapi.db.connection);
-    await pageEditorial.preflightPages(strapi);
-    strapi.alageumMetrics = systemModule.createMetrics();
-    strapi.documents.use(pageEditorial.editorialMiddleware(strapi));
+    try {
+      await quoteSchema.preflightSchema(strapi.db.connection);
+      await catalogFiltersModule.preflightSchema(strapi.db.connection);
+      await documentsModule.preflightSchema(strapi.db.connection);
+      await invoicesModule.preflightSchema(strapi.db.connection);
+      await pageEditorial.preflightPages(strapi);
+      strapi.alageumMetrics = systemModule.createMetrics();
+      strapi.documents.use(pageEditorial.editorialMiddleware(strapi));
+    } catch (error) {
+      quoteSchema.invalidateAdmission(strapi.db.connection);
+      throw error;
+    }
   },
   async bootstrap({ strapi }) {
     const db = strapi.db.connection,
       config = strapi.config.get("alageum");
-    await authModule.ensureSchema(db);
-    await organizationProfileModule.ensureSchema(db);
-    await quoteModule.ensureSchema(db);
+    try {
+      await quoteSchema.verifyAfterSync(db);
+      await authModule.ensureSchema(db);
+      await organizationProfileModule.ensureSchema(db);
+      await quoteModule.ensureSchema(db);
+    } catch (error) {
+      quoteSchema.invalidateAdmission(db);
+      throw error;
+    }
     await auditModule.ensureSchema(db);
     await supportModule.ensureSchema(db);
     await ordersModule.ensureSchema(db);

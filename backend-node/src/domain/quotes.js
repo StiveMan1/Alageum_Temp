@@ -111,73 +111,8 @@ function snapshot(product) {
     }),
   );
 }
-async function ensureSchema(db) {
-  await db.transaction(async (tx) => {
-    await tx.raw("SELECT pg_advisory_xact_lock(731624112)");
-    await tx.raw("CREATE SCHEMA IF NOT EXISTS b2b");
-    const schema = () => tx.schema.withSchema("b2b");
-    if (!(await schema().hasTable("quote_requests")))
-      await schema().createTable("quote_requests", (t) => {
-        t.uuid("id").primary();
-        t.uuid("organization_id")
-          .notNullable()
-          .references("id")
-          .inTable("b2b.organizations");
-        t.uuid("created_by_id")
-          .notNullable()
-          .references("id")
-          .inTable("b2b.users");
-        t.string("status", 60).notNullable().defaultTo("submitted");
-        t.text("comment");
-        t.uuid("idempotency_key").notNullable();
-        t.string("request_hash", 64).notNullable();
-        t.timestamp("created_at", { useTz: true })
-          .notNullable()
-          .defaultTo(tx.fn.now());
-        t.timestamp("updated_at", { useTz: true })
-          .notNullable()
-          .defaultTo(tx.fn.now());
-        t.unique(["organization_id", "created_by_id", "idempotency_key"], {
-          indexName: "uq_b2b_quote_submission",
-        });
-        t.index(["organization_id", "created_by_id", "created_at"]);
-        t.check("status = 'submitted'", [], "quote_status_submitted");
-      });
-    if (!(await schema().hasTable("quote_request_items")))
-      await schema().createTable("quote_request_items", (t) => {
-        t.uuid("id").primary();
-        t.uuid("quote_request_id")
-          .notNullable()
-          .references("id")
-          .inTable("b2b.quote_requests")
-          .onDelete("CASCADE");
-        // CMS records may be removed; the snapshot remains the historical source of truth.
-        t.uuid("product_id").notNullable();
-        t.decimal("quantity", 18, 3).notNullable();
-        t.integer("position").notNullable();
-        t.jsonb("product_snapshot").notNullable();
-        t.unique(["quote_request_id", "product_id"]);
-        t.unique(["quote_request_id", "position"]);
-        t.check(
-          "quantity > 0 AND quantity <= 999999999999999.999",
-          [],
-          "quote_quantity_bounds",
-        );
-        t.check(
-          "position >= 0 AND position < 100",
-          [],
-          "quote_position_bounds",
-        );
-      });
-    // Bounded local schema evolution: widen prior phase limits without dropping data.
-    await tx.raw(
-      "ALTER TABLE b2b.quote_request_items DROP CONSTRAINT IF EXISTS quote_position_bounds, DROP CONSTRAINT IF EXISTS quote_quantity_bounds",
-    );
-    await tx.raw(
-      "ALTER TABLE b2b.quote_request_items ADD CONSTRAINT quote_position_bounds CHECK (position >= 0 AND position < 100), ADD CONSTRAINT quote_quantity_bounds CHECK (quantity > 0 AND quantity <= 999999999999999.999)",
-    );
-  });
-}
+const { ensureSchema } = require("./quote-schema");
+
 function summary(quote, count) {
   if (
     !quote || typeof quote.id !== "string" || !UUID.test(quote.id) ||
@@ -305,6 +240,7 @@ function createQuotes({ db, catalog, audit, auth }) {
             id: randomUUID(),
             organization_id: context.organization_id,
             created_by_id: context.user.id,
+            mode: "catalog",
             status: "submitted",
             comment: body.comment,
             idempotency_key: key,
@@ -315,6 +251,8 @@ function createQuotes({ db, catalog, audit, auth }) {
           body.items.map((item, position) => ({
             id: randomUUID(),
             quote_request_id: quote.id,
+            mode: "catalog",
+            parameters: "{}",
             product_id: item.product_id,
             quantity: item.quantity,
             position,

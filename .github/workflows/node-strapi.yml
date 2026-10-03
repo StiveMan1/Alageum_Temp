@@ -56,6 +56,71 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  native-quote-storage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend-node/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12.14'
+      - name: Install locked backend dependencies
+        working-directory: backend-node
+        run: npm ci
+      - name: Verify preinstalled PostgreSQL 16 and prepare an owned evidence parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          for command in initdb pg_ctl psql createdb; do test -x "/usr/lib/postgresql/16/bin/$command"; done
+          mkdir -p "$RUNNER_TEMP/native-quote-storage"
+          printf 'PG_BIN=/usr/lib/postgresql/16/bin\n' >> "$GITHUB_ENV"
+      - name: Prove fresh-store constraints native restart refusal and FK races
+        timeout-minutes: 24
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=INT --kill-after=75s 1250s python backend-node/scripts/run-native-generic-quote-storage.py \
+            --postgres-major 16 --evidence-dir "$RUNNER_TEMP/native-quote-storage/evidence"
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const directory = path.join(process.env.RUNNER_TEMP, 'native-quote-storage/evidence');
+          const lifecycle = JSON.parse(fs.readFileSync(path.join(directory, 'lifecycle.json')));
+          assert.equal(lifecycle.status, 'passed');
+          const serverVersion = Number(lifecycle.server_identity.version);
+          assert.ok(serverVersion >= 160000 && serverVersion < 170000);
+          for (const key of ['owned_process_group_stopped_verified', 'postgres_stopped_verified',
+            'http_ports_closed_verified', 'source_and_dependency_hashes_unchanged', 'owned_fixture_removed']) {
+            assert.equal(lifecycle[key], true, key);
+          }
+          const results = JSON.parse(fs.readFileSync(path.join(directory, 'results.json')));
+          assert.equal(results.status, 'passed');
+          assert.ok(results.checks.length > 0 && results.checks.every(result => result.status === 'passed'));
+          assert.equal(results.fresh.source_products.count, 238);
+          assert.deepEqual(results.restart.source_products, results.fresh.source_products);
+          assert.equal(results.restart.schema_sha256, results.fresh.schema_sha256);
+          assert.equal(results.fresh.races.length, 4);
+          assert.equal(results.rejected_starts.length, 27);
+          assert.ok(results.rejected_starts.every(result => result.status === 'passed' &&
+            result.sync_calls === 0 && result.mutating_statements.length === 0 && result.unchanged_schema_and_data));
+          NODE
+      - name: Retain sanitized native storage reports only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-quote-storage-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/native-quote-storage/evidence/*.json
+          if-no-files-found: error
+          retention-days: 14
+
   quote-throttle:
     runs-on: ubuntu-latest
     timeout-minutes: 12
