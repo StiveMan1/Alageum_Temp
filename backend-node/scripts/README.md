@@ -122,3 +122,42 @@ existing dependency security gate remains blocked; functional acceptance does
 not approve a production cutover. See
 [`docs/node-document-metadata.md`](../../docs/node-document-metadata.md) for the
 seven-field metadata contract, audit schema limits and evidence requirements.
+
+## Separate organization member fixtures
+
+`bash backend-node/scripts/run-member-tests.sh --browser` creates a fresh loopback
+PostgreSQL cluster with exactly `alageum_strapi_member_test`. It ignores the
+caller's database URL and creates fresh runtime secrets. The fixture preflight
+rejects reused databases before constructing Strapi; seeding refuses existing
+B2B rows or CMS administrators. Use Node 24, PostgreSQL 16+ via `PG_BIN`, and
+existing locked dependencies and Playwright Chromium.
+
+Fixtures contain 55 tenant A memberships and two tenant B memberships, including
+inactive target memberships/users, tenant-local and global roles, equal creation
+timestamps, and blank, Unicode, nonstandard-email and HTML-looking synthetic
+text. Test-only reader roles grant exactly `organization.manage_users`; a separate
+profile-only actor has only profile read/update grants and cannot read members. No
+existing role or organization fixture is changed. The six-string list DTO keeps
+those values as plain data. Authentication changes remain covered separately.
+
+Acceptance runs 21 backend checks: the exact 17-case HTTP/PostgreSQL matrix,
+freshness and seeding guards, full Strapi restart persistence, and final identity/
+business-row invariance without non-authentication audit events. Full acceptance
+requires all 23 runner checks, adding the `.next-member` production build and the
+exact 19 browser cases (15 desktop and four responsive mobile) selected by
+`playwright.members.config.js`, with zero retries, skips, flakes or unexpected
+outcomes. Exactly eight PNGs are required: `members-list-viewport`,
+`members-page-two`, `members-empty`, and `members-error` in each of the
+`member-desktop` and `member-mobile` projects.
+`--backend-only` runs only backend acceptance as a local diagnostic and is
+forbidden in CI.
+
+The runner requires `APP_ENV=test`, `ALAGEUM_TEST_MEMBER_FIXTURES=1`, a long random
+`E2E_MEMBER_PASSWORD`, and its exact loopback database. Raw artifacts are staged
+privately until complete sanitization. Publish only the printed
+`alageum-member-tests.*/evidence` directory, whose stable summary is `results.json`.
+Never publish the sibling database cluster, password files or authentication
+traces. Cleanup has bounded Strapi and owned-process-group teardown, and removes
+only this invocation's temporary database and private staging. Functional
+acceptance does not approve a production cutover or resolve the existing
+dependency-security gate.

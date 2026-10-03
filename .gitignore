@@ -73,3 +73,7 @@ invoice-metadata-evidence/
 # Disposable document metadata acceptance build and evidence
 frontend/.next-document/
 document-metadata-evidence/
+
+# Disposable organization members acceptance build and evidence
+frontend/.next-member/
+member-delivery-evidence/

@@ -7,6 +7,7 @@ const documentsModule = require("./domain/documents");
 const quoteModule = require("./domain/quotes");
 const auditModule = require("./domain/audit");
 const organizationProfileModule = require("./domain/organization-profile");
+const organizationMembersModule = require("./domain/organization-members");
 const { createCatalog } = require("./domain/catalog");
 const { createCmsCatalogAuthorizer } = require("./domain/cms-catalog");
 const { readCatalog } = require("./domain/catalog-source");
@@ -48,11 +49,12 @@ module.exports = {
       audit: auditModule.audit,
     });
     const organizationProfile = organizationProfileModule.createOrganizationProfile({ db, auth, audit: auditModule.audit });
+    const organizationMembers = organizationMembersModule.createOrganizationMembers({ db, auth });
     const support = supportModule.createSupport({ db, auth, audit: auditModule.audit });
     const orders = ordersModule.createOrders({ db, auth, audit: auditModule.audit });
     const invoices = invoicesModule.createInvoices({ db, auth });
     const documents = documentsModule.createDocuments({ db, auth, audit: auditModule.audit });
-    strapi.alageum = { auth, catalog, quotes, cmsCatalog, organizationProfile, support, orders, invoices, documents };
+    strapi.alageum = { auth, catalog, quotes, cmsCatalog, organizationProfile, organizationMembers, support, orders, invoices, documents };
     if (config.importCatalog)
       strapi.log.info(
         "Reviewed catalog import: " +

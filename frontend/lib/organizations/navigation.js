@@ -1,5 +1,9 @@
+import { membersDestination } from './members.js';
+
 // A tenant switch cannot carry a previous tenant's record identifier or filters.
 export function organizationDestination(pathname) {
+  const members = membersDestination(pathname);
+  if (members) return members;
   const lists = ['/b2b', '/b2b/profile', '/b2b/orders', '/b2b/documents', '/b2b/finance', '/b2b/quotes', '/b2b/support'];
   if (lists.includes(pathname)) return pathname;
   if (pathname?.startsWith('/b2b/orders/')) return '/b2b/orders';
