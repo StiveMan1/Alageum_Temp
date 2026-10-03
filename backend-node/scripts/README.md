@@ -82,3 +82,19 @@ logs and explicit PNGs may be shared. Never share the sibling database cluster,
 credentials or browser authentication traces. See
 [`docs/node-support-tickets.md`](../../docs/node-support-tickets.md) for the
 three-route boundary, non-idempotent submission behavior and exact evidence gate.
+
+## Separate invoice metadata fixtures
+
+`bash backend-node/scripts/run-invoice-tests.sh --browser` creates a fresh
+loopback PostgreSQL cluster with exactly `alageum_strapi_invoice_test`, refuses
+reused/non-test/remote inputs before Strapi startup, and inserts only fictitious
+invoice metadata. No real financial feed or default-role provisioning is added.
+
+Acceptance requires 19 backend/HTTP/PostgreSQL checks, an isolated `.next-invoice`
+production build, and 24 browser cases (12 desktop + 12 mobile), with exactly six
+explicit list/empty/retry PNGs. `--backend-only` is local diagnostic mode and is
+forbidden in CI. Publish only the sanitized `alageum-invoice-tests.*/evidence`
+directory, whose stable report is `results.json`; never raw databases, credentials
+or browser authentication traces. See
+[`docs/node-invoice-metadata.md`](../../docs/node-invoice-metadata.md) for the
+six-field read-only contract, schema preflight and evidence gate.

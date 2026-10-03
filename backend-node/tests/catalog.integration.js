@@ -570,6 +570,17 @@ test("real Strapi/PostgreSQL catalog and HTTP contract", async (t) => {
       }
     },
   );
+  await t.test("invoice metadata honors unchanged default admin/accountant grants and denies buyer/engineer/catalog", async () => {
+    const rolesBefore = await db.withSchema("b2b").table("roles").orderBy("id");
+    for (const name of ["admin", "accountant", "buyer", "engineer", "catalog"]) {
+      const token = await login(name), request = ctx({ token });
+      if (["admin", "accountant"].includes(name)) {
+        await app.alageum.invoices.list(request);
+        assert.deepEqual(request.body, { items: [], page: 1, page_size: 50, total: 0 });
+      } else await rejects(() => app.alageum.invoices.list(request), "permission_denied", 403);
+    }
+    assert.deepEqual(await db.withSchema("b2b").table("roles").orderBy("id"), rolesBefore);
+  });
   await require("./cms-catalog.integration-support").runCmsCatalogTests(
     t,
     app,

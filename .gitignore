@@ -65,3 +65,7 @@ support-delivery-evidence/
 # Disposable customer order acceptance build and evidence
 frontend/.next-orders/
 orders-delivery-evidence/
+
+# Disposable invoice metadata acceptance build and evidence
+frontend/.next-invoice/
+invoice-metadata-evidence/
