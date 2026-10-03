@@ -17,6 +17,7 @@ on:
       - 'docs/node-organization-members.md'
       - 'docs/node-session-read-invalidation.md'
       - 'docs/node-legacy-read-compatibility.md'
+      - 'docs/node-system-reads.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -37,6 +38,7 @@ on:
       - 'docs/node-organization-members.md'
       - 'docs/node-session-read-invalidation.md'
       - 'docs/node-legacy-read-compatibility.md'
+      - 'docs/node-system-reads.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -50,6 +52,68 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  system-reads:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: backend-node/package-lock.json
+      - name: Install locked backend dependencies
+        working-directory: backend-node
+        run: npm ci
+      - name: Prepare isolated system runtime and PostgreSQL tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/system-reads"
+          printf 'TMPDIR=%s\n' "$RUNNER_TEMP/system-reads" >> "$GITHUB_ENV"
+          pg_bin=$(pg_config --bindir)
+          for command in initdb pg_ctl createdb; do test -x "$pg_bin/$command"; done
+          printf 'PG_BIN=%s\n' "$pg_bin" >> "$GITHUB_ENV"
+      - name: Verify real system reads database outage recovery and unchanged state
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=45s 520s bash backend-node/scripts/run-system-tests.sh
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const runs = fs.readdirSync(process.env.TMPDIR).filter(name => name.startsWith('alageum-system-tests.'));
+          assert.equal(runs.length, 1, 'one complete isolated system run is required');
+          const directory = path.join(process.env.TMPDIR, runs[0], 'evidence');
+          const report = JSON.parse(fs.readFileSync(path.join(directory, 'results.json')));
+          assert.equal(report.kind, 'isolated-system-reads');
+          assert.equal(report.status, 'passed');
+          assert.equal(report.backendChecks, 23);
+          assert.equal(report.checks.length, 23);
+          assert.ok(report.checks.every(check => check.status === 'passed'));
+          for (const key of ['cleanup', 'clusterCleanup', 'privateFixtureCleanup']) assert.equal(report[key], 'passed');
+          assert.equal(report.outage.stopped, true);
+          assert.equal(report.outage.restored, true);
+          assert.equal(report.outage.readinessStatus, 500);
+          assert.equal(report.outage.recoveryStatus, 200);
+          assert.equal(report.readOnlyFingerprint.tables, 62);
+          assert.match(report.readOnlyFingerprint.digest, /^[0-9a-f]{64}$/);
+          assert.equal(report.browser, 'not-applicable: system JSON routes only');
+          assert.deepEqual(fs.readdirSync(directory).sort(), ['results.json', 'strapi.log']);
+          assert.equal(Object.hasOwn(report, 'evidence'), false, 'withheld or failed publication is not acceptance');
+          NODE
+      - name: Retain sanitized system verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-reads-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/system-reads/alageum-system-tests.*/evidence/
+          retention-days: 14
+
   dependency-audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10

@@ -1,4 +1,31 @@
-# Disposable CMS verification fixtures
+# Disposable verification fixtures
+
+## Isolated system reads and database outage
+
+`bash backend-node/scripts/run-system-tests.sh` runs all 23 system HTTP/PostgreSQL
+groups without a browser or build. It accepts no selection or external-database
+options. Use Node 24, installed locked backend dependencies, and PostgreSQL 16+
+binaries in `PG_BIN`. The runner creates its own loopback cluster and exactly
+`alageum_strapi_system_test`, ignores inherited connection/seeding settings, and
+generates private disposable secrets. It refuses a reused database before Strapi
+initialization and any existing B2B rows before inserting fictitious fixtures.
+
+The suite deliberately stops only that invocation's owned PostgreSQL cluster
+while Strapi remains running, verifies process reads and safe failed readiness,
+then restores it and verifies recovery. It compares all public/B2B table rows,
+columns and constraints before/after the requests and verifies B2B persistence
+plus metrics reset across application recreation. Production/staging startup
+refusal remains an explicit real-startup check.
+
+The printed `alageum-system-tests.*/evidence` directory contains sanitized logs
+and `results.json`. Share only this verified directory. App shutdown, confirmed
+owned-cluster stop/removal and private-fixture removal have separate mandatory
+result fields; cleanup failure fails acceptance. Never publish the sibling raw
+database, credentials or staging files. See
+[`docs/node-system-reads.md`](../../docs/node-system-reads.md) for the exact public
+DTOs, allowed metadata and deliberate legacy adaptations.
+
+## Native CMS administrators
 
 `seed-test-cms-admins.js` is an explicit test command, never application bootstrap.
 It uses Strapi's native role and user services, including native password hashing.

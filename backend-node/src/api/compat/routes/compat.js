@@ -1,7 +1,9 @@
 "use strict";
 const routes = [
   ["GET", "/health", "health"],
-  ["GET", "/readiness", "health"],
+  ["GET", "/readiness", "readiness"],
+  ["GET", "/metrics", "metrics"],
+  ["GET", "/version", "version"],
   ["POST", "/auth/login", "login"],
   ["POST", "/auth/refresh", "refresh"],
   ["POST", "/auth/logout", "logout"],

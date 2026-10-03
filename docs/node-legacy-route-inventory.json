@@ -5,13 +5,13 @@
     "legacy": 50,
     "legacy_business": 46,
     "legacy_system": 4,
-    "node_compat": 33,
-    "overlap": 31,
+    "node_compat": 35,
+    "overlap": 33,
     "overlap_business": 29,
-    "overlap_system": 2,
-    "absent": 19,
+    "overlap_system": 4,
+    "absent": 17,
     "absent_business": 17,
-    "absent_system": 2,
+    "absent_system": 0,
     "node_only": 2
   },
   "legacy": [
@@ -265,7 +265,7 @@
       "path": "/api/v1/metrics",
       "source": "backend/app/api/system.py",
       "class": "system",
-      "presence": "absent"
+      "presence": "present"
     },
     {
       "method": "GET",
@@ -363,7 +363,7 @@
       "path": "/api/v1/version",
       "source": "backend/app/api/system.py",
       "class": "system",
-      "presence": "absent"
+      "presence": "present"
     }
   ],
   "node_only": [

@@ -2,6 +2,7 @@
 module.exports = ({ env }) => [
   "strapi::logger",
   "strapi::errors",
+  "global::compat-metrics",
   "global::compat-errors",
   "strapi::security",
   {

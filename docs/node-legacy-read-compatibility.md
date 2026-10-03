@@ -1,6 +1,6 @@
 # Legacy read-contract corrections
 
-This candidate corrects seven existing `/api/v1` GET routes against the frozen Python reference. It does not complete the migration. Local verification is recorded below; hosted builds/browser acceptance remain pending. The published PR20 baseline is `2c762db62fd779595a3d78e336f7911f10953783`, tree `6421c05c2c2870d38888e9dda8a4951e9dbbbbb1`.
+This document records the seven-read correction verified in [PR21](https://github.com/StiveMan1/Alageum_Temp/pull/21). It does not complete the migration. The local checkpoint evidence is recorded below; terminal hosted evidence is linked from that PR. Its published PR20 baseline is `2c762db62fd779595a3d78e336f7911f10953783`, tree `6421c05c2c2870d38888e9dda8a4951e9dbbbbb1`. The subsequent [system-read adapter](node-system-reads.md) updates the current route inventory separately.
 
 ## Corrected contracts
 
@@ -58,13 +58,13 @@ Frontend lint and all 339 units passed under both default and absolute API setti
 - Python datetime may preserve microseconds while current Node Date serialization uses milliseconds; exact historical timestamp wire parity remains open
 - Organization listing currently excludes missing/foreign-role relationships before pagination. This existing fail-closed behavior remains an explicit deviation; the batch does not relax it
 - Other catalog query validation/search/extra parameters are not broadly rewritten. Native CMS contracts remain separate
-- Node authentication refresh format/session lifetime, audit storage/IP/source fields, order storage/failure ordering, and health/readiness response semantics have separate differences
+- Node authentication refresh format/session lifetime, audit storage/IP/source fields, and order storage/failure ordering have separate differences. The subsequent [system adapter](node-system-reads.md) corrects health/readiness DTOs with explicit runtime adaptations
 
 ## Finite coverage ledger
 
-The inventory counts explicit method/path declarations, normalizing path parameter names to `{param}`. It excludes generated HEAD/OPTIONS/docs, frontend routes and native CMS surfaces. The source baseline contains **50 legacy routes: 46 business and four system**. Node compatibility declares **33 routes**, with **31 overlapping** legacy routes and **two additional organization-profile routes**. **19 legacy routes are absent**. Presence does not mean parity or product acceptance, and this read correction does not change those counts.
+The inventory counts explicit method/path declarations, normalizing path parameter names to `{param}`. It excludes generated HEAD/OPTIONS/docs, frontend routes and native CMS surfaces. The source baseline contains **50 legacy routes: 46 business and four system**. At PR21, Node compatibility declared 33 routes, with 31 overlaps and two additional organization-profile routes. The subsequent system adapter adds metrics/version: the current declarations are **35 Node routes, 33 overlaps and 17 absent business routes**. Presence does not mean parity or product acceptance.
 
-Overlapping groups: auth four; organizations two; public catalog five; catalog administration seven; support three; orders two; invoices one; documents two; RFQ three; health/readiness two. Each group's bounded verification is documented with its implementation. The new published Pages contract and native CMS are additional surfaces, not aliases for the absent legacy content routes.
+Overlapping groups: auth four; organizations two; public catalog five; catalog administration seven; support three; orders two; invoices one; documents two; RFQ three; system reads four. Each group's bounded verification is documented with its implementation. The new published Pages contract and native CMS are additional surfaces, not aliases for the absent legacy content routes.
 
 The complete declaration inventory is [machine-readable](node-legacy-route-inventory.json). `python scripts/check_legacy_route_inventory.py` compares it with the current frozen Python declarations and Node manifest without starting either application. A changed declaration requires explicit inventory regeneration and review; a matching inventory certifies only route presence.
 
@@ -89,8 +89,6 @@ Every absent route needs a finite implement/adapt/retire decision; none is impli
 | GET | `/content/entries/{param}` | Entry model and content migration |
 | POST | `/admin/content/pages` | Editorial API compatibility decision |
 | POST | `/admin/content/pages/{param}/publication` | Publication API compatibility decision |
-| GET | `/metrics` | Operational metrics contract and exposure |
-| GET | `/version` | Operational version contract |
 
 ## Production and workflow gates
 
