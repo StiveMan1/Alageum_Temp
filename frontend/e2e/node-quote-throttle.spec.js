@@ -84,7 +84,9 @@ test('real quote throttle preserves inquiry and login, then explicitly retries o
   expect((await loginResponse).status(), 'Quote exhaustion must not consume the independent login bucket').toBe(200);
   await expect(page).toHaveURL(/\/inquiry\?source=api$/);
   const quantity = page.getByLabel(`Количество ${product.sku}`, { exact: true });
-  const message = page.getByLabel('Сообщение (необязательно)', { exact: true });
+  // The wrapping label's raw text includes controlled textarea content after editing.
+  const message = page.getByRole('main').getByRole('textbox', { name: 'Сообщение (необязательно)', exact: true });
+  await expect(message).toHaveCount(1);
   await expect(quantity).toHaveValue('3');
   expect((await inquiryStorage(page)).selection).toBe(selectionBeforeLogin);
   await message.fill(comment);
