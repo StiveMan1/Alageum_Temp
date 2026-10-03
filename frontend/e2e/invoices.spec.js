@@ -326,7 +326,7 @@ test('interrupted finance login cannot install a late session or reopen invoices
   await page.getByLabel('Пароль', { exact: true }).fill(process.env.E2E_INVOICE_PASSWORD);
   await page.getByRole('button', { name: 'Войти', exact: true }).click();
   expect((await held.started).status).toBe(200);
-  await page.getByRole('link', { name: 'ALAGEUM Electric — главная', exact: true }).click();
+  await page.getByRole('banner').getByRole('link', { name: 'ALAGEUM Electric — главная', exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await held.release();
   await expect(page).toHaveURL(/\/$/);
