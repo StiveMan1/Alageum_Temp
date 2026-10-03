@@ -13,6 +13,7 @@ on:
       - 'docs/node-support-tickets.md'
       - 'docs/node-customer-orders.md'
       - 'docs/node-invoice-metadata.md'
+      - 'docs/node-document-metadata.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -29,6 +30,7 @@ on:
       - 'docs/node-support-tickets.md'
       - 'docs/node-customer-orders.md'
       - 'docs/node-invoice-metadata.md'
+      - 'docs/node-document-metadata.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -823,6 +825,94 @@ jobs:
           path: |
             invoice-metadata-evidence/
             ${{ runner.temp }}/invoice-metadata-tmp/alageum-invoice-tests.*/evidence/
+          retention-days: 14
+
+  document-metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      APP_ENV: test
+      STRAPI_TELEMETRY_DISABLED: 'true'
+      STRAPI_HIDE_UPDATE_MESSAGE: 'true'
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: |
+            backend-node/package-lock.json
+            frontend/package-lock.json
+      - name: Prepare isolated document metadata evidence and PostgreSQL tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          document_temp="$RUNNER_TEMP/document-metadata-tmp"
+          mkdir -p "$document_temp" document-metadata-evidence
+          printf 'TMPDIR=%s\n' "$document_temp" >> "$GITHUB_ENV"
+          pg_bin=$(pg_config --bindir)
+          for command in initdb pg_ctl createdb; do test -x "$pg_bin/$command"; done
+          printf 'PG_BIN=%s\n' "$pg_bin" >> "$GITHUB_ENV"
+      - name: Install locked document metadata dependencies
+        timeout-minutes: 8
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix backend-node
+          npm ci --prefix frontend
+      - name: Install bounded Chromium for document metadata acceptance
+        timeout-minutes: 5
+        working-directory: frontend
+        shell: bash
+        env:
+          PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT: '60000'
+        run: |
+          set -euo pipefail
+          timeout --signal=TERM --kill-after=10s 270s npx --no-install playwright install --with-deps chromium 2>&1 | tee ../document-metadata-evidence/chromium-install.log
+      - name: Verify isolated real HTTP and all twenty-six document metadata browser cases
+        timeout-minutes: 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          # The runner generates ephemeral credentials, respects the login
+          # limiter and stages only sanitized evidence outside its database.
+          timeout --signal=TERM --kill-after=20s 960s bash backend-node/scripts/run-document-tests.sh --browser
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const root = process.env.TMPDIR;
+          const runs = fs.readdirSync(root).filter(name => name.startsWith('alageum-document-tests.'));
+          assert.equal(runs.length, 1, 'one isolated document run is required');
+          const evidence = path.join(root, runs[0], 'evidence');
+          const report = JSON.parse(fs.readFileSync(path.join(evidence, 'results.json')));
+          assert.equal(report.status, 'passed');
+          assert.equal(report.browser, 'passed');
+          assert.equal(report.checks.length, 26);
+          assert.ok(report.checks.every(check => check.status === 'passed'));
+          assert.equal(report.cleanup, 'passed');
+          assert.equal(report.browserTests, 26);
+          assert.equal(report.screenshots.length, 6);
+          for (const project of ['documents-desktop', 'documents-mobile']) {
+            for (const name of ['documents-list', 'documents-empty', 'documents-retry']) {
+              assert.ok(report.screenshots.some(shot => shot.project === project && shot.name === name));
+            }
+          }
+          const log = fs.readFileSync(path.join(evidence, 'playwright.log'), 'utf8');
+          assert.match(log, /\b26 passed\b/);
+          assert.doesNotMatch(log, /\b[1-9]\d* (?:failed|flaky|skipped|did not run)\b/);
+          NODE
+      - name: Retain sanitized document metadata evidence and successful screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: document-metadata-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            document-metadata-evidence/
+            ${{ runner.temp }}/document-metadata-tmp/alageum-document-tests.*/evidence/
           retention-days: 14
 
   # Reimplemented acceptance has dedicated databases and independent failures.

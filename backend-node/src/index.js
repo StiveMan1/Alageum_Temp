@@ -3,6 +3,7 @@ const authModule = require("./domain/auth");
 const supportModule = require("./domain/support");
 const ordersModule = require("./domain/orders");
 const invoicesModule = require("./domain/invoices");
+const documentsModule = require("./domain/documents");
 const quoteModule = require("./domain/quotes");
 const auditModule = require("./domain/audit");
 const organizationProfileModule = require("./domain/organization-profile");
@@ -12,6 +13,7 @@ const { readCatalog } = require("./domain/catalog-source");
 const pageEditorial = require("./domain/page-editorial");
 module.exports = {
   async register({ strapi }) {
+    await documentsModule.preflightSchema(strapi.db.connection);
     await invoicesModule.preflightSchema(strapi.db.connection);
     await pageEditorial.preflightPages(strapi);
     strapi.documents.use(pageEditorial.editorialMiddleware(strapi));
@@ -26,6 +28,7 @@ module.exports = {
     await supportModule.ensureSchema(db);
     await ordersModule.ensureSchema(db);
     await invoicesModule.ensureSchema(db);
+    await documentsModule.ensureSchema(db);
     await pageEditorial.completePageSchema(strapi);
     const auth = authModule.createAuth({
       db,
@@ -48,7 +51,8 @@ module.exports = {
     const support = supportModule.createSupport({ db, auth, audit: auditModule.audit });
     const orders = ordersModule.createOrders({ db, auth, audit: auditModule.audit });
     const invoices = invoicesModule.createInvoices({ db, auth });
-    strapi.alageum = { auth, catalog, quotes, cmsCatalog, organizationProfile, support, orders, invoices };
+    const documents = documentsModule.createDocuments({ db, auth, audit: auditModule.audit });
+    strapi.alageum = { auth, catalog, quotes, cmsCatalog, organizationProfile, support, orders, invoices, documents };
     if (config.importCatalog)
       strapi.log.info(
         "Reviewed catalog import: " +
