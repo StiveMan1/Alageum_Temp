@@ -21,7 +21,10 @@
     "transport_id": {
       "type": "string",
       "required": true,
-      "unique": true
+      "unique": true,
+      "column": {
+        "unique": true
+      }
     },
     "public_key": {
       "type": "string",

@@ -15,6 +15,7 @@ const {
   createQuotes,
 } = require("../src/domain/quotes");
 const { ensureSchema: auditSchema, audit } = require("../src/domain/audit");
+const quoteStore = require("../src/domain/quote-schema");
 const connection = process.env.ALAGEUM_DOMAIN_TEST_DATABASE_URL;
 const config = {
   jwtSecret: "integration-only-key-with-at-least-thirty-two-characters",
@@ -61,7 +62,17 @@ test(
     t.after(async () => {
       await db.destroy();
     });
-    await db.raw("DROP SCHEMA IF EXISTS b2b CASCADE");
+    // Domain-only fixture: obtain the real fresh-store admission before any
+    // DDL. A preexisting database or public target is refused, never reset.
+    // This minimal native-shaped key is synthetic; the separate full-Strapi
+    // storage proof verifies actual native sync, restart and FK behavior.
+    await quoteStore.preflightSchema(db);
+    await db.schema.withSchema("public").createTable("alageum_products", (t) => {
+      t.increments("id").primary();
+      t.string("transport_id", 255);
+      t.unique(["transport_id"], { indexName: "alageum_products_transport_id_uq" });
+    });
+    await quoteStore.verifyAfterSync(db);
     await authSchema(db);
     await auditSchema(db);
     await quoteSchema(db);

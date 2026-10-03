@@ -80,10 +80,12 @@ async function seedTestQuotePrintUsers(strapi, env = process.env) {
       users[kind] = { id, email, roleId, organizationId };
     }
     const legacy = { id: randomUUID(), comment: "Fictitious legacy print request: missing and partial historical snapshots" };
-    await table(tx, "quote_requests").insert({ id: legacy.id, organization_id: organizations.a.id, created_by_id: users.owner.id, comment: legacy.comment, idempotency_key: randomUUID(), request_hash: "0".repeat(64) });
+    // Explicit catalog-fixture provenance preserves partial snapshot print
+    // coverage without assigning a mode to any imported/customer data.
+    await table(tx, "quote_requests").insert({ id: legacy.id, organization_id: organizations.a.id, created_by_id: users.owner.id, mode: "catalog", comment: legacy.comment, idempotency_key: randomUUID(), request_hash: "0".repeat(64) });
     await table(tx, "quote_request_items").insert([
-      { id: randomUUID(), quote_request_id: legacy.id, product_id: randomUUID(), quantity: "0.001", position: 0, product_snapshot: "{}" },
-      { id: randomUUID(), quote_request_id: legacy.id, product_id: randomUUID(), quantity: "999999999999999.999", position: 1, product_snapshot: JSON.stringify({ sku: "FIXTURE-LEGACY-PARTIAL", price_mode: "fixed", price: "123456789012345.678" }) },
+      { id: randomUUID(), quote_request_id: legacy.id, product_id: randomUUID(), mode: "catalog", parameters: "{}", quantity: "0.001", position: 0, product_snapshot: "{}" },
+      { id: randomUUID(), quote_request_id: legacy.id, product_id: randomUUID(), mode: "catalog", parameters: "{}", quantity: "999999999999999.999", position: 1, product_snapshot: JSON.stringify({ sku: "FIXTURE-LEGACY-PARTIAL", price_mode: "fixed", price: "123456789012345.678" }) },
     ]);
     // This manifest contains only fictitious labels and IDs, never credentials.
     return { fixture: "disposable-quote-print", organizations, users, quotes: { legacy } };

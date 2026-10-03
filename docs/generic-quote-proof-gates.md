@@ -34,6 +34,15 @@ lists PostgreSQL 16 and cached Python 3.12.14. The job uses those existing tools
 without starting system database services. It installs the existing locked
 Python requirements and preserves the separate security gates.
 
+The [PR25 reference run](https://github.com/StiveMan1/Alageum_Temp/actions/runs/37136229614)
+passed on exact head `29753e21b6767e4aa52a0a255a4f3d247294f44a` with PostgreSQL
+16.15: 80 quote requests, four password logins, 72 exact installed package
+versions and all 86 pinned source hashes. The expected FK/check/overflow and
+audit rejection SQLSTATEs were observed with full rollback. Natural quota expiry
+waited 60.763 seconds; child exit, database shutdown and owned fixture removal
+were verified before publication. Artifact `11277993506` has SHA-256
+`d5405829874c91261fa85c5e125c4067b3fc3e5f1967c84ee4478979745e519a`.
+
 ## Protected raw-token proof
 
 Exact integer parameters cannot be reconstructed from an already-rounded
@@ -55,14 +64,35 @@ retained separately. Generic POST is still absent: decoded requests reach a
 
 That finite comparison normalizes declared ephemeral identities and response
 values; it is not universal byte parity or a business DTO/storage proof. The
-diagnostic and its evidence are separate from this legacy-reference source
-checkpoint. Application configuration has not adopted the candidate. No vendor
-patch, middleware bypass or generic business route follows from a test harness
-passing. The actual locked legacy application/ORM run remains pending hosted
-execution at this source checkpoint.
+diagnostic and its evidence are separate from the legacy-reference source
+checkpoint. Independent review found an additional limitation: a numeric helper
+called from the first candidate could throw on a native-valid 4,301-digit integer
+before routing. That unmeasured case could change the generic routing result to
+500. The earlier passing reports remain unchanged and do not close that gap.
 
-Both proof gates must pass before generic schema/endpoint implementation begins.
-Native Strapi product-key uniqueness, FK lifecycle, startup/restart retention,
+The subsequent capture-only v2 candidate removes every validation/helper call
+from the boundary middleware. It retains only protected raw text for prospective
+generic processing; a separate diagnostic observer catches helper errors without
+affecting routing. Its final native run passed 209 matching pairs: 418 socket
+requests, 416 completed responses and two deliberate aborts. It preserved the
+original 197-case sequence and added 12 ordinary/overwritten integer-limit cases
+on generic, auth, CMS and catalog routes. Generic 4,300-digit, 4,301-digit and
+overwritten 4,301-digit cases all remained 405; the other route families retained
+their 422 outcomes without generic capture or diagnostics. Independent source and
+result re-review closed the specific helper exception finding.
+
+Strict path-only native capture remains unavailable through a selected supported
+hook. The tested adaptation is global native capture followed immediately by
+metadata cleanup and scoped private retention, then cleanup on unwind. No raw
+logging or broad request-state retention is approved. Application configuration
+has not adopted the candidate. Future generic decoding, error policy, quota/auth
+ordering and persistence remain separate integration requirements. No vendor
+patch, middleware bypass or generic business route follows from this finite proof.
+
+Both prerequisite gates have passed within those limits. The next bounded stage
+is a fresh-store schema and native key/FK proof; generic HTTP creation remains
+disabled until that storage proof passes. Native Strapi product-key uniqueness,
+FK lifecycle, startup/restart retention,
 fresh-store refusal and unchanged catalog/idempotency/read/print behavior remain
 mandatory later implementation acceptance checks. Existing dependency-security
 failures, audit IP/source limitations and timestamp precision differences remain
