@@ -984,6 +984,7 @@ jobs:
           assert.equal(report.checks.length, 23);
           assert.ok(report.checks.every(check => check.status === 'passed'));
           assert.equal(report.cleanup, 'passed');
+          assert.equal(report.clusterCleanup, 'passed');
           assert.equal(report.browserTests, 19);
           assert.equal(report.screenshots.length, 8);
           for (const project of ['member-desktop', 'member-mobile']) {

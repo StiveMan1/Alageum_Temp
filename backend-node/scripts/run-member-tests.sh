@@ -15,28 +15,34 @@ mkdir -p "$XDG_CONFIG_HOME" "$MEMBER_WORK/evidence"
 MEMBER_STARTED=0
 cleanup() {
   result=$?; trap - EXIT
+  cluster_cleanup=passed
   if [[ "$MEMBER_STARTED" == 1 ]]; then
     if "$MEMBER_PG/pg_ctl" -D "$MEMBER_WORK/postgres" -m fast -t 10 -w stop >/dev/null; then
       # Exact mktemp child owned by this invocation, removed after confirmed stop.
-      rm -rf -- "$MEMBER_WORK/postgres"
+      rm -rf -- "$MEMBER_WORK/postgres" || cluster_cleanup=failed
     else
       echo 'Disposable PostgreSQL shutdown failed; raw database was not removed.' >&2
-      result=1
+      cluster_cleanup=failed
     fi
   elif [[ -d "$MEMBER_WORK/postgres" ]]; then
     if "$MEMBER_PG/pg_ctl" -D "$MEMBER_WORK/postgres" status >/dev/null 2>&1; then
-      if "$MEMBER_PG/pg_ctl" -D "$MEMBER_WORK/postgres" -m fast -t 10 -w stop >/dev/null; then rm -rf -- "$MEMBER_WORK/postgres"; else result=1; fi
-    else rm -rf -- "$MEMBER_WORK/postgres"; fi
+      if "$MEMBER_PG/pg_ctl" -D "$MEMBER_WORK/postgres" -m fast -t 10 -w stop >/dev/null; then
+        rm -rf -- "$MEMBER_WORK/postgres" || cluster_cleanup=failed
+      else cluster_cleanup=failed; fi
+    else rm -rf -- "$MEMBER_WORK/postgres" || cluster_cleanup=failed; fi
   fi
+  if [[ "$cluster_cleanup" == failed && "$result" == 0 ]]; then result=1; fi
   rm -f -- "$MEMBER_WORK/pg-password" "$MEMBER_WORK/initdb.log" "$MEMBER_WORK/postgres.log"
   rm -rf -- "$MEMBER_WORK/config" "$MEMBER_WORK/private-artifacts"
-  node - "$MEMBER_WORK/evidence/results.json" "$result" <<'NODE'
+  node - "$MEMBER_WORK/evidence/results.json" "$result" "$cluster_cleanup" <<'NODE'
 const fs = require("node:fs"), path = process.argv[2], exitCode = Number(process.argv[3]);
+const clusterCleanup = process.argv[4];
 let report;
 try { report = JSON.parse(fs.readFileSync(path, "utf8")); }
 catch { report = { kind: "isolated-organization-members", status: "failed", checks: [], browser: "not-run", error: "Runner did not produce a complete sanitized report" }; }
 if (exitCode !== 0) { report.status = "failed"; if (report.cleanup !== "failed") report.shellExitCode = exitCode; }
-report.clusterCleanup = exitCode === 0 ? "passed" : "failed-or-incomplete";
+report.clusterCleanup = clusterCleanup;
+if (clusterCleanup !== "passed") { report.status = "failed"; report.cleanup = "failed"; }
 fs.writeFileSync(path, JSON.stringify(report, null, 2) + "\n", { mode: 0o600 });
 NODE
   echo "Member verification evidence: $MEMBER_WORK/evidence (only sanitized evidence is publishable)"

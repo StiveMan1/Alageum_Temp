@@ -28,7 +28,7 @@ test('members reads use the exact read-only path, 50-row page size and captured 
       setSession(session);
       assert.deepEqual(await getOrganizationMembers(1, { signal: controller.signal }), value);
       assert.equal(calls.length, 1);
-      assert.equal(calls[0].url, '/api/v1/organizations/members?page=1&page_size=50');
+      assert.equal(calls[0].url, `${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/organizations/members?page=1&page_size=50`);
       assert.equal(calls[0].options.signal, controller.signal);
       assert.equal(calls[0].options.headers.get('X-Organization-ID'), session.organization_id);
       assert.equal(calls[0].options.method ?? 'GET', 'GET');

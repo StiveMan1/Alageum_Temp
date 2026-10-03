@@ -286,7 +286,7 @@ test('cancelled organization choice never commits a delayed candidate or alters 
   const held = await holdRealReply(page, `${api}/auth/me`, { predicate: request => request.headers()['x-organization-id'] === b });
   await page.getByTestId('organization-switch-trigger').click(); await option(page, b).check();
   await chooser(page).getByRole('button', { name: 'Переключить организацию', exact: true }).click(); expect((await held.started).status).toBe(200);
-  await chooser(page).getByRole('button', { name: 'Отмена', exact: true }).click(); await expect(chooser(page)).not.toBeVisible();
+  await chooser(page).getByRole('button', { name: 'Отмена выбора', exact: true }).click(); await expect(chooser(page)).not.toBeVisible();
   await held.release(); await expect(active(page)).toContainText(a); await expect(rows(page)).toHaveCount(5);
   await expect(page).toHaveURL(new URL(path(2), process.env.E2E_MEMBER_BASE_URL).href);
   expect(await page.evaluate(() => history.length)).toBe(before);
