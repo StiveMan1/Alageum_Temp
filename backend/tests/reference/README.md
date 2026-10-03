@@ -59,7 +59,7 @@ so this runner intentionally bypasses pytest entirely.
 
 ## Bounded coverage and evidence
 
-The finite corpus currently makes 80 quote endpoint requests and four actual
+The finite corpus currently makes 94 quote endpoint requests and four actual
 login requests. A hard guard permits at most 100 quote requests; the parent
 runner kills the case process after 180 seconds following setup. No POST is
 automatically retried. Independent cases use declared synthetic ASGI peer
@@ -87,6 +87,59 @@ with the deliberately assigned `reference_audit_rejection` constraint identifier
 A generic 500 or unrelated grant failure cannot satisfy these database-fault
 checks. Constraint capture is restricted to three known schema/fixture names;
 driver exception text and SQL parameters are never retained.
+
+### Integer decoder boundary extension
+
+The previous hosted corpus had 80 quote requests. This extension adds exactly
+six independent controls and eight shared-quota requests, for 94 total; the
+runner asserts both the six-control count and complete 94-request count. The
+extension's application/ORM/PostgreSQL outcomes remain **unverified until its
+dedicated hosted workflow passes**. Source/model inspection and `--verify-only`
+are not an execution of this gate. Existing passing reports remain unchanged.
+
+The six independent requests have fixed source-derived expectations:
+
+1. A bare 4,300-digit quantity decodes, validates as a `Decimal`, and reaches the
+   migrated `Numeric(18,3)` column: 500 `internal_error`, SQLSTATE `22003`, no writes.
+2. A quoted 4,300-digit quantity has the same range failure and no writes.
+3. A quoted 4,301-digit quantity bypasses the JSON integer limit but has the same
+   range failure and no writes.
+4. A bare 4,300-digit integer nested under item parameters persists with 201.
+   ORM values and SQL JSONB text must match all digits exactly; SQL must report
+   JSON type `number`.
+5. One request carries nested quoted-digit strings of lengths 4,300 and 4,301.
+   Both persist with 201, exact ORM/SQL text, and SQL JSON type `string`.
+6. One raw request contains 4,300-digit quantity and nested parameter integers,
+   each overwritten by a duplicate key with value 1. It must persist the final
+   values with 201, proving the at-limit duplicate-collapse control.
+
+Four raw 4,301-digit forms are each sent before shared-quota consuming attempt 1
+and again after attempt 10: bare quantity, overwritten quantity, nested parameter
+integer, and overwritten nested parameter integer. All eight must return the
+exact 400 `http_error` envelope with message `There was an error parsing the body`,
+null details, and the matching body/header request ID. They must have no SQL
+errors and no quote/item/audit writes. The existing ten consuming attempts,
+generic/catalog 429 controls, malformed-JSON 422 controls, and natural expiry
+remain intact. Attempts 9 and 10 must still create generic quotes, so unexpected
+quota consumption by any new pre-quota error fails the gate. Each over-limit
+form must still produce 400 after the bucket is full, proving decode-before-quota
+ordering without inspecting or resetting the limiter. The pre-quota bare-quantity
+case omits both bearer and organization headers and must still return 400,
+directly proving decode-before-authentication ordering. The other seven boundary
+requests use valid owner headers. The shared-quota check records the unauthenticated
+form and count without retaining authentication material.
+
+These expectations follow the locked Python 3.12 integer guard of 4,300 digits,
+Starlette 1.6.0 `Request.json()` calling `json.loads`, and FastAPI 0.141.1
+`get_request_handler()` reading/decoding the body before `solve_dependencies()`.
+An over-limit integer raises `ValueError` even when a later duplicate would
+overwrite it. FastAPI maps that exception to HTTP 400; its separate
+`JSONDecodeError` path still produces validation 422 for malformed JSON. The
+frozen `app/core/errors.py` maps HTTP 400 to the asserted envelope.
+`app/commerce/router.py` defines a positive `Decimal` quantity without a maximum
+digit count and untyped nested parameter values; `app/commerce/models.py` and
+the real migrations determine the different quantity/JSONB storage outcomes.
+No surprising runtime result may silently change these expectations.
 
 Only the JSON report is a publication artifact: provenance, selected synthetic
 results, statuses, selected response headers, validation locations/types,
