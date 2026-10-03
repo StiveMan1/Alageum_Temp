@@ -6,6 +6,7 @@ const { assertActiveContext } = require("./auth");
 const v = require("./catalog-validation");
 const nativeMedia = require("./catalog-media");
 const { NAMESPACE, importedProductId } = require("./catalog-identity");
+const { requestPagination } = require("./legacy-query");
 const CATEGORIES = {
   transformers: "Трансформаторы",
   switchgear: "Коммутация и распределение",
@@ -134,7 +135,11 @@ function search(query, text) {
       ]);
   });
 }
-function createCatalog({ db, auth, audit, authorizer }) {
+function createCatalog({ db, auth, audit, authorizer, compatibilityReads = false }) {
+  // Native CMS lists deliberately retain their existing validation/default 20.
+  const pageFor = (ctx) => compatibilityReads
+    ? requestPagination(ctx)
+    : (() => { const p = pagination(ctx.query); return { ...p, offset: BigInt(p.page - 1) * BigInt(p.page_size) }; })();
   const table = (tx = db) => tx(PRODUCT);
   const categories = (tx = db) => tx(CATEGORY);
   const base = (tx = db) =>
@@ -214,7 +219,7 @@ function createCatalog({ db, auth, audit, authorizer }) {
   }
   async function list(ctx, admin = false) {
     if (admin) await manager(ctx);
-    const p = pagination(ctx.query);
+    const p = pageFor(ctx);
     let q = admin ? base() : publicQuery();
     if (ctx.query.category_id) {
       q = q.where("p.category_id", v.parse(v.uuid, ctx.query.category_id));
@@ -232,31 +237,32 @@ function createCatalog({ db, auth, audit, authorizer }) {
     const total = Number(
       (await q.clone().clearSelect().count({ n: "p.id" }).first()).n,
     );
-    const rows = await q
+    const rows = p.offset >= BigInt(total) ? [] : await q
       .orderBy("p.sort_order")
       .orderBy("p.public_key")
       .limit(p.page_size)
-      .offset((p.page - 1) * p.page_size);
+      .offset(Number(p.offset));
     ctx.body = {
       items: rows.map((r) =>
         productOut(r, { public_key: r.category_public_key }, admin),
       ),
-      ...p,
+      page: p.page,
+      page_size: p.page_size,
       total,
     };
   }
   async function categoryList(ctx, admin = false) {
     if (admin) await manager(ctx);
-    const p = pagination(ctx.query);
+    const p = pageFor(ctx);
     const q = categories();
     if (!admin) q.where("is_published", true);
     const total = Number((await q.clone().count({ n: "id" }).first()).n);
-    const rows = await q
+    const rows = p.offset >= BigInt(total) ? [] : await q
       .orderBy("sort_order")
-      .orderBy("public_key")
+      .orderBy(compatibilityReads && !admin ? "transport_id" : "public_key")
       .limit(p.page_size)
-      .offset((p.page - 1) * p.page_size);
-    ctx.body = { items: rows.map(categoryOut), ...p, total };
+      .offset(Number(p.offset));
+    ctx.body = { items: rows.map(categoryOut), page: p.page, page_size: p.page_size, total };
   }
   async function get(ctx, admin = false) {
     if (admin) await manager(ctx);

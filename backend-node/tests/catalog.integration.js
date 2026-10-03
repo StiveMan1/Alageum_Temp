@@ -44,14 +44,14 @@ test("real Strapi/PostgreSQL catalog and HTTP contract", async (t) => {
     "ALAGEUM_JWT_SECRET",
   ])
     process.env[key] ||= randomBytes(48).toString("hex");
-  const app = require("@strapi/strapi").createStrapi({
+  let app = require("@strapi/strapi").createStrapi({
     appDir: process.cwd(),
     distDir: process.cwd(),
   });
+  t.after(() => app?.destroy());
   await app.load();
   const db = app.db.connection,
     { catalog, auth, quotes } = app.alageum;
-  t.after(() => app.destroy());
   async function login(name) {
     const c = ctx({
       body: { email: `${name}@demo.example`, password: "ChangeMe123!" },
@@ -586,4 +586,45 @@ test("real Strapi/PostgreSQL catalog and HTTP contract", async (t) => {
     app,
     { category, businessToken: manager },
   );
+  await require("./catalog-read.integration-support").runCatalogReadTests(t, app, { manager });
+  await require("./catalog-filter.integration-support").runCatalogFilterTests(t, app);
+  await require("./organization-pagination.integration-support").runOrganizationPaginationTests(t, app);
+  await require("./rfq-read.integration-support")({ app, base: `http://127.0.0.1:${app.server.httpServer.address().port}/api/v1`, t });
+  await t.test("populated filter definitions, native category FK and all 238 reviewed identities survive a real Strapi restart", async () => {
+    const { createRestartFixture, verifyRestartFixture, verifyNativeAdapterTransition } = require("./catalog-filter.integration-support");
+    const fixture = await createRestartFixture(app);
+    const previous = app; app = null; await previous.destroy();
+    // One sequential rejected startup on the same disposable database proves
+    // the guard runs before actual Strapi sync, and never silently repairs drift.
+    const observer = require("knex")({ client: "pg", connection: process.env.DATABASE_URL, pool: { min: 0, max: 1 } });
+    const snapshot = async () => JSON.stringify({
+      definitions: await observer.withSchema("b2b").table("product_attribute_definitions").select("*", observer.raw("translations::text AS translations")).orderBy("id"),
+      categories: await observer(CATEGORY).orderBy("id"), products: await observer(PRODUCT).orderBy("id"),
+      audit: await observer.withSchema("b2b").table("audit_events").orderBy("id"),
+    });
+    async function refuseStartup(snapshotRows) {
+      const before = await snapshotRows();
+      const rejected = require("@strapi/strapi").createStrapi({ appDir: process.cwd(), distDir: process.cwd() });
+      try {
+        let synchronizations = 0;
+        const sync = rejected.db.schema.sync.bind(rejected.db.schema);
+        rejected.db.schema.sync = async (...args) => { synchronizations++; return sync(...args); };
+        await assert.rejects(rejected.load(), /Catalog filter schema mismatch/);
+        assert.equal(synchronizations, 0); assert.equal(await snapshotRows(), before);
+      } finally { await rejected.destroy(); }
+    }
+    try {
+      await verifyNativeAdapterTransition(observer, refuseStartup);
+      await observer.raw("ALTER TABLE b2b.product_attribute_definitions ALTER COLUMN code SET DEFAULT 'fictitious forbidden default'");
+      await refuseStartup(snapshot);
+      const column = await observer("information_schema.columns").where({ table_schema: "b2b", table_name: "product_attribute_definitions", column_name: "code" }).first();
+      assert.match(column.column_default, /fictitious forbidden default/);
+    } finally {
+      try { await observer.raw("ALTER TABLE b2b.product_attribute_definitions ALTER COLUMN code DROP DEFAULT"); }
+      finally { await observer.destroy(); }
+    }
+    app = require("@strapi/strapi").createStrapi({ appDir: process.cwd(), distDir: process.cwd() });
+    await app.load();
+    await verifyRestartFixture(app, fixture);
+  });
 });

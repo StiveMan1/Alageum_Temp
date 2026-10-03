@@ -17,11 +17,11 @@ This local migration implements a bounded Node domain behind the existing `/api/
 - Up to 100 unique products per request, quantities greater than zero fitting Decimal(18,3), at most three decimal places, and comments up to 4,000 characters
 - Strict UUID `Idempotency-Key`: first success returns 201; same semantic payload returns 200 and the original quote; changed payload returns 409
 - Per-tenant/per-owner idempotency, database unique constraints, cross-process transaction locking and one transactional audit per newly created quote
-- Owner-and-tenant-scoped request list/detail, private/no-store responses and pagination
+- Organization-scoped request summaries with an additive owner filter, owner-and-tenant-scoped detail, private/no-store responses and pagination
 
 Product IDs in requests and responses remain UUIDs; internal Strapi numeric/document IDs are not business transport IDs. RFQ snapshots explicitly include only public catalog fields and survive subsequent product edits or removal. The catalog adapter must lock published products and visible categories within the same transaction as snapshot creation. An RFQ is an inquiry, not stock reservation, an order, a price commitment or confirmation of availability.
 
-Request listing is deliberately owner-only. `/quotes?mine=true` is the supported frontend contract. Omitted `mine` or explicit `mine=false` is rejected rather than silently claiming the legacy organization-wide listing is migrated.
+Request listing restores the frozen organization default: omitted `mine` or a false Boolean alias returns selected-organization summaries, including peer comments. `mine=true` returns the current owner's summaries. The customer UI explicitly uses that owner filter; detail and print access remain owner-and-tenant scoped. List/detail recheck current authority inside their read transaction without adding read audits. See [read-contract corrections and acceptance limits](node-legacy-read-compatibility.md).
 
 ## Local reset and migration boundary
 
@@ -33,7 +33,7 @@ Demo seeding requires `ALAGEUM_SEED_DEMO=1` and a development/test application e
 
 ## Not migrated by this slice
 
-Invitation/password-reset flows, member-management writes, generic legacy quote creation, organization-wide quote history, RFQ attachments, RFQ status transitions, manager responses, orders, documents, finance, advanced support workflows, notifications, AI and integration workflows are not implemented here. Their legacy code is a reference, not a runtime service or proof of Node feature parity.
+Invitation/password-reset flows, member-management writes, generic legacy quote creation, RFQ attachments, RFQ status transitions, manager responses, advanced support workflows, notifications, AI and integration workflows are not implemented here. Read-only orders, document metadata and invoice metadata have separate bounded Node slices. Their legacy code is a reference, not a runtime service or proof of complete Node feature parity. Real legacy RFQ import and historical timestamp precision remain unresolved.
 
 ## Verification
 

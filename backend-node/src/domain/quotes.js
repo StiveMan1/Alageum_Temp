@@ -4,13 +4,14 @@ const { createHash, randomUUID } = require("node:crypto");
 const { AppError } = require("./errors");
 const {
   table,
+  UUID,
   uuid,
   strictObject,
-  pagination,
   header,
   privateResponse,
   assertActiveContext,
 } = require("./auth");
+const { requestQuoteQuery } = require("./legacy-query");
 
 const MAX_ITEMS = 100;
 const MAX_QUANTITY = "999999999999999.999";
@@ -178,12 +179,22 @@ async function ensureSchema(db) {
   });
 }
 function summary(quote, count) {
+  if (
+    !quote || typeof quote.id !== "string" || !UUID.test(quote.id) ||
+    typeof quote.status !== "string" ||
+    (quote.comment !== null && typeof quote.comment !== "string") ||
+    !Number.isSafeInteger(count) || count < 0 ||
+    !(quote.created_at instanceof Date || typeof quote.created_at === "string")
+  ) throw new TypeError("Invalid quote summary DTO");
+  const createdAt = new Date(quote.created_at);
+  if (!Number.isFinite(createdAt.getTime()))
+    throw new TypeError("Invalid quote summary DTO");
   return {
     id: quote.id,
     status: quote.status,
     comment: quote.comment,
     item_count: count,
-    created_at: new Date(quote.created_at).toISOString(),
+    created_at: createdAt.toISOString(),
   };
 }
 function own(db, context) {
@@ -353,47 +364,57 @@ function createQuotes({ db, catalog, audit, auth }) {
     ctx.set("Location", `/api/v1/quotes/${result.quote.id}`);
   }
   async function list(ctx) {
+    privateResponse(ctx);
     const context = await authorized(ctx, "quote.read");
-    const query = ctx.query || {};
-    if (query.mine !== "true" && query.mine !== true)
-      invalid("Only mine=true request history is supported");
-    const page = pagination(query);
-    const [count, quotes] = await Promise.all([
-      own(db, context).count("* as total").first(),
-      own(db, context)
+    const page = requestQuoteQuery(ctx);
+    ctx.body = await db.transaction(async (tx) => {
+      const fresh = await assertActiveContext(tx, context, "quote.read");
+      // The stored tenant scopes history; a creator's current membership does not.
+      const scoped = () => {
+        const query = table(tx, "quote_requests").where({
+          organization_id: fresh.organization_id,
+        });
+        return page.mine ? query.where({ created_by_id: fresh.user.id }) : query;
+      };
+      const total = Number((await scoped().count("* as total").first()).total);
+      const quotes = page.offset >= BigInt(total) ? [] : await scoped()
+        .select("id", "status", "comment", "created_at")
         .orderBy("created_at", "desc")
         .orderBy("id")
         .limit(page.page_size)
-        .offset((page.page - 1) * page.page_size),
-    ]);
-    const counts = quotes.length
-      ? await table(db, "quote_request_items")
-          .whereIn(
-            "quote_request_id",
-            quotes.map((quote) => quote.id),
-          )
-          .select("quote_request_id")
-          .count("* as total")
-          .groupBy("quote_request_id")
-      : [];
-    const byId = new Map(
-      counts.map((value) => [value.quote_request_id, Number(value.total)]),
-    );
-    ctx.body = {
-      items: quotes.map((quote) => summary(quote, byId.get(quote.id) || 0)),
-      ...page,
-      total: Number(count.total),
-    };
-    privateResponse(ctx);
+        .offset(Number(page.offset));
+      const counts = quotes.length
+        ? await table(tx, "quote_request_items")
+            .whereIn(
+              "quote_request_id",
+              quotes.map((quote) => quote.id),
+            )
+            .select("quote_request_id")
+            .count("* as total")
+            .groupBy("quote_request_id")
+        : [];
+      const byId = new Map(
+        counts.map((value) => [value.quote_request_id, Number(value.total)]),
+      );
+      return {
+        items: quotes.map((quote) => summary(quote, byId.get(quote.id) ?? 0)),
+        page: page.page,
+        page_size: page.page_size,
+        total,
+      };
+    });
     ctx.status = 200;
   }
   async function detail(ctx) {
+    privateResponse(ctx);
     const context = await authorized(ctx, "quote.read");
     const id = uuid(ctx.params.quote_id || ctx.params.id, "quote_id");
-    const quote = await own(db, context).where({ id }).first();
-    if (!quote) throw new AppError("quote_not_found", "Request not found", 404);
-    ctx.body = await detailOut(db, quote);
-    privateResponse(ctx);
+    ctx.body = await db.transaction(async (tx) => {
+      const fresh = await assertActiveContext(tx, context, "quote.read");
+      const quote = await own(tx, fresh).where({ id }).first();
+      if (!quote) throw new AppError("quote_not_found", "Request not found", 404);
+      return detailOut(tx, quote);
+    });
     ctx.status = 200;
   }
   return { create, list, detail, submit };
@@ -407,6 +428,7 @@ module.exports = {
   fingerprint,
   snapshot,
   snapshotOut,
+  summary,
   MAX_ITEMS,
   MAX_QUANTITY,
 };

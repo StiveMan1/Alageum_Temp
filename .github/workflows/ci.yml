@@ -34,6 +34,10 @@ jobs:
       - run: ruff check .
       - run: python ../scripts/test_backend_readiness.py
       - run: python ../scripts/check_vercel_runtime_lock.py
+      - name: Verify the explicit legacy route inventory
+        run: python ../scripts/check_legacy_route_inventory.py
+      - name: Reproduce frozen FastAPI query reference vectors
+        run: python ../backend-node/tests/reference/generate_legacy_query.py --check
       - run: pytest --cov=app --cov-report=term-missing
       - run: alembic upgrade head
       - run: alembic downgrade base
