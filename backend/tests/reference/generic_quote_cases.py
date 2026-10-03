@@ -270,6 +270,37 @@ def body(quantity="1", **item):
     return {"items": [{"quantity": quantity, **item}]}
 
 
+def integer_decode_rejections():
+    # Keep every over-limit token in raw bytes: JSON decoding must see even a
+    # duplicate value that would otherwise be overwritten before DTO validation.
+    digits = b"9" * 4301
+    return [
+        ("quantity", b'{"items":[{"quantity":' + digits + b'}]}'),
+        ("quantity-overwritten", b'{"items":[{"quantity":' + digits
+         + b',"quantity":"1"}]}'),
+        ("parameter", b'{"items":[{"quantity":"1","parameters":{"nested":{"integer":'
+         + digits + b'}}}]}'),
+        ("parameter-overwritten",
+         b'{"items":[{"quantity":"1","parameters":{"nested":{"integer":'
+         + digits + b',"integer":1}}}]}'),
+    ]
+
+
+async def integer_decode_rejection(name, raw, **common):
+    # Frozen Starlette json.loads raises ValueError, not JSONDecodeError. FastAPI
+    # converts it to HTTP 400 before solve_dependencies (including quota/auth).
+    result, record, response = await request(name, raw=raw, status=400,
+                                             code="http_error", **common)
+    expected_error = {"code": "http_error", "message": "There was an error parsing the body",
+                      "details": None, "request_id": record["request_id"]}
+    record["expected_error"] = expected_error
+    checkpoint()
+    require(result == {"error": expected_error}, f"{name}: integer decode envelope differs")
+    require(response.headers.get("x-request-id") == record["request_id"],
+            f"{name}: integer decode response request ID differs")
+    require(not record["sql_errors"], f"{name}: integer decode unexpectedly reached a SQL fault")
+
+
 def item_signature(product, quantity, parameters):
     return str(product) if product is not None else None, str(Decimal(quantity)), parameters
 
@@ -447,6 +478,62 @@ async def ordinary_cases(data, headers):
     return first
 
 
+async def integer_boundary_cases(data, headers):
+    h = headers["owner"]
+    started = QUOTE_REQUESTS
+    digits = "9" * 4300
+    raw_digits = digits.encode("ascii")
+    # A 4,300-digit bare integer decodes and reaches Numeric(18,3); digit strings
+    # at either length bypass the integer decoder and reach the same range error.
+    await request("quantity-integer-4300-overflow",
+                  raw=b'{"items":[{"quantity":' + raw_digits + b'}]}', headers=h,
+                  status=500, code="internal_error", sqlstate="22003")
+    for length in (4300, 4301):
+        await request(f"quantity-digit-string-{length}-overflow", body=body("9" * length),
+                      headers=h, status=500, code="internal_error", sqlstate="22003")
+    integer_parameters = {"nested": {"integer": int(digits)}}
+    exact = await success("nested-parameter-integer-4300", data, h,
+                          raw=b'{"items":[{"quantity":"1","parameters":{"nested":{"integer":'
+                          + raw_digits + b'}}}]}',
+                          expected=[item_signature(None, "1.000", integer_parameters)])
+    async with OWNER_SESSION() as session:
+        stored = (await session.execute(text(
+            "SELECT parameters #>> '{nested,integer}', "
+            "jsonb_typeof(parameters #> '{nested,integer}') "
+            "FROM quote_request_items WHERE quote_request_id=:id"),
+            {"id": uuid.UUID(exact["id"])})).one()
+        require(tuple(stored) == (digits, "number"), "SQL JSONB 4300-digit integer differs")
+    string_parameters = {"nested": {f"digits{length}": "9" * length for length in (4300, 4301)}}
+    strings = await success("nested-parameter-digit-strings-4300-4301", data, h,
+                            payload=body(parameters=string_parameters),
+                            expected=[item_signature(None, "1.000", string_parameters)])
+    async with OWNER_SESSION() as session:
+        stored = (await session.execute(text(
+            "SELECT parameters #>> '{nested,digits4300}', "
+            "jsonb_typeof(parameters #> '{nested,digits4300}'), "
+            "parameters #>> '{nested,digits4301}', "
+            "jsonb_typeof(parameters #> '{nested,digits4301}') "
+            "FROM quote_request_items WHERE quote_request_id=:id"),
+            {"id": uuid.UUID(strings["id"])})).one()
+        require(tuple(stored) == (digits, "string", digits + "9", "string"),
+                "SQL JSONB quoted-digit strings differ")
+    await success("overwritten-integers-4300", data, h,
+                  raw=b'{"items":[{"quantity":' + raw_digits
+                  + b',"quantity":"1","parameters":{"nested":{"integer":' + raw_digits
+                  + b',"integer":1}}}]}',
+                  expected=[item_signature(None, "1.000", {"nested": {"integer": 1}})])
+    require(QUOTE_REQUESTS - started == 6, "Independent integer boundary request count differs")
+    REPORT["checks"].append({"name": "integer-boundary-controls", "quote_requests": 6,
+                             "bare_quantity_digits": 4300,
+                             "quoted_quantity_digits": [4300, 4301],
+                             "quantity_failure_sqlstate": "22003",
+                             "nested_integer_digits": 4300,
+                             "nested_integer_sql_type": "number", "nested_integer_exact": True,
+                             "nested_quoted_digits": [4300, 4301],
+                             "nested_quoted_sql_type": "string", "nested_quoted_exact": True,
+                             "overwritten_4300_quantity_and_parameter": True})
+
+
 async def repetition_cases(data, headers):
     ids = []
     key = str(uuid.uuid4())
@@ -547,6 +634,14 @@ async def quota_and_catalog(data, headers):
     common = {"peer": peer, "headers": h}
     await request("quota-malformed-before", raw=b'{"items":', status=422,
                   code="validation_error", **common)
+    decode_rejections = integer_decode_rejections()
+    require(len(decode_rejections) == 4, "Integer decode rejection corpus size differs")
+    unauthenticated_form = "quantity"
+    require(sum(name == unauthenticated_form for name, _ in decode_rejections) == 1,
+            "Expected exactly one unauthenticated integer decode control")
+    for name, raw in decode_rejections:
+        selected = {"peer": peer} if name == unauthenticated_form else common
+        await integer_decode_rejection(f"quota-integer-4301-{name}-before", raw, **selected)
     # Auth/schema/storage failures all consume the same real bucket.
     await request("quota-auth-failure-1", body=body(), peer=peer, status=401,
                   code="authentication_required")
@@ -584,6 +679,9 @@ async def quota_and_catalog(data, headers):
                   headers=ch, peer=peer, status=429, code="rate_limit_exceeded")
     await request("quota-malformed-still-parse-first", raw=b'{"items":', status=422,
                   code="validation_error", **common)
+    for name, raw in decode_rejections:
+        await integer_decode_rejection(f"quota-integer-4301-{name}-still-parse-first",
+                                       raw, **common)
     # Let the *real* rolling window expire, with no limiter inspection/reset or fake clock.
     async with OWNER_ENGINE.connect() as conn:
         idle_transactions = await conn.scalar(text(
@@ -601,6 +699,13 @@ async def quota_and_catalog(data, headers):
     REPORT["checks"].append({"name": "shared-real-quota", "limit": 10, "window_seconds": 60,
                              "natural_wait_seconds": round(delay, 3),
                              "idle_transactions_before_wait": idle_transactions,
+                             "integer_decode_requests": 8, "integer_decode_digits": 4301,
+                             "integer_decode_forms": [name for name, _ in decode_rejections],
+                             "integer_decode_unauthenticated_form": unauthenticated_form,
+                             "integer_decode_unauthenticated_requests": 1,
+                             "integer_decode_before_authentication": True,
+                             "integer_decode_before_quota_nonconsuming": True,
+                             "integer_decode_before_full_quota_denial": True,
                              "catalog_replay_preserved": True, "catalog_conflict_preserved": True})
 
 
@@ -638,10 +743,12 @@ async def main():
         async with app.router.lifespan_context(app):
             headers = await login(data)
             first = await ordinary_cases(data, headers)
+            await integer_boundary_cases(data, headers)
             await repetition_cases(data, headers)
             await authority_cases(data, headers, first)
             await audit_failure_case(data, headers)
             await quota_and_catalog(data, headers)
+        require(QUOTE_REQUESTS == 94, "Complete finite corpus request count differs")
         REPORT["final_counts"] = await counts()
         REPORT["status"] = "passed"
     except BaseException as exc:
