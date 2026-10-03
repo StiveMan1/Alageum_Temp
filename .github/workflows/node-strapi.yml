@@ -15,6 +15,7 @@ on:
       - 'docs/node-invoice-metadata.md'
       - 'docs/node-document-metadata.md'
       - 'docs/node-organization-members.md'
+      - 'docs/node-session-read-invalidation.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -33,6 +34,7 @@ on:
       - 'docs/node-invoice-metadata.md'
       - 'docs/node-document-metadata.md'
       - 'docs/node-organization-members.md'
+      - 'docs/node-session-read-invalidation.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -450,7 +452,7 @@ jobs:
         run: |
           set -euo pipefail
           timeout --signal=TERM --kill-after=10s 270s npx --no-install playwright install --with-deps chromium 2>&1 | tee ../company-profile-evidence/chromium-install.log
-      - name: Verify isolated real HTTP and all sixteen profile browser cases
+      - name: Verify isolated real HTTP and all seventeen profile browser cases
         timeout-minutes: 17
         shell: bash
         run: |
@@ -472,7 +474,7 @@ jobs:
           assert.equal(report.checks.length, 6);
           assert.ok(report.checks.every(check => check.status === 'passed'));
           const log = fs.readFileSync(path.join(evidence, 'playwright.log'), 'utf8');
-          assert.match(log, /\b16 passed\b/);
+          assert.match(log, /\b17 passed\b/);
           assert.doesNotMatch(log, /\b[1-9]\d* (?:failed|flaky|skipped|did not run)\b/);
           NODE
       - name: Retain sanitized profile evidence and successful screenshots
@@ -786,7 +788,7 @@ jobs:
         run: |
           set -euo pipefail
           timeout --signal=TERM --kill-after=10s 270s npx --no-install playwright install --with-deps chromium 2>&1 | tee ../invoice-metadata-evidence/chromium-install.log
-      - name: Verify isolated real HTTP and all twenty-four invoice metadata browser cases
+      - name: Verify isolated real HTTP and all twenty-eight invoice metadata browser cases
         timeout-minutes: 17
         shell: bash
         run: |
@@ -808,7 +810,7 @@ jobs:
           assert.equal(report.checks.length, 21);
           assert.ok(report.checks.every(check => check.status === 'passed'));
           assert.equal(report.cleanup, 'passed');
-          assert.equal(report.browserTests, 24);
+          assert.equal(report.browserTests, 28);
           assert.equal(report.screenshots.length, 6);
           for (const project of ['invoices-desktop', 'invoices-mobile']) {
             for (const name of ['invoices-list', 'invoices-empty', 'invoices-retry']) {
@@ -816,7 +818,7 @@ jobs:
             }
           }
           const log = fs.readFileSync(path.join(evidence, 'playwright.log'), 'utf8');
-          assert.match(log, /\b24 passed\b/);
+          assert.match(log, /\b28 passed\b/);
           assert.doesNotMatch(log, /\b[1-9]\d* (?:failed|flaky|skipped|did not run)\b/);
           NODE
       - name: Retain sanitized invoice metadata evidence and successful screenshots

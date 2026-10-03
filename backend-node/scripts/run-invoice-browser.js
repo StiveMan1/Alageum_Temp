@@ -182,7 +182,7 @@ const deadline = setTimeout(() => { void interrupted("runner deadline"); }, 9000
         const result = JSON.parse(readFileSync(env.PLAYWRIGHT_JSON_OUTPUT_NAME, "utf8"));
         const flatten = suites => suites.flatMap(suite => [...(suite.specs || []).flatMap(spec => spec.tests), ...flatten(suite.suites || [])]);
         const tests = flatten(result.suites);
-        assert.equal(tests.length, 24); assert.equal(result.stats.expected, 24);
+        assert.equal(tests.length, 28); assert.equal(result.stats.expected, 28);
         assert.equal(result.stats.unexpected + result.stats.skipped + result.stats.flaky, 0);
         const screenshots = [];
         for (const test of tests) {
@@ -195,7 +195,7 @@ const deadline = setTimeout(() => { void interrupted("runner deadline"); }, 9000
         assert.equal(screenshots.length, 6, "Desktop/mobile list/empty/retry PNGs are required");
         for (const project of ["invoices-desktop", "invoices-mobile"]) for (const name of ["invoices-list", "invoices-empty", "invoices-retry"])
           assert.ok(screenshots.some(shot => shot.project === project && shot.name === name));
-        report.browser = "passed"; report.browserTests = 24; report.screenshots = screenshots;
+        report.browser = "passed"; report.browserTests = 28; report.screenshots = screenshots;
       });
     } else report.browser = "not-run: explicit --backend-only";
     assert.equal(report.checks.length, mode === "--browser" ? 21 : 19);

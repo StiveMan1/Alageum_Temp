@@ -130,8 +130,8 @@ test('document route disposal and changed authorization suppress pending complet
     if (dispose) flow.dispose(); else current = false;
     if (reject) pending.reject(new Error('late failure')); else pending.resolve([document]);
     await read; await flow.reload();
-    assert.equal(history.length, 1); assert.equal(calls, 1);
-    if (dispose) assert.equal(signal.aborted, true);
+    assert.equal(history.length, dispose ? 1 : 2); assert.equal(calls, 1);
+    assert.equal(signal.aborted, true);
   }
 });
 

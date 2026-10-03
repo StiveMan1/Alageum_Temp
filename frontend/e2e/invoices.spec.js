@@ -2,6 +2,8 @@ import { expect, test } from '@playwright/test';
 
 // The ordinary list/empty/isolation reads use real isolated PostgreSQL
 // fixtures. Interception is limited to named error and delayed-response cases.
+// Pinned Playwright 1.62.1 disables Chromium BFCache. Controlled pageshow cases
+// check application reconciliation only, not native restoration or first paint.
 const api = process.env.E2E_INVOICE_API_URL?.replace(/\/$/, '');
 const endpoint = `${api}/finance/invoices`;
 const a = process.env.E2E_INVOICE_ORGANIZATION_A;
@@ -253,6 +255,55 @@ test('organization switch drops held invoice reads and history restores the curr
   expect(requestedOrganizations[0]).toBe(a);
   expect(requestedOrganizations.slice(1).every(id => id === b)).toBe(true);
   await expect(alerts(page)).toHaveCount(0);
+});
+
+test('controlled persisted pageshow clears old invoice rows while an unannounced tenant change is validated', async ({ page }) => {
+  await login(page, 'multi'); await expect(summaries(page)).toHaveCount(3);
+  await expect(summary(page, 'FIXTURE-INV-001')).toBeVisible();
+  const organizations = [];
+  page.on('request', request => { if (request.url() === endpoint && request.method() === 'GET') organizations.push(request.headers()['x-organization-id']); });
+  const heldProfile = await holdRealReply(page, `${api}/auth/me`);
+  try {
+    await page.evaluate(id => {
+      const session = JSON.parse(sessionStorage.getItem('alageum_session'));
+      sessionStorage.setItem('alageum_session', JSON.stringify({ ...session, organization_id: id }));
+      // Same-document storage writes emit no storage/session-changed event.
+      // This synthetic lifecycle signal is not evidence of native BFCache.
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    }, b);
+    expect((await heldProfile.started).status).toBe(200);
+    // Hold /me so the shared AuthProvider boundary must clear mounted rows
+    // before replacement identity or invoice data is allowed to settle.
+    await expect(summaries(page)).toHaveCount(0);
+    await expect(list(page)).toHaveCount(0);
+    expect(organizations).toEqual([]);
+  } finally { await heldProfile.release(); }
+  await expect(active(page)).toContainText(b, { useInnerText: true });
+  await expect(summaries(page)).toHaveCount(1);
+  await expect(summaries(page)).toContainText('FIXTURE-OTHER-001', { useInnerText: true });
+  await expect(list(page)).not.toContainText('FIXTURE-INV-001', { useInnerText: true });
+  await expect(alerts(page)).toHaveCount(0);
+  expect(organizations).toEqual([b]);
+  await expect(page).toHaveURL(/\/b2b\/finance$/);
+});
+
+test('controlled persisted pageshow clears mounted invoice rows after unannounced session removal', async ({ page }) => {
+  await login(page); await expect(summaries(page)).toHaveCount(3);
+  await expect(summary(page, 'FIXTURE-INV-001')).toBeVisible();
+  const requests = [];
+  page.on('request', request => { if ([endpoint, `${api}/auth/me`, `${api}/auth/refresh`].includes(request.url())) requests.push(request.method()); });
+  await page.evaluate(() => {
+    sessionStorage.removeItem('alageum_session');
+    // Controlled pageshow only: no application session event or navigation.
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+  });
+  await expect(page.getByRole('heading', { name: 'Войдите в B2B кабинет', exact: true })).toBeVisible();
+  await expect(summaries(page)).toHaveCount(0);
+  await expect(list(page)).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Войти', exact: true })).toHaveAttribute('href', '/login?next=%2Fb2b%2Ffinance');
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  expect(requests).toEqual([]);
+  expect(await page.evaluate(() => sessionStorage.getItem('alageum_session'))).toBeNull();
 });
 
 test('same-organization and different-organization new logins invalidate held invoice responses', async ({ page, request }) => {

@@ -57,7 +57,7 @@ Integration checks include unchanged organization/default role rows, repeatable 
 Browser acceptance lives in a separate profile Playwright suite and isolated fixture runner; it must not enter the existing default or optional webpack scope. A real saved-state reload, desktop/mobile layout, concurrency conflict, permission denial and interrupted session/navigation requests are acceptance requirements. Local Chromium execution is blocked by the executor's Unix-socket restriction; hosted execution is required, and a test listing is not a browser pass. Runtime passwords/tokens and raw databases are excluded from publishable evidence.
 
 Run `bash backend-node/scripts/run-profile-tests.sh --browser` for the separate
-16-case profile suite; `--backend-only` proves its real HTTP setup locally without
+17-case profile suite; `--backend-only` proves its real HTTP setup locally without
 claiming a browser pass. A fresh profile build uses `ALAGEUM_PROFILE_BUILD=1` and
 the isolated `.next-profile` output. The runner waits out the setup-login rate
 window rather than weakening the existing login limiter.
@@ -68,3 +68,9 @@ profile build and production Strapi admin build passed. The isolated HTTP runner
 passed 4/4 groups, including real no-store headers. Hosted profile browser
 execution and its saved-state screenshots remain pending; no local Chromium run
 is claimed.
+
+The controlled persisted-pageshow regression preserves a new unsaved draft after
+a confirmed save, makes no automatic profile read or mutation replay, and checks
+that the saved server snapshot remains unchanged. This is application lifecycle
+coverage, not native BFCache evidence; see
+[`node-session-read-invalidation.md`](node-session-read-invalidation.md).
