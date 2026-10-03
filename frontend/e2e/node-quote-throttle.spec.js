@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { writeFile } from 'node:fs/promises';
 import { performance } from 'node:perf_hooks';
+import { prepareTopCapture } from './helpers/prepare-top-capture';
 
 // Real Node/Strapi, seeded disposable PostgreSQL, and the production frontend.
 // No routes are intercepted, storage is never seeded, and no clock is mocked.
@@ -32,13 +33,7 @@ async function inquiryStorage(page) {
 }
 
 async function capture(page, testInfo, name) {
-  await page.evaluate(() => document.fonts.ready);
-  await page.evaluate(() => {
-    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  });
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
-  await expect(page.getByRole('banner')).toBeInViewport();
+  await prepareTopCapture(page);
   const path = testInfo.outputPath(`${name}.png`);
   await page.screenshot({ path, fullPage: true, animations: 'disabled' });
   await testInfo.attach(name, { path, contentType: 'image/png' });

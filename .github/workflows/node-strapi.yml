@@ -416,6 +416,15 @@ jobs:
         run: |
           npm run lint
           NEXT_PUBLIC_CATALOG_SOURCE=static npm run test:unit
+          mkdir -p playwright-report
+          npx --no-install playwright test --list > playwright-report/legacy-discovery.log
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const discovery = fs.readFileSync('playwright-report/legacy-discovery.log', 'utf8');
+          assert.match(discovery, /Total: [1-9]\d* tests/);
+          assert.doesNotMatch(discovery, /node-quote-throttle\.spec\.js/);
+          NODE
       - name: Build frontend against Node API
         working-directory: frontend
         run: npm run build
