@@ -13,12 +13,14 @@ const catalogFiltersModule = require("./domain/catalog-filters");
 const { createCmsCatalogAuthorizer } = require("./domain/cms-catalog");
 const { readCatalog } = require("./domain/catalog-source");
 const pageEditorial = require("./domain/page-editorial");
+const systemModule = require("./domain/system");
 module.exports = {
   async register({ strapi }) {
     await catalogFiltersModule.preflightSchema(strapi.db.connection);
     await documentsModule.preflightSchema(strapi.db.connection);
     await invoicesModule.preflightSchema(strapi.db.connection);
     await pageEditorial.preflightPages(strapi);
+    strapi.alageumMetrics = systemModule.createMetrics();
     strapi.documents.use(pageEditorial.editorialMiddleware(strapi));
   },
   async bootstrap({ strapi }) {
@@ -58,7 +60,8 @@ module.exports = {
     const orders = ordersModule.createOrders({ db, auth, audit: auditModule.audit });
     const invoices = invoicesModule.createInvoices({ db, auth });
     const documents = documentsModule.createDocuments({ db, auth, audit: auditModule.audit });
-    strapi.alageum = { auth, catalog, catalogFilters, quotes, cmsCatalog, organizationProfile, organizationMembers, support, orders, invoices, documents };
+    const system = systemModule.createSystem({ db, metrics: strapi.alageumMetrics, environment: config.env });
+    strapi.alageum = { auth, catalog, catalogFilters, quotes, cmsCatalog, organizationProfile, organizationMembers, support, orders, invoices, documents, system };
     if (config.importCatalog)
       strapi.log.info(
         "Reviewed catalog import: " +

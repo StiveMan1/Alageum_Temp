@@ -1,13 +1,9 @@
 "use strict";
 module.exports = ({ strapi }) => ({
-  async health(ctx) {
-    await strapi.db.connection.raw("SELECT 1");
-    ctx.body = {
-      status: "ok",
-      backend: "node-strapi",
-      migration: "bounded-phase-1",
-    };
-  },
+  health: (ctx) => strapi.alageum.system.health(ctx),
+  readiness: (ctx) => strapi.alageum.system.readiness(ctx),
+  metrics: (ctx) => strapi.alageum.system.metrics(ctx),
+  version: (ctx) => strapi.alageum.system.version(ctx),
   login: (ctx) => strapi.alageum.auth.login(ctx),
   refresh: (ctx) => strapi.alageum.auth.refresh(ctx),
   logout: (ctx) => strapi.alageum.auth.logout(ctx),
