@@ -189,8 +189,12 @@ test('real quote throttle preserves inquiry and login, then explicitly retries o
   await page.getByRole('link', { name: '← Мои запросы КП', exact: true }).click();
   const ownLink = page.getByRole('link', { name: `Запрос ${quote.id.slice(0, 8)} →`, exact: true });
   await expect(ownLink).toHaveCount(1);
+  await expect(ownLink).toHaveAttribute('href', `/b2b/quotes/${quote.id}`);
   await expect(page.getByText(comment, { exact: true })).toHaveCount(1);
   await ownLink.click();
+  await expect(page).toHaveURL(new URL(`/b2b/quotes/${quote.id}`, page.url()).href);
+  await expect(page.getByRole('heading', { name: product.translations.ru.name, exact: true })).toBeVisible();
+  await expect(page.getByText(comment, { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('heading', { name: product.translations.ru.name, exact: true })).toBeVisible();
   await expect(page.getByText(comment, { exact: true })).toBeVisible();
