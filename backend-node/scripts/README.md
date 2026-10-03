@@ -205,3 +205,18 @@ traces. Cleanup has bounded Strapi and owned-process-group teardown, and removes
 only this invocation's temporary database and private staging. Functional
 acceptance does not approve a production cutover or resolve the existing
 dependency-security gate.
+
+## Bounded native Page fast-save probe
+
+The existing fresh-database Page delivery harness accepts an explicit
+`--fast-save-probe` option only with `ALAGEUM_TEST_PAGE_FAST_SAVE=1` and full
+browser mode. It preserves the original editor/publisher roles and adds a
+disposable Page-only create/read/update/publish actor. After the existing seven
+Page browser cases it runs one serial diagnostic containing 12 measured save or
+publish attempts, with no retries or artificial delays and a 180-second budget.
+
+Only selected synthetic Page data, event timings and screenshots are retained.
+Native login traffic, tokens, passwords and browser storage are excluded. The
+first mismatch stops the probe; passing all attempts gives bounded evidence,
+not a general guarantee against editor races. See
+[`docs/native-page-fast-save.md`](../../docs/native-page-fast-save.md).

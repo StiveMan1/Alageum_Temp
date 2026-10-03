@@ -10,12 +10,15 @@ const { mkdirSync, appendFileSync, writeFileSync, readFileSync } = require("node
 const { resolve, join } = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { StringDecoder } = require("node:string_decoder");
+const { pageDeliveryOptions, extractPageProbeEvidence, assertPageProbeAcceptance } = require("./page-test-guards");
 
 const backend = resolve(__dirname, "..");
 const frontend = resolve(backend, "../frontend");
 const evidence = resolve(backend, "../page-delivery-evidence");
 const httpOnly = process.argv.includes("--http-only");
+const fastSaveProbe = process.argv.includes("--fast-save-probe");
 const report = { implementation: "reimplemented", kind: "native-page-delivery", startedAt: new Date().toISOString(), status: "running", cases: [], browser: { status: "not-run", reason: httpOnly ? "explicit local --http-only mode" : "not yet reached" } };
+if (fastSaveProbe) report.fastSaveProbe = { status: "not-run", reason: "not yet reached" };
 mkdirSync(evidence, { recursive: true });
 const secrets = new Set();
 // Redact complete lines, never individual data chunks. A password or token may
@@ -80,8 +83,7 @@ const watchdog = setTimeout(() => { void failInterrupted("Native Page delivery e
 async function requireFreshDatabase() {
   assert.equal(process.env.APP_ENV, "test", "Page delivery requires APP_ENV=test before app.load");
   assert.equal(process.env.ALAGEUM_TEST_PAGE_FIXTURES, "1", "Explicit disposable Page fixtures must be enabled before app.load");
-  assert.ok(!httpOnly || !process.env.CI, "CI must execute the native browser suite; --http-only is local-only");
-  assert.deepEqual(process.argv.slice(2).filter(value => value !== "--http-only"), [], "Unknown Page harness option");
+  pageDeliveryOptions(process.argv.slice(2), process.env);
   const url = new URL(process.env.DATABASE_URL);
   assert.ok(["postgres:", "postgresql:"].includes(url.protocol));
   assert.ok(["127.0.0.1", "localhost", "[::1]"].includes(url.hostname), "Page tests require loopback PostgreSQL");
@@ -178,13 +180,15 @@ async function delivered(slug, expected, { present = [], absent = [], locale = "
     const { drainNativeAdminMetrics } = require("./seed-test-cms-admins");
     let admins;
     await check("seed minimal native Page roles and reject second seed", async () => {
-      admins = await drainNativeAdminMetrics(app, () => seedTestPageAdmins(app));
-      for (const kind of ["editor", "publisher", "denied"]) {
+      admins = await drainNativeAdminMetrics(app, () => seedTestPageAdmins(app, { fastSaveProbe }));
+      const kinds = ["editor", "publisher", "denied", ...(fastSaveProbe ? ["probe"] : [])];
+      assert.deepEqual(Object.keys(admins), kinds);
+      for (const kind of kinds) {
         assert.ok(admins[kind]?.id && admins[kind]?.email && admins[kind]?.role);
         assert.ok(typeof admins[kind].password === "string" && admins[kind].password.length >= 32);
         secrets.add(admins[kind].password);
       }
-      await assert.rejects(() => drainNativeAdminMetrics(app, () => seedTestPageAdmins(app)), /fresh|existing|already/i);
+      await assert.rejects(() => drainNativeAdminMetrics(app, () => seedTestPageAdmins(app, { fastSaveProbe })), /fresh|existing|already/i);
     });
     app.server.mount();
     await new Promise((done, reject) => { app.server.httpServer.once("error", reject); app.server.httpServer.listen(0, "127.0.0.1", done); });
@@ -204,7 +208,9 @@ async function delivered(slug, expected, { present = [], absent = [], locale = "
     const actors = {};
     const uid = "api::page.page", collection = `/content-manager/collection-types/${uid}`;
     await check("native admin login and exact Page grants", async () => {
-      for (const [kind, actions] of Object.entries({ editor: ["create", "read", "update"], publisher: ["publish", "read"], denied: [] })) {
+      const grants = { editor: ["create", "read", "update"], publisher: ["publish", "read"], denied: [] };
+      if (fastSaveProbe) grants.probe = ["create", "publish", "read", "update"];
+      for (const [kind, actions] of Object.entries(grants)) {
         const result = await native("/admin/login", { method: "POST", body: { email: admins[kind].email, password: admins[kind].password } });
         const token = result.data?.token; assert.equal(typeof token, "string"); secrets.add(token);
         actors[kind] = { token };
@@ -213,6 +219,12 @@ async function delivered(slug, expected, { present = [], absent = [], locale = "
         assert.deepEqual(user.roles.map(role => role.code), [`alageum-page-test-${kind}`]);
         const { data: permissions } = await native("/admin/users/me/permissions", { actor: actors[kind] });
         assert.deepEqual(permissions.map(grant => `${grant.subject}:${grant.action}`).sort(), actions.map(action => `${uid}:plugin::content-manager.explorer.${action}`).sort());
+        if (kind === "probe") for (const grant of permissions) {
+          assert.deepEqual(grant.conditions, [], "Probe grants must be unconditional native Page grants only");
+          const action = grant.action.split(".").at(-1);
+          const expected = action === "publish" ? {} : { fields: require("../src/domain/pages").FIELDS };
+          assert.deepEqual(grant.properties, expected, "Probe grants must expose only the existing Page fields");
+        }
       }
     });
     const { getPreviewPage } = await import(pathToFileURL(join(frontend, "lib/public/pagesPreview.js")).href);
@@ -293,6 +305,30 @@ async function delivered(slug, expected, { present = [], absent = [], locale = "
       assert.equal(browserReport.stats.unexpected + browserReport.stats.skipped + browserReport.stats.flaky, 0);
       report.browser = { status: "passed", ...result, expected: browserReport.stats.expected, unexpected: 0, skipped: 0, flaky: 0 };
     });
+    if (fastSaveProbe) await check("twelve bounded native Page fast-save probe attempts", async () => {
+      const browserEnv = { ...process.env, E2E_PAGE_CMS_BASE_URL: `${cmsOrigin}/cms`, EDITORIAL_PAGES_BASE_URL: webOrigin, FORCE_COLOR: "0", E2E_PAGE_PROBE_EMAIL: admins.probe.email, E2E_PAGE_PROBE_PASSWORD: admins.probe.password };
+      for (const key of ["PLAYWRIGHT_JSON_OUTPUT_FILE", "PLAYWRIGHT_JSON_OUTPUT_NAME", "PLAYWRIGHT_JSON_OUTPUT_DIR"]) delete browserEnv[key];
+      browserChild = loggedChild([join(frontend, "node_modules/@playwright/test/cli.js"), "test", "--config=playwright.page-fast-save.config.js", "--reporter=json"], frontend, browserEnv, "probe-browser-results.json", "probe-browser-stderr.log");
+      // Allow 15 seconds for Playwright's 180-second timeout to emit its report.
+      // An independent parent deadline also bounds a wedged Playwright process.
+      let exceededDeadline = false;
+      const deadline = setTimeout(() => { exceededDeadline = true; void stop(browserChild); }, 195000);
+      let result;
+      try {
+        result = await new Promise((done, reject) => { browserChild.once("error", reject); browserChild.once("close", (code, signal) => done({ code, signal })); });
+      } finally { clearTimeout(deadline); }
+      report.fastSaveProbe = { status: "failed", ...result };
+      const browserReport = JSON.parse(readFileSync(join(evidence, "probe-browser-results.json"), "utf8"));
+      // The marker arrived inside already-redacted Playwright stdout. Persist
+      // only that curated record, applying the same redactor at its final write.
+      const probeEvidence = extractPageProbeEvidence(browserReport);
+      writeFileSync(join(evidence, "probe-evidence.json"), `${redact(JSON.stringify(probeEvidence, null, 2))}\n`);
+      assert.equal(exceededDeadline, false, "Probe browser exceeded its 195-second reporting/cleanup deadline");
+      assert.equal(result.signal, null, "Probe browser child must exit normally");
+      assert.equal(result.code, 0, "Probe browser child close must report exit 0");
+      assertPageProbeAcceptance(browserReport, probeEvidence);
+      report.fastSaveProbe = { status: "passed", ...result, expected: 1, unexpected: 0, skipped: 0, flaky: 0, totals: probeEvidence.totals, underDebounceWindow: probeEvidence.underDebounceWindow, fastWindowCovered: probeEvidence.fastWindowCovered };
+    });
     await check("stopping actual Strapi produces Next 500 without stale body or fixture fallback", async () => {
       const current = app; app = null; await current.destroy();
       await assert.rejects(() => fetch(`${cmsOrigin}/api/v1/pages/about?locale=ru`, { signal: AbortSignal.timeout(2000) }));
@@ -304,7 +340,7 @@ async function delivered(slug, expected, { present = [], absent = [], locale = "
     clearTimeout(watchdog);
     try { await cleanup(); } catch (error) { report.status = "failed"; report.cleanupError = redact(error.message); process.exitCode = 1; }
     saveReport();
-    console.log(JSON.stringify({ kind: report.kind, status: report.status, cases: report.cases.length, browser: report.browser, ...(report.error ? { error: report.error } : {}) }));
+    console.log(JSON.stringify({ kind: report.kind, status: report.status, cases: report.cases.length, browser: report.browser, ...(fastSaveProbe ? { fastSaveProbe: report.fastSaveProbe } : {}), ...(report.error ? { error: report.error } : {}) }));
     output.end(); errors.end();
     process.stdout.write = originalStdout; process.stderr.write = originalStderr;
   }

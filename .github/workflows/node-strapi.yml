@@ -19,6 +19,7 @@ on:
       - 'docs/node-legacy-read-compatibility.md'
       - 'docs/node-system-reads.md'
       - 'docs/node-quote-throttle.md'
+      - 'docs/native-page-fast-save.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -41,6 +42,7 @@ on:
       - 'docs/node-legacy-read-compatibility.md'
       - 'docs/node-system-reads.md'
       - 'docs/node-quote-throttle.md'
+      - 'docs/native-page-fast-save.md'
       - 'scripts/generate-catalog-media.mjs'
       - 'docker-compose.node.yml'
       - '.github/workflows/node-strapi.yml'
@@ -424,6 +426,7 @@ jobs:
           const discovery = fs.readFileSync('playwright-report/legacy-discovery.log', 'utf8');
           assert.match(discovery, /Total: [1-9]\d* tests/);
           assert.doesNotMatch(discovery, /node-quote-throttle\.spec\.js/);
+          assert.doesNotMatch(discovery, /node-page-fast-save\.spec\.js/);
           NODE
       - name: Build frontend against Node API
         working-directory: frontend
@@ -1343,14 +1346,15 @@ jobs:
         run: |
           set -euo pipefail
           timeout --signal=TERM --kill-after=10s 270s npx --no-install playwright install --with-deps chromium 2>&1 | tee ../page-delivery-evidence/chromium-install.log
-      - name: Verify native CMS publication and all seven Page browser cases
+      - name: Verify native Page publication and the bounded fast-save probe
         timeout-minutes: 14
         shell: bash
         env:
           NODE_ENV: production
+          ALAGEUM_TEST_PAGE_FAST_SAVE: '1'
         run: |
           set -euo pipefail
-          timeout --signal=TERM --kill-after=15s 800s node backend-node/scripts/run-page-delivery.js 2>&1 | tee page-delivery-evidence/native-delivery.log
+          timeout --signal=TERM --kill-after=15s 800s node backend-node/scripts/run-page-delivery.js --fast-save-probe 2>&1 | tee page-delivery-evidence/native-delivery.log
       - name: Build explicit disposable static Page preview
         timeout-minutes: 6
         shell: bash
@@ -1370,4 +1374,5 @@ jobs:
           path: |
             page-delivery-evidence/
             frontend/playwright-report/pages-results/
+            frontend/playwright-report/page-fast-save-results/**/fast-save-*.png
           retention-days: 14
