@@ -545,7 +545,24 @@ jobs:
           curl --fail --silent --max-time 10 http://127.0.0.1:8016/_health > /dev/null
           curl --location --fail --silent --max-time 10 http://127.0.0.1:8016/cms > /dev/null
           cd frontend
+          node scripts/verify-native-cms-daily-http.mjs | tee playwright-report/cms-daily-http.log
           npx playwright test --config=playwright.cms.config.js
+          PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/cms-daily-cases.json npx --no-install playwright test --config=playwright.cms-daily.config.js --max-failures=1 --reporter=github,json
+          node - <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const report = JSON.parse(fs.readFileSync('playwright-report/cms-daily-cases.json'));
+          const cases = [];
+          function visit(suite) {
+            for (const spec of suite.specs || []) for (const test of spec.tests || []) cases.push(test);
+            for (const child of suite.suites || []) visit(child);
+          }
+          for (const suite of report.suites) visit(suite);
+          assert.equal(cases.length, 2);
+          assert.equal(report.stats.expected, 2);
+          for (const field of ['unexpected', 'skipped', 'flaky']) assert.equal(report.stats[field], 0);
+          assert.ok(cases.every(test => test.expectedStatus === 'passed' && test.results.length === 1 && test.results[0].status === 'passed' && test.results[0].retry === 0));
+          NODE
           npm run test:e2e:admin -- --max-failures=1
           PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/node-rfq-cases.json npx playwright test --config=playwright.node.config.js --max-failures=1 --reporter=github,json
           node - <<'NODE'
