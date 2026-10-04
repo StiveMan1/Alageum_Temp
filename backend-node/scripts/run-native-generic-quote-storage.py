@@ -12,6 +12,7 @@ from pathlib import Path
 import shutil
 import signal
 import socket
+import stat
 import subprocess
 import tempfile
 import time
@@ -24,7 +25,16 @@ OWNER = "native_quote_storage_owner"
 
 
 def bytes_used(root):
-    return sum(p.stat().st_size for p in root.rglob("*") if p.is_file() and not p.is_symlink())
+    total = 0
+    for path in root.rglob("*"):
+        try:
+            observed = path.lstat()
+        except FileNotFoundError:
+            # PostgreSQL can remove transient files between enumeration and stat.
+            continue
+        if stat.S_ISREG(observed.st_mode):
+            total += observed.st_size
+    return total
 
 
 def port_closed(port):

@@ -9,6 +9,10 @@ const requireBackend = createRequire(new URL('../../backend-node/package.json', 
 const { Client } = requireBackend('pg');
 const { validateFixtureEnvironment } = requireBackend('./scripts/seed-test-cms-admins.js');
 const fixture = validateFixtureEnvironment(process.env);
+if (process.env.ALAGEUM_CMS_BROWSER_DATABASE_URL) {
+  assert.ok(process.env.DATABASE_URL === process.env.ALAGEUM_CMS_BROWSER_DATABASE_URL,
+    'Use the existing browser fixture database for both the CMS server and audit verification');
+}
 const cms = process.env.E2E_CMS_BASE_URL || 'http://127.0.0.1:8016/cms';
 const origin = new URL(cms).origin;
 const api = process.env.E2E_API_URL || `${origin}/api/v1`;

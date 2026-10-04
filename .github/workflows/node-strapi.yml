@@ -545,7 +545,7 @@ jobs:
           curl --fail --silent --max-time 10 http://127.0.0.1:8016/_health > /dev/null
           curl --location --fail --silent --max-time 10 http://127.0.0.1:8016/cms > /dev/null
           cd frontend
-          node scripts/verify-native-cms-daily-http.mjs | tee playwright-report/cms-daily-http.log
+          DATABASE_URL="$ALAGEUM_CMS_BROWSER_DATABASE_URL" node scripts/verify-native-cms-daily-http.mjs | tee playwright-report/cms-daily-http.log
           npx playwright test --config=playwright.cms.config.js
           PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/cms-daily-cases.json npx --no-install playwright test --config=playwright.cms-daily.config.js --max-failures=1 --reporter=github,json
           node - <<'NODE'
