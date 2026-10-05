@@ -204,7 +204,7 @@ async function afterOldDebounce(page, record, reason) {
 async function leaveDialog(page) {
   await page.getByRole('link', { name: 'Back', exact: true }).click();
   const dialog = page.getByRole('alertdialog');
-  await expect(dialog).toContainText('You have unsaved changes, are you sure you want to leave?');
+  await expect(dialog).toContainText('Are you sure you want to leave this page? All your modifications will be lost.');
   return dialog;
 }
 
@@ -212,7 +212,7 @@ async function discardDialog(page) {
   await action(page, 'More document actions').click();
   await page.getByRole('menuitem', { name: 'Discard changes', exact: true }).click();
   const dialog = page.getByRole('alertdialog');
-  await expect(dialog).toContainText('Are you sure?');
+  await expect(dialog).toContainText('Are you sure you want to discard the changes? This action is irreversible.');
   return dialog;
 }
 
