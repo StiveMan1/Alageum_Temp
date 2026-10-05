@@ -350,6 +350,8 @@ for r in I:
    else:out.append(s)
   if shared:out.append(spec('l / b (merged source cell)',shared['raw'],'мм',shared['sourcePage']))
   r['rawSpecs']=out
+from apply_source_review import apply_model_additions, apply_family_additions
+COMMON_PROSE_GROUPS=apply_model_additions(I,spec,ROOT)
 # All model-level manufacturer fields remain unknown. The brand/logo does not identify a producing legal entity.
 C=[]; old=json.load(open('/workspace/scratch/3e2b26bde66a/alageum-new-catalog-reconciliation/source-inventory/old-records.json'))
 for r in I:
@@ -358,7 +360,7 @@ for r in I:
  for p in r['sourcePages']:
   if p in L and r['id'] not in L[p]['productIds']:L[p]['productIds'].append(r['id'])
  r['sourceRow']=r.get('sourceRow',{'page':r['rawSpecs'][0]['sourcePage'] if r['rawSpecs'] else r['sourcePages'][0],'designation':r['designation'],'execution':r['execution'],'kind':r['recordType']})
- r['technicalSpecs']=[{'label':s['label'],'value':s['raw'],'unit':s['unitAsPrinted'],'page':s['sourcePage']} for s in r['rawSpecs']]
+ r['technicalSpecs']=[{'label':s['label'],'value':s['raw'],'unit':s['unitAsPrinted'],'page':s['sourcePage'],**{k:s[k] for k in ['sourceKind','commonProseGroupId','inferredUnit','unitInferenceNote','unitHeaderSourcePage'] if k in s}} for s in r['rawSpecs']]
  # Exact source series + model identity and voltage support; no category-only matches.
  if r['series']=='НТМИ' and r['designation'] in ['НТМИ-6','НТМИ-10']:
   oid='ntmi-'+r['designation'].split('-')[1];r['candidateOldIds']=[oid];r['overlapAssessment']=[{'oldId':oid,'status':'strong-model-identity-candidate','evidence':'Exact model designation; HV6/10 and main secondary0.1kV match old web-reference. PDF adds raw technical/drawing evidence. Manufacturer not stated in product source pages, so legal-entity match remains unverified.','autoMerge':False}]
@@ -423,6 +425,8 @@ for aid in ['oil-tmg-twostage-large','oil-tmg-20kv-large']:
  A[aid]['sameConstructionTemplateCandidate']='corrugated-hermetic-large-top-bushings'
  A[aid]['sameConstructionEvidence']='Pages47/57 share the same three orthographic views and terminal/tank layout; preserve size-specific dimensions and switch execution.'
 A['accessory-thermal-cabinet']['oldAssetCandidate']={'oldId':'cat-shtz','oldPage':63,'newPage':86,'type':'representative-family-only','reason':'Same thermal-protection/fan-control purpose and similar front control arrangement. Newphoto does not verify old dimensions or all controls.'}
+apply_family_additions(F,I,C,L,COMMON_PROSE_GROUPS)
+N.append('Independent review additions:19 source-scoped common-prose groups. Pump limits remain row-scoped:62=-45…+40°C,64=-60…+40°C. Drawing-only models receive no unsupported prose inheritance. Printed-versus-inferred unit metadata and TC87 voltage provenance are synchronized across aliases.')
 for fname,obj in [('inventory.json',{'source':'ALAGEUM transformer technical catalog March18 2026','sectionPdfPages':[46,101],'families':list(F.values()),'models':I,'configurations':C,'notes':N}),('page-ledger.json',list(L.values())),('asset-families.json',{'families':list(A.values()),'notes':['Construction evidence only; no generated3D/icon assets or site edits.']})]:
  with open(os.path.join(ROOT,fname),'w') as f:json.dump(obj,f,ensure_ascii=False,indent=2)
 with open(os.path.join(ROOT,'notes.md'),'w') as f:

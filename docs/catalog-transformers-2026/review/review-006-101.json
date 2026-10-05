@@ -1,5 +1,5 @@
 {
-  "status": "complete-with-corrections-and-prose-coverage-gaps",
+  "status": "source-review-complete-all-reported-sectional-corrections-resolved",
   "sourceSha256": "8f27b781f1ff620ce2d67f606d6e115f2d0c35fbd31698f04c392a8ae611c70e",
   "scopePhysicalPages": [
     6,
@@ -77,7 +77,7 @@
       "sourcePage": 25,
       "confidence": "high",
       "evidence": "Page25 printed A1 column says550. Corresponding class X2K2 p21 value450 must not be copied to X3K2.",
-      "status": "applied-by-parent-and-independently-reverified",
+      "status": "applied-and-independently-reverified",
       "evidenceImage": "independent-review/zoom-025.png"
     },
     {
@@ -92,7 +92,8 @@
       "sourcePage": 14,
       "confidence": "high",
       "kind": "source-wording",
-      "note": "The page14 prose says воздухоочиститель (split across a line). Drawing17 separately labels a воздухоосушитель. Do not describe the p14 wording as an exact transcription of the drawing term. Keep the two page-supported facts distinct."
+      "note": "The page14 prose says воздухоочиститель (split across a line). Drawing17 separately labels a воздухоосушитель. Do not describe the p14 wording as an exact transcription of the drawing term. Keep the two page-supported facts distinct.",
+      "status": "applied-and-independently-verified"
     },
     {
       "rowId": null,
@@ -105,7 +106,8 @@
       "sourcePage": 86,
       "confidence": "high",
       "kind": "family-label",
-      "note": "Family title was copied from the10kVA first row even though six explicit rows cover10,16,25,40,63,100kVA. A descriptive alternative is ТС(З) — 10–100кВА, класс0,66кВ; this is a range summary of six explicit rows, not authorization to synthesize intermediate models."
+      "note": "Family title was copied from the10kVA first row even though six explicit rows cover10,16,25,40,63,100kVA. A descriptive alternative is ТС(З) — 10–100кВА, класс0,66кВ; this is a range summary of six explicit rows, not authorization to synthesize intermediate models.",
+      "status": "applied-and-independently-verified"
     },
     {
       "rowId": null,
@@ -119,7 +121,8 @@
       "sourcePage": 66,
       "confidence": "high",
       "kind": "family-label",
-      "note": "Family includes both ТМПН and ТМПНГ rows. Model-level series fields correctly distinguish them. Retain that distinction in the family heading; p66 heading is ТМПН(Г)-25-665. Do not create25kVA from the heading."
+      "note": "Family includes both ТМПН and ТМПНГ rows. Model-level series fields correctly distinguish them. Retain that distinction in the family heading; p66 heading is ТМПН(Г)-25-665. Do not create25kVA from the heading.",
+      "status": "applied-and-independently-verified"
     },
     {
       "rowId": "alageum-2026-ts-16",
@@ -134,7 +137,8 @@
       "sourcePage": 87,
       "confidence": "high",
       "kind": "page-attribution",
-      "note": "These rows repeat380/220 explicitly on87;86 supplies the continued table header and0,66кВ family prose. Leave the class-voltage prose attribution at86. Numeric voltages and printed кВ unit remain unchanged."
+      "note": "These rows repeat380/220 explicitly on87;86 supplies the continued table header and0,66кВ family prose. Leave the class-voltage prose attribution at86. Numeric voltages and printed кВ unit remain unchanged.",
+      "status": "applied-and-independently-verified"
     },
     {
       "rowId": "alageum-2026-ts-25",
@@ -149,7 +153,8 @@
       "sourcePage": 87,
       "confidence": "high",
       "kind": "page-attribution",
-      "note": "These rows repeat380/220 explicitly on87;86 supplies the continued table header and0,66кВ family prose. Leave the class-voltage prose attribution at86. Numeric voltages and printed кВ unit remain unchanged."
+      "note": "These rows repeat380/220 explicitly on87;86 supplies the continued table header and0,66кВ family prose. Leave the class-voltage prose attribution at86. Numeric voltages and printed кВ unit remain unchanged.",
+      "status": "applied-and-independently-verified"
     },
     {
       "rowId": "alageum-2026-ts-40",
@@ -164,7 +169,8 @@
       "sourcePage": 87,
       "confidence": "high",
       "kind": "page-attribution",
-      "note": "These rows repeat380/220 explicitly on87;86 supplies the continued table header and0,66кВ family prose. Leave the class-voltage prose attribution at86. Numeric voltages and printed кВ unit remain unchanged."
+      "note": "These rows repeat380/220 explicitly on87;86 supplies the continued table header and0,66кВ family prose. Leave the class-voltage prose attribution at86. Numeric voltages and printed кВ unit remain unchanged.",
+      "status": "applied-and-independently-verified"
     },
     {
       "rowId": "alageum-2026-ts-63",
@@ -179,7 +185,8 @@
       "sourcePage": 87,
       "confidence": "high",
       "kind": "page-attribution",
-      "note": "These rows repeat380/220 explicitly on87;86 supplies the continued table header and0,66кВ family prose. Leave the class-voltage prose attribution at86. Numeric voltages and printed кВ unit remain unchanged."
+      "note": "These rows repeat380/220 explicitly on87;86 supplies the continued table header and0,66кВ family prose. Leave the class-voltage prose attribution at86. Numeric voltages and printed кВ unit remain unchanged.",
+      "status": "applied-and-independently-verified"
     },
     {
       "rowId": "alageum-2026-ts-100",
@@ -194,7 +201,8 @@
       "sourcePage": 87,
       "confidence": "high",
       "kind": "page-attribution",
-      "note": "These rows repeat380/220 explicitly on87;86 supplies the continued table header and0,66кВ family prose. Leave the class-voltage prose attribution at86. Numeric voltages and printed кВ unit remain unchanged."
+      "note": "These rows repeat380/220 explicitly on87;86 supplies the continued table header and0,66кВ family prose. Leave the class-voltage prose attribution at86. Numeric voltages and printed кВ unit remain unchanged.",
+      "status": "applied-and-independently-verified"
     }
   ],
   "warnings": [
@@ -285,7 +293,7 @@
     }
   ],
   "completedAtUtc": "2026-10-05T07:39:55.173327+00:00",
-  "sourcePath": "source PDF: see source-manifest.json",
+  "sourcePath": "/opt/codex/downloads/3c77bd75-85c2-4903-abff-8c147cf917b6/28860948-ae2f-4d1f-bf4b-18e59b8cba00",
   "method": {
     "pageCoverage": "Every physical page6–101 was visually inspected, not sampled. Primary data pages were opened individually at the regenerated full-page resolution; remaining drawings/dividers were inspected in legible contact sheets. Critical small tables/cells on25,75,79,97 were independently rendered at4× from the recovered PDF.",
     "numericCoverage": "Every populated primary technical/dimension table row and its transcribed values/units were compared against source pixels. This is a full table-cell review, not a numeric sample. Merged cells, tap sequences, slash pairs and connection options were checked in their printed row scope. Drawing dimension tables75/97 were checked in full; redundant drawing H tables96/98 were checked.",
@@ -456,7 +464,8 @@
           "page": 50
         }
       ],
-      "note": "Heading/table start at100kVA while prose starts at40. Preserve disagreement; no40/63kVA TM20kV records may be invented."
+      "note": "Heading/table start at100kVA while prose starts at40. Preserve disagreement; no40/63kVA TM20kV records may be invented.",
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -489,7 +498,8 @@
           "unit": null,
           "page": 51
         }
-      ]
+      ],
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -522,7 +532,8 @@
           "unit": null,
           "page": 54
         }
-      ]
+      ],
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -561,7 +572,8 @@
           "unit": null,
           "page": 58
         }
-      ]
+      ],
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -588,7 +600,8 @@
           "unit": null,
           "page": 60
         }
-      ]
+      ],
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -650,7 +663,8 @@
         "alageum-2026-tmpn-p62-r7",
         "alageum-2026-tmpn-p62-r8"
       ],
-      "note": "Apply only to the indicated page-scoped rows;62 and64 print different lower temperature limits. Do not flatten the mixed tmpn-top family into one temperature."
+      "note": "Apply only to the indicated page-scoped rows;62 and64 print different lower temperature limits. Do not flatten the mixed tmpn-top family into one temperature.",
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -715,7 +729,8 @@
         "alageum-2026-tmpn-p64-r9",
         "alageum-2026-tmpn-p64-r10"
       ],
-      "note": "Apply only to the indicated page-scoped rows;62 and64 print different lower temperature limits. Do not flatten the mixed tmpn-top family into one temperature."
+      "note": "Apply only to the indicated page-scoped rows;62 and64 print different lower temperature limits. Do not flatten the mixed tmpn-top family into one temperature.",
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -769,7 +784,8 @@
         "alageum-2026-om-2p5",
         "alageum-2026-om-4-p",
         "alageum-2026-om-10-p"
-      ]
+      ],
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -815,7 +831,8 @@
           "page": 77
         }
       ],
-      "note": "Keep printed choices as choices; no climate/category Cartesian expansion. Page78 heading25–4000 is broader than the eleven actual classA rows63–2500."
+      "note": "Keep printed choices as choices; no climate/category Cartesian expansion. Page78 heading25–4000 is broader than the eleven actual classA rows63–2500.",
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -861,7 +878,8 @@
           "page": 78
         }
       ],
-      "note": "Keep printed choices as choices; no climate/category Cartesian expansion. Page78 heading25–4000 is broader than the eleven actual classA rows63–2500."
+      "note": "Keep printed choices as choices; no climate/category Cartesian expansion. Page78 heading25–4000 is broader than the eleven actual classA rows63–2500.",
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -907,7 +925,8 @@
           "page": 82
         }
       ],
-      "note": "Keep printed choices as choices; no climate/category Cartesian expansion. Page78 heading25–4000 is broader than the eleven actual classA rows63–2500."
+      "note": "Keep printed choices as choices; no climate/category Cartesian expansion. Page78 heading25–4000 is broader than the eleven actual classA rows63–2500.",
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -933,7 +952,8 @@
         "alageum-2026-relay-tr100",
         "alageum-2026-sensor-pt100"
       ],
-      "note": "Scope mandatory temperature-control statement to the cast-insulation transformer equipment context, with relay/sensor facts on those accessories; do not apply to damper or every accessory."
+      "note": "Scope mandatory temperature-control statement to the cast-insulation transformer equipment context, with relay/sensor facts on those accessories; do not apply to damper or every accessory.",
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -960,7 +980,7 @@
       "configurationIds": [
         "alageum-2026-cooling-fans"
       ],
-      "status": "already-captured-in-existing-configuration; preserve-without-duplication"
+      "status": "verified-existing-configuration-without-duplication"
     },
     {
       "familyIds": [
@@ -976,7 +996,8 @@
           "page": 91
         }
       ],
-      "note": "180°C and133% are already in model rawSpecs. Present this statement as source claim, not an independent safety certification."
+      "note": "180°C and133% are already in model rawSpecs. Present this statement as source claim, not an independent safety certification.",
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -997,7 +1018,8 @@
           "unit": null,
           "page": 96
         }
-      ]
+      ],
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -1029,7 +1051,8 @@
         "alageum-2026-nom-6",
         "alageum-2026-nom-10"
       ],
-      "note": "Electrical rows only. Do not attach p97 prose as electrical/operating evidence to drawing-only НОМ3."
+      "note": "Electrical rows only. Do not attach p97 prose as electrical/operating evidence to drawing-only НОМ3.",
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -1056,7 +1079,8 @@
           "unit": null,
           "page": 98
         }
-      ]
+      ],
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -1089,7 +1113,8 @@
           "unit": null,
           "page": 99
         }
-      ]
+      ],
+      "status": "applied-and-independently-verified"
     },
     {
       "familyIds": [
@@ -1122,10 +1147,11 @@
           "unit": null,
           "page": 100
         }
-      ]
+      ],
+      "status": "applied-and-independently-verified"
     }
   ],
-  "commonProseFinding": "Section046–101 family records currently have only identity/title/model/source fields and omit essential shared constraints. The additions above are page-scoped printed facts. Record them as family technicalSpecs or equally explicit scoped model facts before describing the import as covering all catalog characteristics.",
+  "commonProseFinding": "Initially missing section046–101 operating/construction constraints were added and all597 model fields and exact source scopes independently verified. The fan configuration was already present and preserved without duplication.",
   "verifiedChecks": {
     "sectionCounts": [
       {
@@ -1224,7 +1250,8 @@
       "currentValue": "кВ",
       "correctPrintedValue": null,
       "confidence": "high",
-      "note": "Tap-voltage header does not itself print a unit. The adjacent nominal-voltage header prints кВ and values make kV a reasonable inference, but raw unitAsPrinted should be null; an explicitly labeled derived/normalized unit may remain кВ. No numeric conversion requested."
+      "note": "Tap-voltage header does not itself print a unit. The adjacent nominal-voltage header prints кВ and values make kV a reasonable inference, but raw unitAsPrinted should be null; an explicitly labeled derived/normalized unit may remain кВ. No numeric conversion requested.",
+      "status": "applied-and-independently-verified"
     },
     {
       "sourcePages": [
@@ -1241,7 +1268,20 @@
       "currentValue": "кВА / — / В",
       "correctPrintedValue": "кВА / — / —",
       "confidence": "high",
-      "note": "Power subcolumn prints кВА; switch position and tap-voltage subcolumn print no unit. Other nominal-voltage columns print В, so V is a sensible inference but not literally printed for the tap subcolumn. Mark voltage unit inferred or separate columns. Do not change the tap values."
+      "note": "Power subcolumn prints кВА; switch position and tap-voltage subcolumn print no unit. Other nominal-voltage columns print В, so V is a sensible inference but not literally printed for the tap subcolumn. Mark voltage unit inferred or separate columns. Do not change the tap values.",
+      "status": "applied-and-independently-verified"
     }
-  ]
+  ],
+  "finalSection046ScopeVerification": {
+    "status": "pass",
+    "checkedAtUtc": "2026-10-05T07:56:27.059395+00:00",
+    "inventorySha256": "72d9f9f3c49eab6a4350e40700eb3820114fc15b1ece703d48e66af199d3d666",
+    "scope": "Targeted final verification against independent review required additions and corrections, not repeat96-page visual review.",
+    "expectedProseFieldsChecked": 597,
+    "modelRecords": 135,
+    "configurationRecords": 82,
+    "allRawTechnicalAliasesConsistent": true,
+    "drawingOnlyLeak": false,
+    "errors": []
+  }
 }

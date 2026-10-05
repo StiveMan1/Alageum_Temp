@@ -186,7 +186,8 @@
     "contentTypes": [
       "purpose",
       "electrical-table",
-      "dimension-table"
+      "dimension-table",
+      "common-prose"
     ],
     "notes": [
       "Text says range40–2500 but explicit rows100–2500 only; do not manufacture TM40."
@@ -208,7 +209,10 @@
     "configurationIds": [
       "tm-20kv-heading-range"
     ],
-    "inventoryRowCount": 10
+    "inventoryRowCount": 10,
+    "commonProseGroupIds": [
+      "common-prose-01-p50"
+    ]
   },
   {
     "pdfPage": 51,
@@ -241,7 +245,8 @@
       "dimension-table-continuation",
       "purpose",
       "electrical-table",
-      "dimension-table"
+      "dimension-table",
+      "common-prose"
     ],
     "notes": [
       "Small diagram table names ОМ2,0 additionally. Diagram values differ from73; kept distinct raw measurements."
@@ -264,7 +269,10 @@
       "ТМГ-63"
     ],
     "configurationIds": [],
-    "inventoryRowCount": 3
+    "inventoryRowCount": 3,
+    "commonProseGroupIds": [
+      "common-prose-02-p51"
+    ]
   },
   {
     "pdfPage": 52,
@@ -375,7 +383,8 @@
     ],
     "contentTypes": [
       "purpose",
-      "electrical-table"
+      "electrical-table",
+      "common-prose"
     ],
     "notes": [
       "Small diagram table names ОМ2,0 additionally. Diagram values differ from73; kept distinct raw measurements."
@@ -395,7 +404,10 @@
       "ТМГ-2500"
     ],
     "configurationIds": [],
-    "inventoryRowCount": 10
+    "inventoryRowCount": 10,
+    "commonProseGroupIds": [
+      "common-prose-03-p54"
+    ]
   },
   {
     "pdfPage": 55,
@@ -551,7 +563,8 @@
     "contentTypes": [
       "purpose",
       "electrical-table",
-      "dimension-table"
+      "dimension-table",
+      "common-prose"
     ],
     "notes": [
       "Small diagram table names ОМ2,0 additionally. Diagram values differ from73; kept distinct raw measurements."
@@ -565,7 +578,10 @@
       "ТМГСУ-250"
     ],
     "configurationIds": [],
-    "inventoryRowCount": 4
+    "inventoryRowCount": 4,
+    "commonProseGroupIds": [
+      "common-prose-04-p58"
+    ]
   },
   {
     "pdfPage": 59,
@@ -626,7 +642,8 @@
     "contentTypes": [
       "purpose",
       "electrical-table",
-      "dimension-table"
+      "dimension-table",
+      "common-prose"
     ],
     "notes": [
       "Small diagram table names ОМ2,0 additionally. Diagram values differ from73; kept distinct raw measurements."
@@ -641,7 +658,10 @@
       "ТМЭГ-250"
     ],
     "configurationIds": [],
-    "inventoryRowCount": 5
+    "inventoryRowCount": 5,
+    "commonProseGroupIds": [
+      "common-prose-05-p60"
+    ]
   },
   {
     "pdfPage": 61,
@@ -707,7 +727,8 @@
     ],
     "contentTypes": [
       "purpose",
-      "electrical-table"
+      "electrical-table",
+      "common-prose"
     ],
     "notes": [
       "8 rows; repeated ТМПН-160/3 and250/3 are distinct nominal-voltage variants."
@@ -722,7 +743,10 @@
       "ТМПНГ-100/3"
     ],
     "configurationIds": [],
-    "inventoryRowCount": 8
+    "inventoryRowCount": 8,
+    "commonProseGroupIds": [
+      "common-prose-06-p62"
+    ]
   },
   {
     "pdfPage": 63,
@@ -782,11 +806,14 @@
       "alageum-2026-tmpn-p64-r5",
       "alageum-2026-tmpn-p64-r6",
       "alageum-2026-tmpn-p64-r7",
-      "alageum-2026-tmpn-p64-r8"
+      "alageum-2026-tmpn-p64-r8",
+      "alageum-2026-tmpn-p64-r9",
+      "alageum-2026-tmpn-p64-r10"
     ],
     "contentTypes": [
       "purpose",
-      "electrical-table"
+      "electrical-table",
+      "common-prose"
     ],
     "notes": [
       "8 rows plus2 continued65; 436/6 and426/6 explicitly distinct. Text range100–630 does not erase665 row."
@@ -800,10 +827,15 @@
       "ТМПНГ-426/6",
       "ТМПНГ-665/3",
       "ТМПНГ-100/3 (боковой вывод)",
-      "ТМПНГ-160/3 (боковой вывод)"
+      "ТМПНГ-160/3 (боковой вывод)",
+      "ТМПНГ-250/3 (боковой вывод)",
+      "ТМПНГ-630/3 (боковой вывод)"
     ],
     "configurationIds": [],
-    "inventoryRowCount": 8
+    "inventoryRowCount": 8,
+    "commonProseGroupIds": [
+      "common-prose-07-p64"
+    ]
   },
   {
     "pdfPage": 65,
@@ -1089,7 +1121,8 @@
     ],
     "contentTypes": [
       "purpose",
-      "electrical-table"
+      "electrical-table",
+      "common-prose"
     ],
     "notes": [
       "5 named models;6/10kV and selectable secondary values retained as configurations, not invented full SKUs."
@@ -1110,7 +1143,10 @@
       "alageum-2026-om-4-p-voltage-options",
       "alageum-2026-om-10-p-voltage-options"
     ],
-    "inventoryRowCount": 5
+    "inventoryRowCount": 5,
+    "commonProseGroupIds": [
+      "common-prose-08-p72"
+    ]
   },
   {
     "pdfPage": 73,
@@ -1275,7 +1311,8 @@
     ],
     "contentTypes": [
       "purpose",
-      "electrical-table"
+      "electrical-table",
+      "common-prose"
     ],
     "notes": [
       "15model rows; title spelling стандарный preserved; loss units printed кВт."
@@ -1331,7 +1368,10 @@
       "alageum-2026-tsl-c-4000-execution-1",
       "alageum-2026-tsl-c-4000-execution-2"
     ],
-    "inventoryRowCount": 15
+    "inventoryRowCount": 15,
+    "commonProseGroupIds": [
+      "common-prose-09-p77"
+    ]
   },
   {
     "pdfPage": 78,
@@ -1375,7 +1415,8 @@
     ],
     "contentTypes": [
       "dimension-table",
-      "purpose"
+      "purpose",
+      "common-prose"
     ],
     "notes": [
       "Top table belongs to standard class C preceding77; lower heading starts A. Heading range25–4000 not expanded: A electrical rows only63–2500 on79."
@@ -1454,7 +1495,10 @@
       "alageum-2026-tsl-a-2500-execution-2",
       "tsl-loss-A-heading-range"
     ],
-    "inventoryRowCount": 0
+    "inventoryRowCount": 0,
+    "commonProseGroupIds": [
+      "common-prose-10-p78"
+    ]
   },
   {
     "pdfPage": 79,
@@ -1801,7 +1845,8 @@
     ],
     "contentTypes": [
       "purpose",
-      "electrical-table"
+      "electrical-table",
+      "common-prose"
     ],
     "notes": [
       "Small diagram table names ОМ2,0 additionally. Diagram values differ from73; kept distinct raw measurements."
@@ -1825,7 +1870,10 @@
     "configurationIds": [
       "tslz-20kv-mentioned-execution"
     ],
-    "inventoryRowCount": 12
+    "inventoryRowCount": 12,
+    "commonProseGroupIds": [
+      "common-prose-11-p82"
+    ]
   },
   {
     "pdfPage": 83,
@@ -1952,7 +2000,8 @@
     ],
     "contentTypes": [
       "accessories",
-      "product-photos"
+      "product-photos",
+      "common-prose"
     ],
     "notes": [
       "Small diagram table names ОМ2,0 additionally. Diagram values differ from73; kept distinct raw measurements."
@@ -1974,7 +2023,10 @@
       "ЕК-290"
     ],
     "configurationIds": [],
-    "inventoryRowCount": 3
+    "inventoryRowCount": 3,
+    "commonProseGroupIds": [
+      "common-prose-12-p85"
+    ]
   },
   {
     "pdfPage": 86,
@@ -2002,7 +2054,8 @@
       "accessories",
       "product-photos",
       "purpose",
-      "electrical-table"
+      "electrical-table",
+      "common-prose"
     ],
     "notes": [
       "Small diagram table names ОМ2,0 additionally. Diagram values differ from73; kept distinct raw measurements."
@@ -2036,7 +2089,10 @@
       "alageum-2026-ts-100-execution-2",
       "alageum-2026-cooling-fans"
     ],
-    "inventoryRowCount": 2
+    "inventoryRowCount": 2,
+    "commonProseGroupIds": [
+      "common-prose-13-p86"
+    ]
   },
   {
     "pdfPage": 87,
@@ -2241,7 +2297,8 @@
       "purpose",
       "electrical-table",
       "dimension-table",
-      "designation-key"
+      "designation-key",
+      "common-prose"
     ],
     "notes": [
       "Small diagram table names ОМ2,0 additionally. Diagram values differ from73; kept distinct raw measurements."
@@ -2264,7 +2321,10 @@
       "alageum-2026-tsn-630-execution-1",
       "alageum-2026-tsn-630-execution-2"
     ],
-    "inventoryRowCount": 4
+    "inventoryRowCount": 4,
+    "commonProseGroupIds": [
+      "common-prose-14-p91"
+    ]
   },
   {
     "pdfPage": 92,
@@ -2439,7 +2499,8 @@
       "electrical-table",
       "drawing",
       "dimension-table",
-      "component-legend"
+      "component-legend",
+      "common-prose"
     ],
     "notes": [
       "2models; drawing adds У3 suffix aliases. Max power unit printed кВА."
@@ -2454,7 +2515,10 @@
     ],
     "componentLegendPresent": true,
     "configurationIds": [],
-    "inventoryRowCount": 2
+    "inventoryRowCount": 2,
+    "commonProseGroupIds": [
+      "common-prose-15-p96"
+    ]
   },
   {
     "pdfPage": 97,
@@ -2477,7 +2541,8 @@
       "electrical-table",
       "drawing",
       "dimension-table",
-      "component-legend"
+      "component-legend",
+      "common-prose"
     ],
     "notes": [
       "2electrical rows and additional НОМ-3 explicitly in drawing table;325/340kg mass retained."
@@ -2493,7 +2558,10 @@
     ],
     "componentLegendPresent": true,
     "configurationIds": [],
-    "inventoryRowCount": 3
+    "inventoryRowCount": 3,
+    "commonProseGroupIds": [
+      "common-prose-16-p97"
+    ]
   },
   {
     "pdfPage": 98,
@@ -2515,7 +2583,8 @@
       "electrical-table",
       "drawing",
       "dimension-table",
-      "component-legend"
+      "component-legend",
+      "common-prose"
     ],
     "notes": [
       "Small diagram table names ОМ2,0 additionally. Diagram values differ from73; kept distinct raw measurements."
@@ -2530,7 +2599,10 @@
     ],
     "componentLegendPresent": true,
     "configurationIds": [],
-    "inventoryRowCount": 2
+    "inventoryRowCount": 2,
+    "commonProseGroupIds": [
+      "common-prose-17-p98"
+    ]
   },
   {
     "pdfPage": 99,
@@ -2550,7 +2622,8 @@
       "purpose",
       "electrical-table",
       "drawing",
-      "component-legend"
+      "component-legend",
+      "common-prose"
     ],
     "notes": [
       "Full20kg/oil80kg inconsistent; power unitкВ inconsistent; retain source."
@@ -2564,7 +2637,10 @@
     ],
     "componentLegendPresent": true,
     "configurationIds": [],
-    "inventoryRowCount": 1
+    "inventoryRowCount": 1,
+    "commonProseGroupIds": [
+      "common-prose-18-p99"
+    ]
   },
   {
     "pdfPage": 100,
@@ -2585,7 +2661,8 @@
       "purpose",
       "electrical-table",
       "drawing",
-      "component-legend"
+      "component-legend",
+      "common-prose"
     ],
     "notes": [
       "One named model with2explicit winding-voltage configurations, each distinct inventory entry."
@@ -2599,7 +2676,10 @@
     ],
     "componentLegendPresent": true,
     "configurationIds": [],
-    "inventoryRowCount": 2
+    "inventoryRowCount": 2,
+    "commonProseGroupIds": [
+      "common-prose-19-p100"
+    ]
   },
   {
     "pdfPage": 101,

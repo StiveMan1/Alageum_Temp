@@ -3,9 +3,9 @@
     102,
     187
   ],
-  "status": "complete-page-and-row-review-with-prose-additions-and-provenance-findings",
+  "status": "complete-primary-table-cell-review-cleared",
   "sourceSha256": "8f27b781f1ff620ce2d67f606d6e115f2d0c35fbd31698f04c392a8ae611c70e",
-  "inventorySha256AtReport": "df1f24d89e15c9071c2926baca36e5098fba3c35cfabc8289522cb19a30f1296",
+  "inventorySha256AtReport": "9f64b2872dda01a652eab5bb47af97cd324fc5ce45c3141e1c6457afa2d6d2fb",
   "reviewMethod": {
     "allPhysicalPagesVisuallyReviewed": [
       102,
@@ -140,7 +140,7 @@
     ],
     "pageReviewComplete": true,
     "rowEnumerationReviewComplete": true,
-    "numericReview": "Visual comparison against the supplied technicalSpecs on every populated table page and across every enumerated row, with shared/merged cells, units, material labels, voltage alternatives, losses and dimensional/mass values checked. This is a row-level review with numeric spot checks, not a separately logged second transcription or certification of every scalar cell. No additional numeric mismatch was confirmed.",
+    "numericReview": "Complete independent source-pixel primary-table value/unit pass: 2803 per-record field assignments match separately entered source expectations. Shared cells were checked once, then every named-row assignment was verified. Also verified98table-derived execution/tap-range assignments. No uncovered or mismatching primary-table fields; no rawSpecs divergence. The separate expected-value program and field-level results are retained in the audit artifacts.",
     "higherResolutionChecks": [
       102,
       109,
@@ -149,7 +149,14 @@
       168
     ],
     "drawingReview": "All drawing-page headings, rating associations and asset-family applicability reviewed. Numeric drawing callouts were not exhaustively transcribed or certified.",
-    "ocrUse": "No OCR used as authority."
+    "ocrUse": "No OCR used as authority.",
+    "numericTableReviewComplete": true,
+    "numericTableSpotChecksOnly": false,
+    "primaryTableAssignmentsChecked": 2803,
+    "tableExecutionAssignmentsChecked": 98,
+    "proseFieldsSeparatelyReviewed": 309,
+    "fullCellAuditFile": "full-cell-check-102-187.json",
+    "independentExpectedValueProgram": "full_cell_check_102_187.py"
   },
   "counts": {
     "families": 39,
@@ -459,7 +466,7 @@
       "physicalPage": 111,
       "confidence": "high",
       "reason": "3xPDF crop confirms /110 in both designation-explanation labels and the body. /10 is not printed.",
-      "status": "needs-correction"
+      "status": "verified-applied"
     }
   ],
   "commonProseAdditionsFile": "common-prose-additions-102-187.json",
@@ -467,8 +474,8 @@
   "limitations": [
     "No independent external manufacturer confirmation for pre166pages.",
     "No full SKU synthesis; original printed designations and source variation context must remain visible.",
-    "No certification of every numeric drawing callout or engineering performance guarantee.",
-    "If reporting completion, distinguish complete page/row enumeration from numeric spot-check coverage."
+    "No certification of every numeric drawing callout or engineering performance guarantee."
   ],
-  "recommendation": "Keep count wording model/variation records; apply remaining provenance/warning corrections and source-scoped prose additions before final import claims."
+  "recommendation": "This exact inventory hash is cleared for source transcription import. Keep the count wording model/variation records and retain all source uncertainty and generic-reactor distinctions. Any changed table values or units require rechecking against the retained expected values.",
+  "commonProseAdditionStatus": "Applied by parent and confirmed present in reviewed inventory; separate prose fields accounted for by full-cell audit coverage classifier."
 }

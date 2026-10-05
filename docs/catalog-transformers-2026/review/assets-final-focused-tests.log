@@ -1,0 +1,44 @@
+(node:33) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspace/scratch/3e2b26bde66a/alageum-catalog-assets-next/frontend/lib/catalog/models/transformer2026Types.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /workspace/scratch/3e2b26bde66a/alageum-catalog-assets-next/frontend/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ new evidence registry accounts for every source row, group and missing construction without activation (3.899887ms)
+✔ accepted group evidence is pixel-reviewed, local, closed-allowlisted and attached to row-specific source pages (1.949934ms)
+✔ proposals reuse visible construction across explicitly linked rows without inferring from category, ratings or arbitrary IDs (1.686353ms)
+✔ mixed executions have no silent default, accept only explicit source alternatives, and preserve cutaway distinctions (0.723267ms)
+✔ duplicate old identities, uncertain captions and source gaps cannot be bypassed by selecting a group (1.742851ms)
+✔ every illustrative mesh has finite bounded geometry, explicit scale disclaimer and reusable disposal (342.526035ms)
+✔ source-visible topology distinctions remain in actual mesh components (33.478917ms)
+✔ all 67 source-based vector icons rasterize visibly within the viewBox without Three.js or source images (261.234013ms)
+✔ new library leaves all 238 old records and their visual/icon mappings byte-for-byte stable (4.024902ms)
+✔ source recheck guards the triangular NTMI layout, three AOMZh terminals and asymmetric end-mounted fans (17.361704ms)
+✔ large corrugated/conservator terminals preserve source four-tall-LV contact plates and three-short-HV hierarchy (15.598058ms)
+✔ reviewed oil/measurement repairs preserve visible terminal counts, planes and directional cooling (26.840126ms)
+✔ dry transformer source links, busbars, enclosure sides and heating ribs are explicit (12.761126ms)
+✔ power source layouts split incompatible pages and preserve per-side radiator units, stacking and terminal groups (47.715709ms)
+✔ unclassified ZOM/ZNOM secondary symbols cannot receive a 3D binding (0.447289ms)
+✔ short-end oil conservators sit outside terminal footprints; RPN plates retain their own height profile (8.438359ms)
+✔ seven plated LV terminals remain separate in the upright35 plan (3.284864ms)
+✔ final power terminal profiles follow the page158/160 drawings without adding an unverified page116 fitting (0.287797ms)
+(node:34) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspace/scratch/3e2b26bde66a/alageum-catalog-assets-next/frontend/lib/catalog/data.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /workspace/scratch/3e2b26bde66a/alageum-catalog-assets-next/frontend/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ review-only staging accounts for exact identities without importing unreviewed rows (374.337337ms)
+✔ candidate old identities never become duplicate cards, merges, or an all-held family (13.078012ms)
+✔ every admitted variation has exactly one explicit parent; standalone reactor configurations stay a family (7.997493ms)
+✔ short designations and repeated source labels never become fabricated SKUs (3.692669ms)
+✔ units and physical page provenance survive adapters and API transport (17.242827ms)
+✔ reactive power is distinct from transformer kVA and missing manufacturer stays unknown (1.203274ms)
+✔ source warnings and held configuration evidence are preserved (0.773473ms)
+✔ data import alone cannot activate unreviewed geometry or a generic substitute (1.428102ms)
+✔ reviewed asset shape matches static/API wire records and rejects every identity/spec mutation (2637.761372ms)
+✔ raw API media cannot be bypassed with fake sourceMediaPath/type or an approved-looking display image (8.177023ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3841.521
