@@ -1,3 +1,4 @@
+import { getReviewedTransformerAsset, isTransformer2026Record } from './transformer2026Runtime.js';
 import { equipmentVisualAudit, getEquipmentVisual } from './visualMap.js';
 import { sourceIconMapA, sourceIconVariantMapA } from './sourceIconMapA.js';
 import { sourceIconMapB, sourceIconVariantMapB } from './sourceIconMapB.js';
@@ -10,6 +11,10 @@ export const iconConfidenceLabel = icon => icon.confidence === 'source-based'
   : 'Условная схема типа; внешний вид исполнения не подтверждён';
 
 export function getEquipmentIcon(product = {}) {
+  if (isTransformer2026Record(product)) {
+    const asset = getReviewedTransformerAsset(product, 'icons');
+    return { type: asset?.type || null, confidence: asset ? 'source-based' : 'source-only', sourceFamilyId: product.familyId || product.id, sourcePages: asset?.sourcePages || product.sourcePages || [], sourceImage: asset?.sourceImage || product.image || null, reason: asset ? 'Иконка по проверенной видимой конструкции; не точный чертёж исполнения' : 'Документ источника; изображение конструкции не подтверждено' };
+  }
   const visual = getEquipmentVisual(product);
   const familyId = product.familyId || product.id;
   const imported = product.sourceKind === 'supplied-pdf';

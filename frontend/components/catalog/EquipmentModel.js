@@ -5,7 +5,7 @@ import EquipmentIcon from './EquipmentIcon';
 import { MODEL_DISCLOSURE, equipmentModelName, resolveModelType } from '@/lib/catalog/models/types';
 import styles from './models/EquipmentModel.module.css';
 
-function ModelViewer({ type, className }) {
+function ModelViewer({ type, className, previewIconType, previewIconReason }) {
   const [status, setStatus] = useState('idle');
   const canvasRef = useRef(null);
   const viewerRef = useRef(null);
@@ -43,10 +43,10 @@ function ModelViewer({ type, className }) {
     <div className={styles.topline}><span>БИБЛИОТЕКА ТИПОВ</span><span className={styles.badge}>3D</span></div>
     <div className={styles.viewport}>
       {active && <canvas ref={canvasRef} className={styles.canvas} tabIndex={0} aria-label={`Интерактивная 3D-модель: ${label}`} aria-describedby={helpId}/>}
-      {!active && <div className={styles.preview}><EquipmentIcon type={type} size={148}/><span className={styles.previewLabel}>{label}</span></div>}
+      {!active && <div className={styles.preview}>{previewIconType ? <EquipmentIcon type={previewIconType} size={148} title={previewIconReason}/> : <svg width="148" height="148" viewBox="0 0 64 64" role="img" aria-label="Изображение конструкции не подтверждено" data-model-preview="source-document" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17 7h22l9 9v41H17zM39 7v11h9M23 27h18M23 35h18M23 43h12"/></svg>}<span className={styles.previewLabel}>{label}</span></div>}
       {status === 'loading' && <div className={styles.loading} role="status">Загружаем 3D-модель…</div>}
       {status === 'idle' && <button ref={activateRef} type="button" className={styles.activate} onClick={() => setStatus('loading')}><span aria-hidden="true">↗</span> Открыть 3D-модель</button>}
-      {status === 'error' && <div className={styles.fallback} role="status"><p>3D недоступно в этом браузере. Выше показана схема типа оборудования.</p><button type="button" className={styles.retry} onClick={() => setStatus('loading')}>Попробовать снова</button></div>}
+      {status === 'error' && <div className={styles.fallback} role="status"><p>3D недоступно в этом браузере. {previewIconType ? 'Выше показана отдельно проверенная иконка.' : 'Изображение конструкции этого исполнения не подтверждено.'}</p><button type="button" className={styles.retry} onClick={() => setStatus('loading')}>Попробовать снова</button></div>}
     </div>
     {active && <div className={styles.controls} role="group" aria-label="Управление 3D-моделью">
       <button type="button" disabled={status !== 'ready'} aria-label="Повернуть модель влево" onClick={() => viewerRef.current?.rotate(.25)}>↶</button>
@@ -61,8 +61,8 @@ function ModelViewer({ type, className }) {
   </section>;
 }
 
-export default function EquipmentModel({ type, className = '' }) {
+export default function EquipmentModel({ type, className = '', previewIconType = null, previewIconReason = '' }) {
   const resolved = resolveModelType(type);
   // Type changes fully release the previous viewer, including pending imports.
-  return <ModelViewer key={resolved} type={resolved} className={className}/>;
+  return <ModelViewer key={resolved} type={resolved} className={className} previewIconType={previewIconType} previewIconReason={previewIconReason}/>;
 }

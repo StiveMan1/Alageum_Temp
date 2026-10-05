@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import catalogRelease from "../../backend-node/data/catalog-release.json" with { type: "json" };
 import { expectCatalogViewport, expectReceivesPointer } from "./helpers/catalog-viewport";
 
 const selectionKey = "alageum.catalog.selection.v1";
@@ -16,6 +17,55 @@ async function expectShell(page) {
   await expect(page.getByRole("contentinfo")).toBeVisible();
   await expect(page.getByRole("banner").getByRole("link", { name: "ALAGEUM Electric — главная" })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+}
+
+async function expectDecodedImage(image) {
+  await expect(image).toBeVisible();
+  await expect.poll(() => image.evaluate(element => element.complete && element.naturalWidth > 0 && element.naturalHeight > 0), {
+    message: "The referenced source image must load and decode, not merely have a valid-looking src",
+  }).toBe(true);
+}
+
+async function canvasEvidence(canvas, testInfo, name, previous = null) {
+  const png = await canvas.screenshot({ animations: "disabled" });
+  // Decode actual Playwright screenshots with built-in browser APIs. Detached
+  // 2D canvases neither modify the page nor depend on optional native packages.
+  const metrics = await canvas.page().evaluate(async ({ current, previous }) => {
+    async function decode(base64) {
+      const image = new Image();
+      image.src = `data:image/png;base64,${base64}`;
+      await image.decode();
+      const copy = document.createElement("canvas");
+      copy.width = image.naturalWidth;
+      copy.height = image.naturalHeight;
+      const context = copy.getContext("2d", { willReadFrequently: true });
+      context.drawImage(image, 0, 0);
+      return context.getImageData(0, 0, copy.width, copy.height);
+    }
+    const image = await decode(current);
+    const before = previous ? await decode(previous) : null;
+    if (before && (before.width !== image.width || before.height !== image.height)) throw new Error("Canvas size changed during rotation");
+    let darkPixels = 0;
+    let changedPixels = 0;
+    const colors = new Set();
+    // Ignore the focus ring and edges. The empty radial background is lighter
+    // than 200, so DOM readiness or a blank canvas cannot pass this check.
+    for (let y = 12; y < image.height - 12; y += 1) {
+      for (let x = 12; x < image.width - 12; x += 1) {
+        const offset = (y * image.width + x) * 4;
+        const rgb = [...image.data.subarray(offset, offset + 3)];
+        if (Math.min(...rgb) < 200) darkPixels += 1;
+        colors.add(rgb.map(value => Math.floor(value / 8)).join(","));
+        if (before && rgb.reduce((sum, value, channel) => sum + Math.abs(value - before.data[offset + channel]), 0) > 30) changedPixels += 1;
+      }
+    }
+    return { width: image.width, height: image.height, darkPixels, colors: colors.size, changedPixels };
+  }, { current: png.toString("base64"), previous: previous?.png.toString("base64") || null });
+  await testInfo.attach(`${name}.png`, { body: png, contentType: "image/png" });
+  await testInfo.attach(`${name}-pixels.json`, { body: Buffer.from(JSON.stringify(metrics)), contentType: "application/json" });
+  expect(metrics.darkPixels, "A real rendered model must occupy the interior of the canvas").toBeGreaterThan(metrics.width * metrics.height * 0.01);
+  expect(metrics.colors, "A rendered model must have more than the empty background's colors").toBeGreaterThan(12);
+  return { png, ...metrics };
 }
 
 test("demo catalog opens without backend requests and shares the site shell", async ({ page }) => {
@@ -103,7 +153,7 @@ test("unknown product has a useful recovery route", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Позиция не найдена" })).toBeVisible();
   await page.getByRole("link", { name: "Вернуться в каталог", exact: true }).click();
   await expect(page).toHaveURL(/\/catalog$/);
-  await expect(foundCount(page)).toHaveText("Найдено: 238");
+  await expect(foundCount(page)).toHaveText(`Найдено: ${catalogRelease.recordCount}`);
 });
 
 test("comparison deep links expose differences and handle removal", async ({ page }) => {
@@ -235,7 +285,7 @@ test("explicit API errors never silently substitute demo products", async ({ pag
   await expect.poll(() => attempts).toBeGreaterThanOrEqual(2);
   await expect(page.getByRole("alert", { name: "Ошибка каталога" })).toBeVisible();
   await page.getByRole("link", { name: "Справочный статический каталог", exact: true }).click();
-  await expect(foundCount(page)).toHaveText("Найдено: 238");
+  await expect(foundCount(page)).toHaveText(`Найдено: ${catalogRelease.recordCount}`);
 });
 
 test("shared navigation closes after Escape and a route change", async ({ page, isMobile }) => {
@@ -318,16 +368,16 @@ test("comparison retains exact 12 V versus 24 V differences", async ({ page }) =
 
 test("category navigation preserves individual models and global search", async ({ page }) => {
   await page.goto("/catalog");
-  await expect(foundCount(page)).toHaveText("Найдено: 238");
-  await expect(page.getByRole("button", { name: "Все товары (238)", exact: true })).toBeVisible();
+  await expect(foundCount(page)).toHaveText(`Найдено: ${catalogRelease.recordCount}`);
+  await expect(page.getByRole("button", { name: `Все товары (${catalogRelease.recordCount})`, exact: true })).toBeVisible();
   const filters = await openFilters(page);
   await filters.getByRole("button", { name: /^Трансформаторы/ }).click();
-  await expect(foundCount(page)).toHaveText("Найдено: 13");
+  await expect(foundCount(page)).toHaveText("Найдено: 570");
   await filters.getByRole("button", { name: /^Масляные трансформаторы/ }).click();
   await expect(page).toHaveURL(/equipmentType=oil-transformer/);
   await expect(catalogRows(page)).toHaveCount(6);
-  await page.getByRole("button", { name: "Все товары (238)", exact: true }).click();
-  await expect(foundCount(page)).toHaveText("Найдено: 238");
+  await page.getByRole("button", { name: `Все товары (${catalogRelease.recordCount})`, exact: true }).click();
+  await expect(foundCount(page)).toHaveText(`Найдено: ${catalogRelease.recordCount}`);
   await page.getByLabel("Поиск по каталогу").fill("ЯТП-0.25-220-12У3");
   await page.getByLabel("Поиск по каталогу").press("Enter");
   await expect(page.locator('tr[data-product-id="cat-yatp-v001"]')).toBeVisible();
@@ -335,11 +385,11 @@ test("category navigation preserves individual models and global search", async 
   await page.reload();
   await expect(foundCount(page)).toHaveText("Найдено: 1");
   await page.getByRole("button", { name: "Сбросить все", exact: true }).click();
-  await expect(foundCount(page)).toHaveText("Найдено: 238");
+  await expect(foundCount(page)).toHaveText(`Найдено: ${catalogRelease.recordCount}`);
   await page.goBack();
   await expect(foundCount(page)).toHaveText("Найдено: 1");
   await page.goForward();
-  await expect(foundCount(page)).toHaveText("Найдено: 238");
+  await expect(foundCount(page)).toHaveText(`Найдено: ${catalogRelease.recordCount}`);
   await expectShell(page);
 });
 
@@ -400,4 +450,215 @@ test("catalog rows use only shared vectors and variants carry their own icon", a
   const variants = page.locator(".variant-grid [data-product-icon]");
   await expect(variants).toHaveCount(2);
   await expect(variants.nth(0)).not.toHaveAttribute("data-icon-type", await variants.nth(1).getAttribute("data-icon-type"));
+});
+
+
+test("transformer source: 823 records retain exact admitted identities and exclude held duplicates", async ({ page }) => {
+  expect(catalogRelease.recordCount).toBe(823);
+  await page.goto("/catalog");
+  await expect(foundCount(page)).toHaveText("Найдено: 823");
+  await page.getByLabel("Поиск по каталогу").fill("alageum-tmg-standard-16");
+  await page.getByLabel("Поиск по каталогу").press("Enter");
+  await expect(page.locator('tr[data-product-id="alageum-tmg-standard-16"]')).toBeVisible();
+  await expect(page.locator('tr[data-product-id="alageum-tmg-standard-16"]')).toContainText("ТМГ-16");
+  await page.goto("/catalog/alageum-tmg-standard-400");
+  await expect(page.getByRole("heading", { name: "Позиция не найдена" })).toBeVisible();
+  await page.goto("/catalog/tmg-400");
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("400");
+});
+
+test("transformer source: physical page175 stays in the2026 PDF across repeated navigation and history", async ({ page }) => {
+  await page.goto("/catalog/source?source=transformers-2026&page=175");
+  await expect(page.getByLabel("Исходное издание")).toHaveValue("transformers-2026");
+  await expect(page.getByLabel("Страница исходного каталога")).toHaveValue("175");
+  await expect(page.locator('.source-page-image img')).toHaveAttribute('src', '/catalog-source/transformers-2026/page-175.webp');
+  await expectDecodedImage(page.locator('.source-page-image img'));
+  await page.getByRole("button", { name: "Далее →", exact: true }).click();
+  await expect(page).toHaveURL(/source=transformers-2026&page=176/);
+  await expectDecodedImage(page.locator('.source-page-image img'));
+  await page.goBack();
+  await expect(page.getByLabel("Страница исходного каталога")).toHaveValue("175");
+  await page.goForward();
+  await expect(page.getByLabel("Страница исходного каталога")).toHaveValue("176");
+  await page.getByLabel("Страница исходного каталога").selectOption("187");
+  await expect(page.getByRole("button", { name: "Далее →", exact: true })).toBeDisabled();
+  await expectDecodedImage(page.locator('.source-page-image img'));
+  await page.getByLabel("Исходное издание").selectOption("substations");
+  await expect(page.getByLabel("Страница исходного каталога")).toHaveValue("1");
+  await expect(page.locator('.source-page-image img')).toHaveAttribute('src', '/catalog-source/page-001.webp');
+  await expectDecodedImage(page.locator('.source-page-image img'));
+  await expectShell(page);
+});
+
+test("transformer source: reactors preserve kVAr and document fallback without transformer geometry", async ({ page }) => {
+  await page.goto("/catalog?category=reactors");
+  await expect(foundCount(page)).toHaveText("Найдено: 24");
+  const filters = await openFilters(page);
+  await expect(filters.getByLabel("Мощность, кВА", { exact: true })).toHaveCount(0);
+  const id="tr2026-family-asia-shunt-reactor-configurations";
+  await page.goto(`/catalog/${id}`);
+  await expect(page.getByRole("heading", { level: 1 })).toContainText("Шунтирующие реакторы");
+  await expect(page.getByRole("button", { name: /Открыть 3D-модель/ })).toHaveCount(0);
+  await expect(page.locator(`[data-product-icon="${id}"]`).first()).toHaveAttribute("data-icon-confidence", "source-only");
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await page.locator(".catalog-configuration summary").first().click();
+  await expect(page.locator(".catalog-configuration").first()).toContainText("кВАр");
+  await page.getByRole("tab", { name: /^Документы/ }).click();
+  await expect(page.getByRole("tabpanel")).toContainText("187 физических страниц");
+  await expect(page.getByRole("tabpanel").getByRole("link", { name: "стр. 176", exact: true })).toHaveAttribute("href", "/catalog/source?source=transformers-2026&page=176");
+});
+
+test("transformer source: exact power filter opens the admitted card and preserves its selection and source", async ({ page }) => {
+  await page.goto("/catalog?category=transformers");
+  const filters = await openFilters(page);
+  await filters.getByLabel("Мощность, кВА", { exact: true }).selectOption("16");
+  await expect(page).toHaveURL(/power=16/);
+  await page.getByLabel("Поиск по каталогу").fill("alageum-tmg-standard-16");
+  await page.getByLabel("Поиск по каталогу").press("Enter");
+  await expect(catalogRows(page)).toHaveCount(1);
+  const row = page.locator('tr[data-product-id="alageum-tmg-standard-16"]');
+  await expect(row.locator("[data-product-icon]")).toHaveAttribute("data-icon-type", "tr26-corrugated-small");
+  await expect(row.locator("[data-product-icon] svg")).toBeVisible();
+  await page.reload();
+  await expect(catalogRows(page)).toHaveCount(1);
+  await expectCatalogViewport(page);
+  await row.getByRole("link", { name: "ТМГ-16 (стандартный)", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("ТМГ-16 (стандартный)");
+  await expect(page.locator(".summary-specs")).toContainText("16");
+  await expect(page.locator('[data-equipment-model="tr26-corrugated-small"]')).toHaveAttribute("data-model-status", "idle");
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await page.getByRole("button", { name: "В подборку ТМГ-16", exact: true }).click();
+  await page.getByRole("button", { name: "В подборку ТМГ-16", exact: true }).click();
+  await page.getByRole("link", { name: "Открыть подборку →", exact: true }).click();
+  await expect(page.getByRole("spinbutton", { name: "Количество ТМГ-16", exact: true })).toHaveValue("2");
+  await page.reload();
+  await expect(page.getByRole("spinbutton", { name: "Количество ТМГ-16", exact: true })).toHaveValue("2");
+  await page.goBack();
+  await page.getByRole("tab", { name: /^Документы/ }).click();
+  await page.getByRole("tabpanel").getByRole("link", { name: "стр. 6", exact: true }).click();
+  await expect(page).toHaveURL(/source=transformers-2026&page=6/);
+  await expectDecodedImage(page.locator(".source-page-image img"));
+  await page.goBack();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("ТМГ-16 (стандартный)");
+  await expectShell(page);
+});
+
+for (const specimen of [
+  { id: "alageum-tmg-standard-16", type: "tr26-corrugated-small" },
+  { id: "alageum-2026-tsl-20kv-100", type: "tr26-dry-cast-open" },
+  { id: "alageum-tdn-16000-110-cu-cu-bd1c6d05", type: "tr26-hv-tdn-16" },
+  { id: "tmg-400", type: "oil-transformer" },
+]) {
+  test(`transformer source: real WebGL renders, rotates, closes and reopens ${specimen.id}`, async ({ page }, testInfo) => {
+    test.setTimeout(90_000);
+    const pageErrors = [];
+    page.on("pageerror", error => pageErrors.push(error.message));
+    await page.goto(`/catalog/${specimen.id}`);
+    const viewer = page.locator(`[data-equipment-model="${specimen.type}"]`);
+    await expect(viewer).toHaveAttribute("data-model-status", "idle");
+    await expect(viewer.locator(`svg[data-equipment-type="${specimen.type}"]`)).toBeVisible();
+    await expect(viewer).toContainText("Иллюстративная 3D-модель типа; не CAD и не чертёж конкретного исполнения");
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await viewer.getByRole("button", { name: "Открыть 3D-модель", exact: true }).click();
+    // Deliberately fail if WebGL is unavailable. The separate forced-fallback
+    // case verifies graceful degradation, but never substitutes for render QA.
+    await expect(viewer).toHaveAttribute("data-model-status", "ready", { timeout: 30_000 });
+    const canvas = viewer.locator("canvas");
+    await expect(canvas).toBeVisible();
+    await expect.poll(() => canvas.evaluate(element => {
+      const gl = element.getContext("webgl2") || element.getContext("webgl");
+      return Boolean(gl && !gl.isContextLost() && gl.drawingBufferWidth > 0 && gl.drawingBufferHeight > 0);
+    })).toBe(true);
+    const before = await canvasEvidence(canvas, testInfo, `${specimen.id}-opened`);
+    await viewer.getByRole("button", { name: "Повернуть модель влево", exact: true }).click();
+    await viewer.getByRole("button", { name: "Повернуть модель влево", exact: true }).click();
+    const rotated = await canvasEvidence(canvas, testInfo, `${specimen.id}-rotated`, before);
+    expect(rotated.changedPixels, "Rotate must change the rendered pixels").toBeGreaterThan(before.width * before.height * 0.005);
+    await canvas.press("ArrowRight");
+    await canvas.press("+");
+    await canvas.press("Home");
+    await viewer.getByRole("button", { name: "Приблизить модель", exact: true }).click();
+    await viewer.getByRole("button", { name: "Отдалить модель", exact: true }).click();
+    await viewer.getByRole("button", { name: "Сброс", exact: true }).click();
+    await viewer.getByRole("button", { name: "Закрыть 3D-модель", exact: true }).click();
+    await expect(viewer).toHaveAttribute("data-model-status", "idle");
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await expect(viewer.getByRole("button", { name: "Открыть 3D-модель", exact: true })).toBeFocused();
+    await viewer.getByRole("button", { name: "Открыть 3D-модель", exact: true }).click();
+    await expect(viewer).toHaveAttribute("data-model-status", "ready");
+    await canvasEvidence(canvas, testInfo, `${specimen.id}-reopened`);
+    await viewer.getByRole("button", { name: "Закрыть 3D-модель", exact: true }).click();
+    await expect(page.locator("canvas")).toHaveCount(0);
+    await expectShell(page);
+    expect(pageErrors).toEqual([]);
+  });
+}
+
+test("transformer source: shared construction survives family navigation without inventing a family model", async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  await page.goto("/catalog/alageum-tmg-standard-16");
+  const type = "tr26-corrugated-small";
+  const viewer = page.locator(`[data-equipment-model="${type}"]`);
+  await viewer.getByRole("button", { name: "Открыть 3D-модель", exact: true }).click();
+  await expect(viewer).toHaveAttribute("data-model-status", "ready", { timeout: 30_000 });
+  await page.locator(".family-back-link a").click();
+  await expect(page).toHaveURL(/\/catalog\/tr2026-family-tmg-standard$/);
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await expect(page.locator("[data-equipment-model]")).toHaveCount(0);
+  await expect(page.locator('.model-type-label [data-product-icon]')).toHaveAttribute("data-icon-confidence", "source-only");
+  await expectDecodedImage(page.locator(".product-visual img"));
+  const variant = page.locator('.variant-grid a[href="/catalog/alageum-tmg-standard-25"]');
+  await expect(variant.locator("[data-product-icon]")).toHaveAttribute("data-icon-type", type);
+  await variant.click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("ТМГ-25 (стандартный)");
+  await expect(viewer).toHaveAttribute("data-model-status", "idle");
+  await viewer.getByRole("button", { name: "Открыть 3D-модель", exact: true }).click();
+  await expect(viewer).toHaveAttribute("data-model-status", "ready");
+  await canvasEvidence(viewer.locator("canvas"), testInfo, "shared-construction-tmg25");
+  await page.goBack();
+  await expect(page).toHaveURL(/\/catalog\/tr2026-family-tmg-standard$/);
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await page.goForward();
+  await expect(viewer).toHaveAttribute("data-model-status", "idle");
+  await expect(page.locator("canvas")).toHaveCount(0);
+});
+
+test("transformer source: independently approved icon-only records keep their source image and no 3D", async ({ page }) => {
+  const id = "alageum-2026-relay-tr100";
+  await page.goto(`/catalog/${id}`);
+  await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-type", "tr26-icon-temperature-relay");
+  await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-confidence", "source-based");
+  await expect(page.locator("[data-equipment-model]")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Открыть 3D-модель", exact: true })).toHaveCount(0);
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await expectDecodedImage(page.locator(".product-visual img"));
+  await page.getByRole("tab", { name: /^Документы/ }).click();
+  await page.getByRole("tabpanel").getByRole("link", { name: "стр. 85", exact: true }).click();
+  await expect(page).toHaveURL(/source=transformers-2026&page=85/);
+  await expectDecodedImage(page.locator(".source-page-image img"));
+  await page.goBack();
+  await expect(page.locator("[data-equipment-model]")).toHaveCount(0);
+  await expectShell(page);
+});
+
+test("transformer source: unavailable WebGL retains the separately approved icon across retries", async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (kind, ...args) {
+      return /webgl/i.test(kind) ? null : original.call(this, kind, ...args);
+    };
+  });
+  await page.goto("/catalog/alageum-tmg-standard-16");
+  const viewer = page.locator('[data-equipment-model="tr26-corrugated-small"]');
+  await viewer.getByRole("button", { name: "Открыть 3D-модель", exact: true }).click();
+  await expect(viewer).toHaveAttribute("data-model-status", "error");
+  await expect(viewer).toContainText("Выше показана отдельно проверенная иконка");
+  await expect(viewer.locator('svg[data-equipment-type="tr26-corrugated-small"]')).toBeVisible();
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await viewer.getByRole("button", { name: "Попробовать снова", exact: true }).click();
+  await expect(viewer).toHaveAttribute("data-model-status", "error");
+  await expect(page.locator("canvas")).toHaveCount(0);
+  await page.locator(".product-original-illustration summary").click();
+  await expectDecodedImage(page.locator(".product-original-illustration img"));
+  await expectShell(page);
 });

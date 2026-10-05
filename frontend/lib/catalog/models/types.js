@@ -1,3 +1,6 @@
+import { transformer2026Types } from './transformer2026Types.js';
+import { sourceConstructionDefinitions } from './sourceConstructions.js';
+
 /**
  * Shared visual vocabulary, deliberately independent of catalogue records/SKUs.
  * Geometry is an illustrative interpretation of the cited representative sources,
@@ -31,9 +34,10 @@ export const equipmentModelTypes = Object.freeze({
   'railway-frame-substation': { name: 'Железнодорожная КТП на раме', reference: '/catalog-products/cat-ktpzh-25-1000.webp' },
   'upper-input-protection': { name: 'Установка защиты с воздушным вводом', reference: '/catalog-products/cat-ukzv.webp' },
   'outdoor-floor-cabinet': { name: 'Наружный шкаф с козырьком', reference: '/catalog-products/cat-ukzn.webp' },
+  ...sourceConstructionDefinitions,
   equipment: { name: 'Электрооборудование', reference: null },
 });
 
-export const resolveModelType = (type) => Object.hasOwn(equipmentModelTypes, type) ? type : 'equipment';
-export const equipmentModelName = (type) => equipmentModelTypes[resolveModelType(type)].name;
+export const resolveModelType = (type) => Object.hasOwn(equipmentModelTypes, type) || Object.hasOwn(transformer2026Types, type) ? type : 'equipment';
+export const equipmentModelName = (type) => (transformer2026Types[type] || equipmentModelTypes[resolveModelType(type)]).name;
 export const MODEL_DISCLOSURE = 'Иллюстративная 3D-модель типа; не CAD и не чертёж конкретного исполнения';

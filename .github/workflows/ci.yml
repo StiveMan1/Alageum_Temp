@@ -214,3 +214,56 @@ jobs:
             frontend/test-results/
             frontend/playwright-report/
           retention-days: 7
+
+  transformer-source-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_PUBLIC_CATALOG_SOURCE: static
+      NEXT_TELEMETRY_DISABLED: '1'
+      E2E_CATALOG_BASE_URL: http://127.0.0.1:3100
+      PLAYWRIGHT_JSON_OUTPUT_FILE: playwright-report/catalog-results.json
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build the production static catalog
+        timeout-minutes: 5
+        run: npm run build
+      - name: Verify new source assets and old catalog regressions on desktop and mobile
+        timeout-minutes: 12
+        shell: bash
+        run: |
+          npm run start -- --hostname 127.0.0.1 --port 3100 > catalog-browser.log 2>&1 &
+          web_pid=$!
+          cleanup() {
+            kill "${web_pid}" 2>/dev/null || true
+            wait "${web_pid}" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          deadline=$((SECONDS + 90))
+          until curl --fail --silent --connect-timeout 2 --max-time 5 "${E2E_CATALOG_BASE_URL}/catalog" > /dev/null; do
+            if ! kill -0 "${web_pid}" || (( SECONDS >= deadline )); then
+              tail -80 catalog-browser.log
+              exit 1
+            fi
+            sleep 2
+          done
+          npm run test:e2e:catalog -- --reporter=github,json
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: transformer-source-browser-${{ github.run_id }}
+          path: |
+            frontend/test-results/
+            frontend/playwright-report/
+            frontend/catalog-browser.log
+          retention-days: 7

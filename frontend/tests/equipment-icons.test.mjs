@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import sharp from 'sharp';
-import { officialProducts, importedProducts } from '../lib/catalog/data.js';
+import { baselineOfficialProducts as officialProducts, importedProducts } from '../lib/catalog/data.js';
 import { getEquipmentIcon, equipmentIconAudit, equipmentIconVariantAudit, iconConfidenceLabel } from '../lib/catalog/models/iconMap.js';
 import { equipmentIconTypes, sourceIconShapes, resolveIconType } from '../lib/catalog/models/iconTypes.js';
 import { renderEquipmentIcon } from './helpers/render-equipment-icon.mjs';

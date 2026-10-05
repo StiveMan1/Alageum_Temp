@@ -5,10 +5,11 @@ const { readCatalog } = require("../src/domain/catalog-source");
 const model = import("../src/plugins/alageum-catalog/admin/src/media-draft.mjs");
 const optionsFor = (media) => ({ reviewed: structuredClone(media), entries: media.map((item, index) => ({ id: `entry-${index}`, path: item.path, kind: item.kind, representation: "crop", source_pages: [3], mime: "image/png" })) });
 
-test("all 238 imported media arrays roundtrip without normalizing alternative text", async () => {
+test("all released imported media arrays roundtrip without normalizing alternative text", async () => {
   const { createMediaDraft, serializeMediaDraft } = await model;
   const records = readCatalog();
-  assert.equal(records.length, 238);
+  const expected = require("../data/catalog-release.json").recordCount;
+  assert.equal(records.length, expected);
   for (const record of records) {
     const media = record.image ? [{ path: record.image, kind: "image", alt: record.imageCaption || "" }] : [];
     const result = serializeMediaDraft(createMediaDraft(media), optionsFor(media));

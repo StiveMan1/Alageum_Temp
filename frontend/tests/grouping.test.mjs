@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { officialProducts, demoProducts, importedProducts, webOfficialProducts } from '../lib/catalog/data.js';
+import { baselineOfficialProducts as officialProducts, demoProducts, importedProducts, webOfficialProducts } from '../lib/catalog/data.js';
 import { groupProducts, getFamilyForProduct, equipmentTypeFor, equipmentTypes, catalogTaxonomy, categorySpecRows, facetValues, getCatalogSpecSummary } from '../lib/catalog/grouping.js';
 import { filterCatalogGroups, filterProducts, getCatalogFacetOptions, getProductFacetOptions, normalizeSelection, parseComparison, sortProducts } from '../lib/catalog/query.js';
 import { equipmentModelTypes } from '../lib/catalog/models/types.js';
@@ -29,11 +29,11 @@ test('public catalog keeps all 238 original rows and type navigation never colla
   assert.ok(visible.every((record) => !record.isCatalogGroup));
 });
 
-test('five category hierarchies expose 13 valid shared types and cover each raw record exactly once', () => {
-  assert.equal(catalogTaxonomy.length, 5);
-  assert.equal(equipmentTypes.length, 13);
-  assert.equal(new Set(equipmentTypes.map((type) => type.id)).size, 13);
-  for (const type of equipmentTypes) assert.ok(equipmentModelTypes[type.id], type.id);
+test('seven category hierarchies expose 15 semantic navigation types and cover each raw record exactly once', () => {
+  assert.equal(catalogTaxonomy.length, 7);
+  assert.equal(equipmentTypes.length, 15);
+  assert.equal(new Set(equipmentTypes.map((type) => type.id)).size, 15);
+  for (const type of equipmentTypes) assert.ok(equipmentModelTypes[type.id] || ['reactor', 'transformer-accessory'].includes(type.id), type.id);
   const encountered = [];
   for (const category of catalogTaxonomy) {
     for (const type of category.subcategories) {

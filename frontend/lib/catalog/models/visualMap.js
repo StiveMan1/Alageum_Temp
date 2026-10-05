@@ -1,9 +1,12 @@
+import { getReviewedTransformerAsset, isTransformer2026Record } from './transformer2026Runtime.js';
+import { sourceRecordVisuals } from './sourceConstructions.js';
+
 /**
  * Construction audit of all 65 imported families and their 59 unchanged images.
  * Inspected 2026-10-01. This map is intentionally independent of navigation types.
  * A match means shared outer construction, never exact dimensions, CAD or internals.
  */
-export const equipmentVisualAudit = Object.freeze({
+const baselineVisualAudit = Object.freeze({
   "cat-ktp-25-250": {
     "type": "substation",
     "sourcePages": [
@@ -523,7 +526,7 @@ export const equipmentVisualAudit = Object.freeze({
     ],
     "confidence": "source-only",
     "fallbackImage": "/catalog-products/cat-atp-2x25.webp",
-    "reason": "Специальная железнодорожная автотрансформаторная сборка на общей раме; универсальная ячейка не подходит.",
+    "reason": "Закрытое блочно-модульное здание АТП с двумя дверями, цоколем и боковыми вводами на странице 81; внутренний разрез не выносится наружу.",
     "inherit": false
   },
   "cat-psk-27-5": {
@@ -658,6 +661,11 @@ export const equipmentVisualAudit = Object.freeze({
   }
 });
 
+// Update reviewed families, while keeping inheritance disabled for new constructions.
+export const equipmentVisualAudit = Object.freeze(Object.fromEntries(
+  Object.entries(baselineVisualAudit).map(([id, visual]) => [id, { ...visual, ...(sourceRecordVisuals[id] || {}) }]),
+));
+
 const explicitVariantVisuals = {
   'cat-bdrm-v010': { type: null, sourcePages: [70, 71], confidence: 'source-only', reason: 'Обозначение БДРМ-25-2-22 приведено только на принципиальной схеме и отличается от размерной таблицы; одинаковый корпус не утверждается.' },
   'cat-bdrm-v011': { type: null, sourcePages: [70, 71], confidence: 'source-only', reason: 'Обозначение БДРМ-25-4-41 приведено только на принципиальной схеме; его механическое исполнение отдельно не подтверждено.' },
@@ -680,10 +688,15 @@ const genericType = (product) => {
 
 /** Source-family visual evidence; do not substitute equipmentTypeFor() for this. */
 export function getEquipmentVisual(product = {}) {
+  if (isTransformer2026Record(product)) {
+    const asset = getReviewedTransformerAsset(product, 'geometry');
+    return { type: asset?.type || null, sourceFamilyId: product.familyId || product.id, sourcePages: asset?.sourcePages || product.sourcePages || [], confidence: asset ? 'source-matched' : 'source-only', fallbackImage: asset?.sourceImage || product.image || null, reason: asset ? 'Иллюстративная компоновка по проверенному чертежу; не CAD, не размеры и не точная модель исполнения.' : 'Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели.' };
+  }
   const familyId = product.familyId || product.id;
   const audited = product.sourceKind === 'supplied-pdf' && Object.hasOwn(equipmentVisualAudit, familyId) ? equipmentVisualAudit[familyId] : null;
   if (audited) {
-    const override = Object.hasOwn(explicitVariantVisuals, product.id) ? explicitVariantVisuals[product.id] : null;
+    const override = Object.hasOwn(sourceRecordVisuals, product.id) ? sourceRecordVisuals[product.id]
+      : Object.hasOwn(explicitVariantVisuals, product.id) ? explicitVariantVisuals[product.id] : null;
     const canInherit = product.recordKind !== 'variant' || audited.inherit || override;
     return {
       type: canInherit ? (override ? override.type : audited.type) : null,

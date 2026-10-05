@@ -1,3 +1,4 @@
+const reviewedRecordCount = require("../data/catalog-release.json").recordCount;
 "use strict";
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
@@ -117,14 +118,14 @@ test("real Strapi/PostgreSQL catalog and HTTP contract", async (t) => {
     },
   );
   await t.test(
-    "238 source rows preserve every public key and UUID; reimport is insert-only",
+    "released source rows preserve every public key and UUID; reimport is insert-only",
     async () => {
       const records = readCatalog();
       const stored = await db(PRODUCT).whereIn(
         "public_key",
         records.map((r) => r.id),
       );
-      assert.equal(stored.length, 238);
+      assert.equal(stored.length, reviewedRecordCount);
       for (const row of stored) {
         assert.equal(
           row.transport_id,
@@ -134,7 +135,7 @@ test("real Strapi/PostgreSQL catalog and HTTP contract", async (t) => {
       assert.deepEqual(await catalog.importRecords(records), {
         categories_created: 0,
         created: 0,
-        skipped: 238,
+        skipped: reviewedRecordCount,
       });
     },
   );
@@ -590,7 +591,7 @@ test("real Strapi/PostgreSQL catalog and HTTP contract", async (t) => {
   await require("./catalog-filter.integration-support").runCatalogFilterTests(t, app);
   await require("./organization-pagination.integration-support").runOrganizationPaginationTests(t, app);
   await require("./rfq-read.integration-support")({ app, base: `http://127.0.0.1:${app.server.httpServer.address().port}/api/v1`, t });
-  await t.test("populated filter definitions, native category FK and all 238 reviewed identities survive a real Strapi restart", async () => {
+  await t.test("populated filter definitions, native category FK and all released reviewed identities survive a real Strapi restart", async () => {
     const { createRestartFixture, verifyRestartFixture, verifyNativeAdapterTransition } = require("./catalog-filter.integration-support");
     const fixture = await createRestartFixture(app);
     const previous = app; app = null; await previous.destroy();

@@ -9,6 +9,8 @@ const isFamily = (product) => product.recordKind === 'family' || product.recordT
 
 // Navigation groups rows by a reusable equipment type; it does NOT merge their identities.
 export const equipmentTypes = [
+  { id: 'reactor', name: 'Реакторы', categories: ['reactors'] },
+  { id: 'transformer-accessory', name: 'Принадлежности трансформаторов', categories: ['accessories'] },
   { id: 'oil-transformer', name: 'Масляные трансформаторы', categories: ['transformers'] },
   { id: 'dry-transformer', name: 'Сухие трансформаторы', categories: ['transformers'] },
   { id: 'instrument-transformer', name: 'Измерительные трансформаторы', categories: ['transformers'] },
@@ -25,6 +27,8 @@ export const equipmentTypes = [
 ];
 
 export const catalogTaxonomy = [
+  { id: 'reactors', name: 'Реакторы' },
+  { id: 'accessories', name: 'Принадлежности трансформаторов' },
   { id: 'transformers', name: 'Трансформаторы' },
   { id: 'switchgear', name: 'Коммутация и распределение' },
   { id: 'substations', name: 'Комплектные подстанции' },
@@ -43,6 +47,8 @@ const rows = {
 };
 const categoryKeys = {
   transformers: ['power', 'voltage', 'cooling'],
+  reactors: ['voltage', 'subtype'],
+  accessories: ['subtype', 'function'],
   substations: ['power', 'voltage', 'installation'],
   switchgear: ['voltage', 'current', 'installation'],
   cabinets: ['voltage', 'current', 'subtype'],
@@ -58,6 +64,8 @@ export function equipmentTypeFor(product = {}) {
   const family = product.familyProduct || product;
   const id = family.familyId || family.id || '';
   const text = [family.name, family.series, family.subtype, family.installation].join(' ').toLocaleLowerCase('ru');
+  if (family.productKind === 'reactor' || family.category === 'reactors') return 'reactor';
+  if (family.category === 'accessories') return 'transformer-accessory';
   if (family.category === 'transformers') {
     if (/нтми|измерительн/.test(text)) return 'instrument-transformer';
     return family.cooling === 'Сухое' || /сухой|сухие|тсл/.test(text) ? 'dry-transformer' : 'oil-transformer';
