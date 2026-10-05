@@ -41,9 +41,9 @@ function matchesSearch(product, words) {
   if (compactQuery(words.join(' ')) === compactQuery(product.sku)) return true;
   const evidence = (product.source === 'official' || product.source === 'api') ? searchEvidence(product) : [];
   const haystack = normalizeQuery([
-    product.id, product.name, product.sku, product.category, product.voltage, product.power,
+    product.id, product.name, product.designation, product.execution, product.sku, product.category, product.voltage, product.power,
     product.cooling, product.installation, product.subtype, product.manufacturer,
-    product.familyName, product.series,
+    product.familyName, product.series, product.sourceRow?.variant,
     ...(product.configurations || []).map((configuration) => configuration.designation),
     ...evidence.map((entry) => `${entry.value} ${entry.unit}`),
   ].join(' '));
@@ -135,7 +135,7 @@ export function selectionCsv(items, products) {
   };
   return '\uFEFF' + [['Подборка — не заказ', 'Обозначение', 'Наименование', 'Количество'], ...items.map((item) => {
     const product = products.find((entry) => entry.id === item.id);
-    return [product?.source === 'api' ? 'Актуальный каталог API; не заказ' : product?.source === 'official' ? 'Официальный каталог; исполнение уточняется' : 'ДЕМО — не заказ; синтетические данные', product?.sku || '', product?.name || '', item.quantity];
+    return [product?.source === 'api' ? 'Актуальный каталог API; не заказ' : product?.source === 'official' ? 'Официальный каталог; исполнение уточняется' : 'ДЕМО — не заказ; синтетические данные', product?.designation || product?.sku || '', product?.name || '', item.quantity];
   })].map((row) => row.map(cell).join(';')).join('\r\n');
 }
 

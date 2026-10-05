@@ -1,6 +1,13 @@
-import json, pathlib
-D=pathlib.Path('/workspace/scratch/3e2b26bde66a/alageum-new-catalog-reconciliation/new-source/section-006-045')
-source={'id':'alageum-technical-catalog-2026-03-18','filePath':'/opt/codex/downloads/6784eca4-d2d2-49f5-bab9-616901f3be06/ac6e8f25-ca55-4705-95bc-ff4ed0ad78ec','catalogBrand':'Alageum electric','date':'2026-03-18','dateProvenance':'Assignment; this section does not repeat the cover date','pdfPageCount':187,'assignedPhysicalPages':[6,45],'pageNumbering':'Physical PDF and printed pages match throughout 6–45','method':'All 40 rendered pages visually inspected; numeric tables manually transcribed from rendered source. Auxiliary Russian/English OCR retained separately and is not authoritative.'}
+import argparse, json, os, pathlib
+parser=argparse.ArgumentParser(description='Replay the reviewed section transcription into an explicit output directory.')
+parser.add_argument('--output', type=pathlib.Path, required=True, help='Directory for replayed inventory and review outputs')
+parser.add_argument('--old-records', type=pathlib.Path, required=True, help='Frozen 238-row legacy inventory JSON')
+parser.add_argument('--source-pdf', default=os.environ.get('ALAGEUM_SOURCE_PDF', 'https://drive.google.com/file/d/113q2las1R18OJ6g6laJ5ZN4PFPsY635f/view'), help='Local PDF path or source reference; defaults to ALAGEUM_SOURCE_PDF or the verified Drive URL')
+args=parser.parse_args()
+SOURCE_PDF_REFERENCE=str(args.source_pdf)
+D=args.output
+D.mkdir(parents=True, exist_ok=True)
+source={'id':'alageum-technical-catalog-2026-03-18','filePath':SOURCE_PDF_REFERENCE,'catalogBrand':'Alageum electric','date':'2026-03-18','dateProvenance':'Assignment; this section does not repeat the cover date','pdfPageCount':187,'assignedPhysicalPages':[6,45],'pageNumbering':'Physical PDF and printed pages match throughout 6–45','method':'All 40 rendered pages visually inspected; numeric tables manually transcribed from rendered source. Auxiliary Russian/English OCR retained separately and is not authoritative.'}
 F=[]; P=[]; pages={n:{'pdfPage':n,'printedPage':str(n),'visualInspected':True,'renderPath':f'renders/p{n:03d}.png','productIds':[],'familyIds':[],'headings':[],'pageType':None,'drawings':[],'notes':[]} for n in range(6,46)}
 G3=['У/Ун-0','У/Zн-11','Д/Ун-11']; G2=['У/Ун-0','Д/Ун-11']
 
@@ -373,7 +380,7 @@ family('tmg-switch-6-10','ТМГ','6↔10 кВ, с 2-х этажным пере�
 2500|2196|1070|1070|145|260|250|170|6065|1695
 ''',{'default':44,1600:45,2000:45,2500:45},45,[46,47],notes=['Drawings on pages 46–47 verified by neighboring section worker, outside assigned visual inspection range.'],description={'pdfPage':44,'text':'Переключение со стороны ВН 6 на 10 кВ и обратно; при 10 кВ У/Ун-0, при 6 кВ Д/Ун-11; переключение 15–20 минут; передвижные и перемещаемые установки.'})
 source['sha256']='8f27b781f1ff620ce2d67f606d6e115f2d0c35fbd31698f04c392a8ae611c70e'
-source['filePath']='/opt/codex/downloads/3c77bd75-85c2-4903-abff-8c147cf917b6/28860948-ae2f-4d1f-bf4b-18e59b8cba00'
+source['filePath']=SOURCE_PDF_REFERENCE
 source['catalogBrand']='Alageum Electric'
 source['catalogBrandProvenance']='Parent verification of source page 3; Alageum electric logo on every assigned page'
 # Drawing grouping is at construction-type level, never an asserted identical 3D mesh.
@@ -408,7 +415,7 @@ def mapping(p):
  if fid=='tmg-copper':return ('sealed-corrugated-small' if small else 'sealed-corrugated-large',42 if small else 43,'drawings directly follow copper-winding tables; same visible construction topology')
  if fid=='tmg-switch-6-10':return ('tmg-switch-small' if small else 'tmg-switch-large',46 if small else 47,'explicit continuation drawing confirmed by section 046–101 source review')
 
-OLD=json.load(open('/workspace/scratch/3e2b26bde66a/alageum-new-catalog-reconciliation/source-inventory/old-records.json'))
+OLD=json.load(open(args.old_records))
 CONFIGS=[]
 for p in P:
  a,pg,why=mapping(p)

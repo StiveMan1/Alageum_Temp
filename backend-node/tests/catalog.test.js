@@ -11,10 +11,11 @@ const valid = {
   slug: "test-product",
   translations: { ru: { name: "Товар" } },
 };
-test("all 238 shipped records and stable deterministic identities survive source integrity checks", () => {
+test("all released source records and stable deterministic identities survive source integrity checks", () => {
   const rows = readCatalog();
-  assert.equal(rows.length, 238);
-  assert.equal(new Set(rows.map((r) => r.id)).size, 238);
+  const expected = require("../data/catalog-release.json").recordCount;
+  assert.equal(rows.length, expected);
+  assert.equal(new Set(rows.map((r) => r.id)).size, expected);
   for (const row of rows) {
     const id = uuid5(`product:${row.id}`, NAMESPACE);
     assert.match(id, /^[0-9a-f-]{36}$/);

@@ -430,8 +430,8 @@
     "tr26-icon-vibration-damper"
   ],
   "accessoryLimits": "Source-photo exterior silhouettes only; relay controls and damper flange hole positions corrected. No 3D or exact technical/internal layout claim. Thermal-cabinet identity hold and unbound cooling-fan definition receive no runtime clearance.",
-  "renderEvidence": "Independent rerender: /workspace/shared/transformer-asset-independent-review/final-qa; final perspective, plan/end sheets and large icon tiles inspected. No WebGL/browser validation claimed.",
-  "testEvidence": "final-focused-tests.log:28passed,0failed; includes238old mapping stability and585record shape checks",
+  "renderEvidence": "Independent rerender: docs/catalog-transformers-2026/assets/qa; final perspective, plan/end sheets and large icon tiles inspected. No WebGL/browser validation claimed.",
+  "testEvidence": "docs/catalog-transformers-2026/review/assets-final-focused-tests.log:28passed,0failed; includes238old mapping stability and585record shape checks",
   "initialFindingsAndCorrections": [
     {
       "types": [

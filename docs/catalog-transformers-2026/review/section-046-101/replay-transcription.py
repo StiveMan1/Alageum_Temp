@@ -1,4 +1,7 @@
-import json,re,os
+import argparse,json,re,os
+parser=argparse.ArgumentParser(description='Replay the reviewed section transcription with an explicit legacy inventory input.')
+parser.add_argument('--old-records', required=True, help='Frozen 238-row legacy inventory JSON')
+args=parser.parse_args()
 from collections import defaultdict
 ROOT=os.path.dirname(__file__)
 I=[]; F={}; A={}; L={n:{'pdfPage':n,'printedPage':n if n not in [76,95,101] else None,'visualInspected':True,'render':f'pages/{n:03}.png','headings':[],'series':[],'productIds':[],'contentTypes':[],'notes':[]} for n in range(46,102)}
@@ -353,7 +356,7 @@ for r in I:
 from apply_source_review import apply_model_additions, apply_family_additions
 COMMON_PROSE_GROUPS=apply_model_additions(I,spec,ROOT)
 # All model-level manufacturer fields remain unknown. The brand/logo does not identify a producing legal entity.
-C=[]; old=json.load(open('/workspace/scratch/3e2b26bde66a/alageum-new-catalog-reconciliation/source-inventory/old-records.json'))
+C=[]; old=json.load(open(args.old_records))
 for r in I:
  r['designation']=r['sourceDesignation'];r['execution']=r.get('context','');r['candidateOldIds']=[];r['overlapAssessment']=[]
  r['sourcePages']=sorted(set(r['sourcePages']+[s['sourcePage'] for s in r['rawSpecs']]))

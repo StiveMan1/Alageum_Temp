@@ -11,12 +11,14 @@ import { getProductMedia, sameOrderedMedia, selectApiProductImage } from '../lib
 import { getEquipmentVisual } from '../lib/catalog/models/visualMap.js';
 import { getEquipmentIcon } from '../lib/catalog/models/iconMap.js';
 import manifest from '../lib/catalog/media-manifest.json' with { type: 'json' };
+import transformerRuntime from '../lib/catalog/models/transformer2026RuntimeManifest.json' with { type: 'json' };
+import { catalogSources, getCatalogSource, getSourcePageAsset, isSourcePage, sourcePageImage, sourcePageUrl } from '../lib/catalog/sources.js';
 
 const require = createRequire(import.meta.url);
 const variant = productById('cat-bktp-modular-v001');
 const baselineMedia = product => product.image ? [{ path: product.image, kind: 'image', ...(Object.hasOwn(product, 'imageCaption') ? { alt: product.imageCaption } : {}) }] : [];
 const live = (source, media = baselineMedia(source)) => normalizeApiProduct({
-  id: manifest.overrides[source.id]?.database_id || '2e39f767-a489-4e09-adee-8d4f7d782f93', public_key: source.id, slug: source.id,
+  id: transformerRuntime.geometry[source.id]?.database_id || transformerRuntime.icons[source.id]?.database_id || manifest.overrides[source.id]?.database_id || '2e39f767-a489-4e09-adee-8d4f7d782f93', public_key: source.id, slug: source.id,
   category_public_key: source.category, specs: source, provenance: source, media,
   translations: { ru: { name: source.name } },
 });
@@ -35,7 +37,9 @@ async function renderVisual(product) {
       .replace("import ProductIcon from './ProductIcon';", 'const ProductIcon = ({ product }) => <span data-product-icon={product.id}/>;')
       .replace("export { default as ProductIcon } from './ProductIcon';", '')
       .replace("import EquipmentModel from './EquipmentModel';", 'const EquipmentModel = ({ type }) => <section data-equipment-model={type}/>;')
+      .replace("'@/lib/catalog/models/iconMap'", JSON.stringify(new URL('../lib/catalog/models/iconMap.js', import.meta.url).href))
       .replace("'@/lib/catalog/models/visualMap'", JSON.stringify(new URL('../lib/catalog/models/visualMap.js', import.meta.url).href))
+      .replace("'@/lib/catalog/sources'", JSON.stringify(new URL('../lib/catalog/sources.js', import.meta.url).href))
       .replace("'@/lib/catalog/media'", JSON.stringify(new URL('../lib/catalog/media.js', import.meta.url).href));
     const { transform, loadBindings } = require('next/dist/build/swc');
     await loadBindings();
@@ -59,7 +63,7 @@ test('generated overrides correspond only to actual reviewed mismatches and exac
   assert.deepEqual(manifest.assets['/catalog-products/cat-bktp-modular.webp'].source_pages, [39]);
 });
 
-test('untouched API records match all 238 static image choices and preserve reviewed construction mappings', () => {
+test('untouched API records match all released static image choices and preserve reviewed construction mappings', () => {
   const frozen = JSON.stringify(officialProducts);
   for (const source of officialProducts) {
     const product = live(source);
@@ -184,4 +188,50 @@ test('KTPS v007 uses the reviewed page20 scan only for its exact untouched impor
   assert.match(html, /src="\/catalog-source\/page-020.webp"/);
   assert.match(html, /href="\/catalog\/source\?page=20"/);
   assert.doesNotMatch(html, /page=19|Страница 19/);
+});
+
+
+test('source-aware media resolves exact registered scans without crossing PDF page namespaces', () => {
+  for (const [sourceId, lastPage] of [['substations', 104], ['transformers-2026', 187]]) {
+    for (let page = 1; page <= lastPage; page++) {
+      const path = sourcePageImage(sourceId, page);
+      const asset = getSourcePageAsset(path);
+      assert.equal(asset.sourceId, sourceId);
+      assert.equal(asset.page, page);
+      const media = getProductMedia({ source: 'api', image: path }, {});
+      assert.equal(media.sourceId, sourceId);
+      assert.equal(media.representation, 'source-scan');
+      assert.deepEqual(media.sourcePages, [page]);
+      assert.equal(media.caption, `Страница ${page} исходного каталога; не фотография изделия`);
+      assert.equal(isSourcePage(sourceId, page), true);
+    }
+    for (const page of [0, -1, lastPage + 1, 1.5, '1', NaN]) {
+      assert.equal(isSourcePage(sourceId, page), false);
+      assert.equal(sourcePageImage(sourceId, page), null);
+      assert.equal(sourcePageUrl(sourceId, page), null);
+    }
+  }
+  assert.equal(sourcePageUrl('substations', 38), '/catalog/source?page=38');
+  assert.equal(sourcePageUrl('transformers-2026', 38), '/catalog/source?source=transformers-2026&page=38');
+  assert.equal(sourcePageUrl('transformers-2026', 187), '/catalog/source?source=transformers-2026&page=187');
+  assert.notEqual(sourcePageImage('substations', 38), sourcePageImage('transformers-2026', 38));
+});
+
+test('unknown sources, guessed paths and conflicting provenance do not acquire source evidence', () => {
+  const source = catalogSources['transformers-2026'];
+  const identity = { sourceId: source.id, sourceFileId: source.source_file_id, sourceSha256: source.source_sha256, sourceUrl: source.source_url };
+  assert.equal(getCatalogSource(identity).id, source.id);
+  for (const conflict of [{ sourceId: 'substations' }, { sourceFileId: 'unknown' }, { sourceSha256: '0'.repeat(64) }, { sourceUrl: catalogSources.substations.source_url }])
+    assert.equal(getCatalogSource({ ...identity, ...conflict }), null);
+  for (const sourceId of ['unknown', '__proto__', 'constructor']) {
+    assert.equal(getCatalogSource(sourceId), null);
+    assert.equal(sourcePageUrl(sourceId, 1), null);
+  }
+  for (const path of ['/catalog-source/page-105.webp', '/catalog-source/transformers-2026/page-000.webp', '/catalog-source/transformers-2026/page-188.webp', '/catalog-source/unknown/page-001.webp', '/catalog-source/transformers-2026/../page-038.webp', '/catalog-products/unknown.webp']) {
+    assert.equal(getSourcePageAsset(path), null);
+    const media = getProductMedia({ source: 'api', image: path }, {});
+    assert.equal(media.representation, null);
+    assert.equal(media.sourceId, null);
+    assert.deepEqual(media.sourcePages, []);
+  }
 });

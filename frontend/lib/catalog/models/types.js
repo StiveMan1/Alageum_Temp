@@ -1,3 +1,4 @@
+import { transformer2026Types } from './transformer2026Types.js';
 import { sourceConstructionDefinitions } from './sourceConstructions.js';
 
 /**
@@ -37,6 +38,6 @@ export const equipmentModelTypes = Object.freeze({
   equipment: { name: 'Электрооборудование', reference: null },
 });
 
-export const resolveModelType = (type) => Object.hasOwn(equipmentModelTypes, type) ? type : 'equipment';
-export const equipmentModelName = (type) => equipmentModelTypes[resolveModelType(type)].name;
+export const resolveModelType = (type) => Object.hasOwn(equipmentModelTypes, type) || Object.hasOwn(transformer2026Types, type) ? type : 'equipment';
+export const equipmentModelName = (type) => (transformer2026Types[type] || equipmentModelTypes[resolveModelType(type)]).name;
 export const MODEL_DISCLOSURE = 'Иллюстративная 3D-модель типа; не CAD и не чертёж конкретного исполнения';

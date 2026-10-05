@@ -1,8 +1,11 @@
 import { officialProducts as webOfficialProducts } from './official.js';
 import { importedProducts, catalogImport } from './imported.js';
+import { transformerProducts, transformerImport } from './transformers2026.js';
+export { transformerProducts, transformerImport };
 export { webOfficialProducts, importedProducts, catalogImport };
 const importedById = new Map(importedProducts.map(p => [p.id, p]));
-export const officialProducts = [...webOfficialProducts.map(p => importedById.has(p.id) ? { ...p, ...importedById.get(p.id), manufacturer: importedById.get(p.id).manufacturer ?? p.manufacturer, manufacturers: importedById.get(p.id).manufacturers?.length ? importedById.get(p.id).manufacturers : p.manufacturers, additionalSources: [{ url: p.sourceUrl, label: 'Публичная страница производителя' }] } : p), ...importedProducts.filter(p => !webOfficialProducts.some(w => w.id === p.id))];
+export const baselineOfficialProducts = [...webOfficialProducts.map(p => importedById.has(p.id) ? { ...p, ...importedById.get(p.id), manufacturer: importedById.get(p.id).manufacturer ?? p.manufacturer, manufacturers: importedById.get(p.id).manufacturers?.length ? importedById.get(p.id).manufacturers : p.manufacturers, additionalSources: [{ url: p.sourceUrl, label: 'Публичная страница производителя' }] } : p), ...importedProducts.filter(p => !webOfficialProducts.some(w => w.id === p.id))];
+export const officialProducts = [...baselineOfficialProducts, ...transformerProducts];
 // Synthetic UI fixtures only. These are not ALAGEUM products or technical recommendations.
 // DEMO-001 preserves the identifier/name from backend/scripts/seed.py; its specs remain unknown.
 export const categories = [
@@ -10,6 +13,8 @@ export const categories = [
   { id: 'switchgear', name: 'Коммутация и распределение', short: 'Коммутация' },
   { id: 'substations', name: 'Комплектные подстанции', short: 'Подстанции' },
   { id: 'cabinets', name: 'Шкафы, щиты и управление', short: 'Шкафы и щиты' },
+  { id: 'reactors', name: 'Реакторы', short: 'Реакторы' },
+  { id: 'accessories', name: 'Принадлежности трансформаторов', short: 'Принадлежности' },
   { id: 'protection', name: 'Катодная защита и измерение', short: 'Защита и измерение' },
 ];
 
@@ -44,5 +49,5 @@ export const specRows = [
   { key: 'manufacturer', label: 'Производители серии' },
 ];
 
-export const recordKindLabel = (product) => product.recordKind === 'family' ? 'Серия / семейство' : product.recordKind === 'variant' ? 'Каталожное обозначение' : product.source === 'demo' ? 'Синтетический пример' : 'Справочная запись';
+export const recordKindLabel = (product) => product.sourceRecordType === 'configuration-family' ? 'Семейство табличных конфигураций' : product.sourceRecordType === 'drawing-only-model' ? 'Обозначение на чертеже' : product.sourceRecordType === 'accessory' ? 'Принадлежность' : product.recordKind === 'family' ? 'Серия / семейство' : product.recordKind === 'variant' ? 'Каталожное обозначение' : product.source === 'demo' ? 'Синтетический пример' : 'Справочная запись';
 export const specUnit = (product, row) => row.key === 'voltage' ? (product.voltageUnit ?? row.unit) : row.unit;

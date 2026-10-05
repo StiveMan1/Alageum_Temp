@@ -1,3 +1,4 @@
+const reviewedRecordCount = require("../data/catalog-release.json").recordCount;
 "use strict";
 const assert = require("node:assert/strict");
 const { randomUUID } = require("node:crypto");
@@ -13,7 +14,7 @@ const categoryRow = (key, published, parent = null) => ({ transport_id: randomUU
 async function definitionsSnapshot(db) { return JSON.stringify(await table(db).select("*", db.raw("translations::text AS translations")).orderBy("id")); }
 async function reviewedIdentities(db) {
   const rows = await db(PRODUCT).whereIn("public_key", readCatalog().map(row => row.id)).select("transport_id", "public_key").orderBy("public_key");
-  assert.equal(rows.length, 238);
+  assert.equal(rows.length, reviewedRecordCount);
   for (const row of rows) assert.equal(row.transport_id, uuid5(`product:${row.public_key}`, NAMESPACE));
   return rows;
 }
@@ -130,7 +131,7 @@ async function runCatalogFilterTests(t, app) {
       await rollback(async tx => { await table(tx).insert({ ...rows[0], id: randomUUID(), category_id: empty.transport_id }); });
       await filters.ensureSchema(db); await filters.ensureSchema(db); await filters.preflightSchema(db);
       assert.equal(await businessSnapshot(), before);
-      assert.deepEqual(await app.alageum.catalog.importRecords(readCatalog()), { categories_created: 0, created: 0, skipped: 238 });
+      assert.deepEqual(await app.alageum.catalog.importRecords(readCatalog()), { categories_created: 0, created: 0, skipped: reviewedRecordCount });
       assert.deepEqual(await reviewedIdentities(db), sourceBefore); assert.equal(await businessSnapshot(), before);
     });
     await t.test("filter preflight refuses schema drift before native synchronization or bootstrap writes", async () => {

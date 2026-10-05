@@ -17,7 +17,8 @@ test('official reference records are distinct from synthetic fixtures', () => {
 });
 test('manufacturer search works without guessing catalog manufacturers', () => {
  const results=filterProducts(officialProducts,{q:'АЭМЗ'});assert.deepEqual(results.map(p=>p.id),['pktp-400','pktp-1000']);
- assert.equal(filterProducts(officialProducts,{q:'Asia Trafo'}).length,0);
+ const asia=filterProducts(officialProducts,{q:'Asia Trafo'});assert.equal(asia.length,207);
+ for(const row of asia){assert.equal(row.sourceId,'transformers-2026');assert.equal(row.manufacturer,'ТОО «Asia Trafo»');assert.ok(row.manufacturerEvidencePages.includes(166));}
 });
 test('power unknowns remain unknown and reference values are preserved', () => {
  assert.equal(officialProducts.find(p=>p.id==='ntmi-6').power,null);

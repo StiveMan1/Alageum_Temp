@@ -1,6 +1,6 @@
-(node:33) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspace/scratch/3e2b26bde66a/alageum-catalog-assets-next/frontend/lib/catalog/models/transformer2026Types.js is not specified and it doesn't parse as CommonJS.
+(node:33) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of frontend/lib/catalog/models/transformer2026Types.js is not specified and it doesn't parse as CommonJS.
 Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-To eliminate this warning, add "type": "module" to /workspace/scratch/3e2b26bde66a/alageum-catalog-assets-next/frontend/package.json.
+To eliminate this warning, add "type": "module" to frontend/package.json.
 (Use `node --trace-warnings ...` to show where the warning was created)
 ✔ new evidence registry accounts for every source row, group and missing construction without activation (3.899887ms)
 ✔ accepted group evidence is pixel-reviewed, local, closed-allowlisted and attached to row-specific source pages (1.949934ms)
@@ -20,9 +20,9 @@ To eliminate this warning, add "type": "module" to /workspace/scratch/3e2b26bde6
 ✔ short-end oil conservators sit outside terminal footprints; RPN plates retain their own height profile (8.438359ms)
 ✔ seven plated LV terminals remain separate in the upright35 plan (3.284864ms)
 ✔ final power terminal profiles follow the page158/160 drawings without adding an unverified page116 fitting (0.287797ms)
-(node:34) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///workspace/scratch/3e2b26bde66a/alageum-catalog-assets-next/frontend/lib/catalog/data.js is not specified and it doesn't parse as CommonJS.
+(node:34) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of frontend/lib/catalog/data.js is not specified and it doesn't parse as CommonJS.
 Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
-To eliminate this warning, add "type": "module" to /workspace/scratch/3e2b26bde66a/alageum-catalog-assets-next/frontend/package.json.
+To eliminate this warning, add "type": "module" to frontend/package.json.
 (Use `node --trace-warnings ...` to show where the warning was created)
 ✔ review-only staging accounts for exact identities without importing unreviewed rows (374.337337ms)
 ✔ candidate old identities never become duplicate cards, merges, or an all-held family (13.078012ms)

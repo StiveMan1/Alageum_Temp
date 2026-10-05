@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { importedProducts, officialProducts } from '../lib/catalog/data.js';
+import { importedProducts, baselineOfficialProducts as officialProducts } from '../lib/catalog/data.js';
 import { equipmentVisualAudit, getEquipmentVisual } from '../lib/catalog/models/visualMap.js';
 import { equipmentModelTypes } from '../lib/catalog/models/types.js';
 

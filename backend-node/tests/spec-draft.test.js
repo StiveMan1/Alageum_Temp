@@ -5,11 +5,12 @@ const { readCatalog } = require("../src/domain/catalog-source");
 const v = require("../src/domain/catalog-validation");
 const model = import("../src/plugins/alageum-catalog/admin/src/spec-draft.mjs");
 
-test("all 238 reviewed records roundtrip their exact specification fields through the native draft", async () => {
+test("all released reviewed records roundtrip their exact specification fields through the native draft", async () => {
   const { createSpecsDraft, serializeSpecsDraft } = await model;
   const keys = ["technicalSpecs", "configurations", "power", "voltage", "voltageUnit", "cooling", "installation", "subtype", "manufacturer", "manufacturers", "recordKind", "recordType", "isOrderableSku", "series", "familyId", "familyName", "variantIds", "variantSpecs", "notes"];
   const records = readCatalog();
-  assert.equal(records.length, 238);
+  const expected = require("../data/catalog-release.json").recordCount;
+  assert.equal(records.length, expected);
   for (const record of records) {
     const specs = Object.fromEntries(keys.filter((key) => Object.hasOwn(record, key)).map((key) => [key, record[key]]));
     const result = serializeSpecsDraft(createSpecsDraft(specs));

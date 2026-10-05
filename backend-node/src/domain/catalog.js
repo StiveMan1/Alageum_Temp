@@ -13,8 +13,14 @@ const CATEGORIES = {
   substations: "Комплектные подстанции",
   cabinets: "Шкафы, щиты и управление",
   protection: "Катодная защита и измерение",
+  reactors: "Реакторы",
+  accessories: "Принадлежности трансформаторов",
 };
 const SPEC_FIELDS = [
+  "designation",
+  "execution",
+  "productKind",
+  "sourceRecordType",
   "technicalSpecs",
   "configurations",
   "power",
@@ -36,6 +42,12 @@ const SPEC_FIELDS = [
   "notes",
 ];
 const PROVENANCE_FIELDS = [
+  "sourceId",
+  "sourceFileId",
+  "sourceSha256",
+  "sourceRow",
+  "sourceFamilyId",
+  "manufacturerEvidencePages",
   "sourceKind",
   "sourceUrl",
   "sourceTitle",
@@ -474,7 +486,7 @@ function createCatalog({ db, auth, audit, authorizer, compatibilityReads = false
         await identityLock(tx);
         const result = { categories_created: 0, created: 0, skipped: 0 };
         const cat = {};
-        for (const [i, [key, label]] of Object.entries(CATEGORIES).entries()) {
+        for (const [i, [key, label]] of Object.entries(CATEGORIES).filter(([key]) => !["reactors", "accessories"].includes(key) || records.some(r => r.category === key)).entries()) {
           const id = uuid5(`category:${key}`, NAMESPACE);
           let row = await categories(tx).where({ public_key: key }).first();
           if (row && row.transport_id !== id)

@@ -407,10 +407,11 @@ async function native() {
     const products = await db("alageum_products").whereIn("public_key", source.map(x => x.id)).orderBy("public_key");
     const sourceIdentity = products.map(row => ({ public_key: row.public_key, transport_id: row.transport_id }));
     await check("reviewed-238-source-identities-and-importer", async item => {
-      assert.equal(source.length, 238); assert.equal(products.length, 238);
+      const reviewedRecordCount = load(path.join(appDir, "data/catalog-release.json")).recordCount;
+      assert.equal(source.length, reviewedRecordCount); assert.equal(products.length, reviewedRecordCount);
       for (const row of products) assert.equal(row.transport_id, importedProductId(row.public_key));
-      assert.deepEqual(await app.alageum.catalog.importRecords(source), { categories_created: 0, created: 0, skipped: 238 });
-      item.count = 238; item.sha256 = hash(sourceIdentity);
+      assert.deepEqual(await app.alageum.catalog.importRecords(source), { categories_created: 0, created: 0, skipped: source.length });
+      item.count = source.length; item.sha256 = hash(sourceIdentity);
     });
     report.source_products = { count: products.length, identity_sha256: hash(sourceIdentity), rows_sha256: hash(products) };
     if (mode === "restart") {

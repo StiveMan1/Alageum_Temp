@@ -1,0 +1,78 @@
+{
+  "sourceDataClearance": "docs/catalog-transformers-2026/review/data-clearance.json",
+  "inventorySha256": "c3948d7152a6130aa4672b9f6d3d5a8f08144b5965df7bebabca067ba5bc8438",
+  "assetClearance": "docs/catalog-transformers-2026/review/assets-clearance.json",
+  "assetClearanceSha256": "930def10e4d3ac298b2551480432dab987198bc6e56fa404c8a00f6960a28f29",
+  "runtime": {
+    "officialRecords": 823,
+    "unchangedLegacyRecords": 238,
+    "newRecords": 585,
+    "newFamilyParents": 77,
+    "admittedModelVariationRows": 508,
+    "heldIdentityRows": 32,
+    "automaticIdentityMerges": 0,
+    "verifiedOrderableSkus": 0,
+    "sourceConfigurations": 407,
+    "attachedConfigurations": 349,
+    "heldConfigurations": 58,
+    "approvedNewGeometryRows": 251,
+    "approvedNewIconRows": 257,
+    "iconOnlyNewRows": 6
+  },
+  "media": {
+    "associations": 823,
+    "assets": 248,
+    "bytes": 21968700,
+    "transformerPages": 187,
+    "transformerPageBytes": 20429458,
+    "sourcePdfPublished": false
+  },
+  "checks": {
+    "frontendLint": "passed",
+    "frontendUnitTests": {
+      "passed": 377,
+      "failed": 0
+    },
+    "frontendProductionBuild": "passed, default Turbopack",
+    "backendAggregate": {
+      "passed": 562,
+      "failed": 0
+    },
+    "importGeneratorCheck": "passed",
+    "assetApprovalGeneratorCheck": "passed",
+    "mediaGeneratorCheck": "passed",
+    "gitDiffCheck": "passed",
+    "focusedPlaywrightDiscovery": {
+      "suite": "complete catalog against production build",
+      "desktop": 34,
+      "mobile": 34,
+      "total": 68,
+      "execution": "deferred to CI; not locally browser-executed",
+      "evidence": "Success PNGs, pixel metrics, JSON results and logs retained by CI"
+    },
+    "sameCommandProductionHttpSmoke": {
+      "status": 200,
+      "paths": [
+        "/catalog",
+        "/catalog/alageum-tmg-standard-16",
+        "/catalog/tr2026-family-asia-shunt-reactor-configurations",
+        "/catalog/source?source=transformers-2026&page=175",
+        "/catalog-source/transformers-2026/page-175.webp",
+        "/catalog-source/transformers-2026/page-012.webp"
+      ],
+      "scope": "Final activated production build; HTTP response only, not rendered UI or WebGL validation",
+      "artifact": "docs/catalog-transformers-2026/import-http-smoke.json"
+    },
+    "browserLimit": "Supported cloud-browser attempt returned ERR_BLOCKED_BY_CLIENT; no network or security settings changed",
+    "nodeWorkflowReleaseAssertion": {
+      "expectedRecordCount": 823,
+      "validCountAccepted": true,
+      "stale238Rejected": true,
+      "wrong824Rejected": true,
+      "dailyTestBehaviorChanged": false
+    }
+  },
+  "publication": "Prepared locally for a draft pull request; no merge or deployment.",
+  "runtimeAssetManifestSha256": "015aec00fbd4ee411c581fbc1443a348cdfd1f85649607820c406a0b658f6434",
+  "recordShapeManifestSha256": "2e960a153bfbc7b94be57fe26407852ae0d81e1ef5fd7ee529503d52c5042a28"
+}

@@ -293,7 +293,7 @@
     }
   ],
   "completedAtUtc": "2026-10-05T07:39:55.173327+00:00",
-  "sourcePath": "/opt/codex/downloads/3c77bd75-85c2-4903-abff-8c147cf917b6/28860948-ae2f-4d1f-bf4b-18e59b8cba00",
+  "sourcePath": "https://drive.google.com/file/d/113q2las1R18OJ6g6laJ5ZN4PFPsY635f/view",
   "method": {
     "pageCoverage": "Every physical page6–101 was visually inspected, not sampled. Primary data pages were opened individually at the regenerated full-page resolution; remaining drawings/dividers were inspected in legible contact sheets. Critical small tables/cells on25,75,79,97 were independently rendered at4× from the recovered PDF.",
     "numericCoverage": "Every populated primary technical/dimension table row and its transcribed values/units were compared against source pixels. This is a full table-cell review, not a numeric sample. Merged cells, tap sequences, slash pairs and connection options were checked in their printed row scope. Drawing dimension tables75/97 were checked in full; redundant drawing H tables96/98 were checked.",

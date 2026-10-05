@@ -1,6 +1,6 @@
 // Small complement to the lossless PDF chunks: reviewed web records and merged overlays.
 import { writeFileSync } from 'node:fs';
-import { officialProducts, webOfficialProducts } from '../frontend/lib/catalog/data.js';
+import { baselineOfficialProducts as officialProducts, webOfficialProducts } from '../frontend/lib/catalog/data.js';
 const webIds = new Set(webOfficialProducts.map(product => product.id));
 const value = {
   format: 'alageum-catalog-overlay-v1',

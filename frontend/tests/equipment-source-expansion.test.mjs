@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import * as THREE from 'three';
-import { officialProducts, productById } from '../lib/catalog/data.js';
+import { baselineOfficialProducts as officialProducts, productById } from '../lib/catalog/data.js';
 import { getEquipmentVisual } from '../lib/catalog/models/visualMap.js';
 import { getEquipmentIcon } from '../lib/catalog/models/iconMap.js';
 import { equipmentModelTypes } from '../lib/catalog/models/types.js';

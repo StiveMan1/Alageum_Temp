@@ -104,7 +104,9 @@ jobs:
           const results = JSON.parse(fs.readFileSync(path.join(directory, 'results.json')));
           assert.equal(results.status, 'passed');
           assert.ok(results.checks.length > 0 && results.checks.every(result => result.status === 'passed'));
-          assert.equal(results.fresh.source_products.count, 238);
+          const release = JSON.parse(fs.readFileSync('backend-node/data/catalog-release.json'));
+          assert.equal(release.format, 'alageum-catalog-release-v1');
+          assert.equal(results.fresh.source_products.count, release.recordCount);
           assert.deepEqual(results.restart.source_products, results.fresh.source_products);
           assert.equal(results.restart.schema_sha256, results.fresh.schema_sha256);
           assert.equal(results.fresh.races.length, 4);

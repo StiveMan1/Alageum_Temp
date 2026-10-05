@@ -3,7 +3,7 @@ import test from 'node:test';
 import fs from 'node:fs';
 import { editorDraft, editorPayload, catalogPrice } from '../lib/catalog/admin.js';
 import { normalizeApiProduct, normalizeApiSelection, isApiCatalog, safeSourceUrl } from '../lib/catalog/apiData.js';
-import { officialProducts, importedProducts } from '../lib/catalog/data.js';
+import { baselineOfficialProducts as officialProducts, importedProducts } from '../lib/catalog/data.js';
 import { getEquipmentIcon } from '../lib/catalog/models/iconMap.js';
 import { selectionCsv } from '../lib/catalog/query.js';
 const product = { id:'uuid',public_key:'product-a',slug:'product-a',category_id:'cat',category_public_key:'transformers',sku:'A',version:7,price:'1250.10',currency:'USD',price_mode:'fixed',status:'published',translations:{ru:{name:'Current',description:'Current description'},en:{name:'English'}},specs:{power:630,technicalSpecs:[{label:'Power',value:'630',unit:'kVA'}]},provenance:{sourceKind:'supplied-pdf',sourcePages:[6],sourceUrl:'https://example.com/source'},media:[],source_data:{name:'OLD',image:'/brand/old.png',power:100}};

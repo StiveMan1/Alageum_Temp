@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { existsSync, readFileSync } from 'node:fs';
-import { officialProducts, importedProducts, webOfficialProducts, categories, catalogImport, productById, specUnit } from '../lib/catalog/data.js';
+import { baselineOfficialProducts as officialProducts, importedProducts, webOfficialProducts, categories, catalogImport, productById, specUnit } from '../lib/catalog/data.js';
 import { filterProducts, paginationWindow, normalizeSelection, selectionCsv } from '../lib/catalog/query.js';
 
 const families=importedProducts.filter(p=>p.recordKind==='family');

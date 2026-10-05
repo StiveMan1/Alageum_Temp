@@ -1,3 +1,5 @@
+import { resolveTransformer2026Type } from './transformer2026Types.js';
+import { createTransformer2026Geometry, disposeTransformer2026Geometry } from './transformer2026Geometry.js';
 import * as THREE from 'three';
 import { resolveModelType } from './types.js';
 import { buildSourceEquipmentGeometry } from './sourceGeometry.js';
@@ -8,6 +10,7 @@ import { buildSourceEquipmentGeometry } from './sourceGeometry.js';
 const colors = { body: 0xe5e7e5, panel: 0xf1f1ed, frame: 0x737e82, dark: 0x323d44, red: 0xb92735, copper: 0xb87957, insulator: 0xaaa698, screen: 0x33474c, glass: 0x778f92, warning: 0xe3ba5d };
 
 export function createEquipmentGeometry(type) {
+  if (resolveTransformer2026Type(type)) return createTransformer2026Geometry(type);
   const group = new THREE.Group();
   group.name = `equipment-type:${resolveModelType(type)}`;
   const materials = Object.fromEntries(Object.entries(colors).map(([key, color]) => [key, new THREE.MeshStandardMaterial({ color, roughness: key === 'copper' ? .4 : .72, metalness: key === 'frame' ? .4 : .12 })]));
@@ -276,6 +279,7 @@ export function createEquipmentGeometry(type) {
 }
 
 export function disposeEquipmentGeometry(group) {
+  if (resolveTransformer2026Type(group.userData.type)) return disposeTransformer2026Geometry(group);
   const geometries = new Set();
   const materials = new Set(group.userData.materials || []);
   group.traverse((object) => {

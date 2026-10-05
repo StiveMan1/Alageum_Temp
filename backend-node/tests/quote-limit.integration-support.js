@@ -1,3 +1,4 @@
+const reviewedRecordCount = require("../data/catalog-release.json").recordCount;
 "use strict";
 // This module is test-only. No fixture, reset route or clock override enters the app.
 const assert = require("node:assert/strict");
@@ -67,7 +68,7 @@ async function seedFixtures(app) {
   const config = app.config.get("alageum"), now = Math.floor(Date.now() / 1000);
   const tokens = Object.fromEntries(Object.entries(actors).map(([name, id]) => [name, require("jsonwebtoken").sign({ sub: id, type: "access", jti: randomUUID(), iat: now, nbf: now, exp: now + 900 }, config.jwtSecret, { algorithm: "HS256", issuer: config.jwtIssuer, audience: config.jwtAudience })]));
   const products = await app.db.connection("alageum_products").select("transport_id").where({ status: "published" }).orderBy("public_key");
-  assert.equal(products.length, 238, "Use only the reviewed 238-product native catalog");
+  assert.equal(products.length, reviewedRecordCount, "Use only the reviewed 238-product native catalog");
   // Pinned Strapi upload schedules its initial weekly bookkeeping 15 seconds
   // after fresh startup, even when transmission is disabled. Let that real job
   // settle before the full protected-row baseline; do not reset or stop jobs.
