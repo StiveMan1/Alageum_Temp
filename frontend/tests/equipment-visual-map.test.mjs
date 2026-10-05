@@ -32,8 +32,8 @@ test('all 65 imported families are audited against existing source pages', () =>
 
 test('all 238 official rows receive a grounded visual or an explicit uncertainty state', () => {
   assert.equal(officialProducts.length, 238);
-  assert.deepEqual(tally(officialProducts), { generic: 14, 'source-only': 91, 'source-matched': 123, unverified: 10 });
-  assert.deepEqual(tally(families), { 'source-matched': 25, 'source-only': 34, unverified: 6 });
+  assert.deepEqual(tally(officialProducts), { generic: 14, 'source-only': 43, 'source-matched': 171, unverified: 10 });
+  assert.deepEqual(tally(families), { 'source-matched': 56, 'source-only': 3, unverified: 6 });
   for (const product of officialProducts) {
     const visual = getEquipmentVisual(product);
     if (visual.confidence === 'source-matched') {
@@ -64,13 +64,13 @@ test('mixed family drawings are not blindly inherited by a named variant', () =>
   assert.equal(get('cat-ptm-tded').type, null);
   assert.equal(get('cat-ptm-tded-v003').type, null);
   assert.equal(get('cat-ptm-tded-v012').type, 'protection-cabinet');
-  assert.equal(get('cat-ptm-tded-v013').type, null);
+  assert.equal(get('cat-ptm-tded-v013').type, 'indoor-protection-enclosure');
   assert.deepEqual(get('cat-bktp-modular-v001').sourcePages, [38]);
   assert.equal(get('cat-bktp-modular-v001').fallbackImage, '/catalog-source/page-038.webp');
   assert.deepEqual(get('cat-bktp-modular-v002').sourcePages, [39]);
   assert.notEqual(get('cat-bktp-modular-v001').fallbackImage, get('cat-bktp-modular-v002').fallbackImage);
-  assert.equal(get('cat-ktpb-k').type, null);
-  assert.equal(get('cat-ukzv').type, null);
+  assert.equal(get('cat-ktpb-k').type, 'outdoor-switchyard-substation');
+  assert.equal(get('cat-ukzv').type, 'upper-input-protection');
   assert.equal(get('cat-ukzv-v001').type, 'upper-input-protection');
   assert.equal(get('cat-ukzv-v002').type, null);
   assert.equal(get('cat-ukzn-v001').type, 'outdoor-floor-cabinet');

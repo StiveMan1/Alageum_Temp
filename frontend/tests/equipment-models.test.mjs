@@ -11,7 +11,7 @@ const requiredTypes = Object.keys(equipmentModelTypes).filter(type => type !== '
 
 test('the library provides one stable shared visual per equipment type', () => {
   assert.equal(navigationTypes.length, 13);
-  assert.equal(requiredTypes.length, 26);
+  assert.equal(requiredTypes.length, 59);
   for (const type of requiredTypes) {
     assert.equal(resolveModelType(type), type);
     assert.ok(equipmentModelName(type).length > 5);

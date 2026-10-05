@@ -1,3 +1,5 @@
+import { sourceConstructionDefinitions } from './sourceConstructions.js';
+
 /**
  * Shared visual vocabulary, deliberately independent of catalogue records/SKUs.
  * Geometry is an illustrative interpretation of the cited representative sources,
@@ -31,6 +33,7 @@ export const equipmentModelTypes = Object.freeze({
   'railway-frame-substation': { name: 'Железнодорожная КТП на раме', reference: '/catalog-products/cat-ktpzh-25-1000.webp' },
   'upper-input-protection': { name: 'Установка защиты с воздушным вводом', reference: '/catalog-products/cat-ukzv.webp' },
   'outdoor-floor-cabinet': { name: 'Наружный шкаф с козырьком', reference: '/catalog-products/cat-ukzn.webp' },
+  ...sourceConstructionDefinitions,
   equipment: { name: 'Электрооборудование', reference: null },
 });
 

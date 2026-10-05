@@ -921,13 +921,13 @@
       ],
       "reviewed": [
         {
-          "path": "/catalog-products/cat-ktps-100-1600.webp",
+          "path": "/catalog-source/page-020.webp",
           "kind": "image",
-          "alt": "Иллюстрация серии из каталога · не фото конкретного исполнения"
+          "alt": "Страница 20 исходного каталога; не фотография изделия"
         }
       ],
       "entry_ids": [
-        "7b49e464dd535f5303967e69b7c733608b48165874393008c64a06388b22451c"
+        "59619afa65cebe98f4905cddd2752dc4c6c87eef56feef707fc2533fe762ce24"
       ]
     },
     "cat-mtp-25-100": {
@@ -5404,6 +5404,18 @@
       "mime": "image/webp",
       "sha256": "6a08630939966a32b3a51ea4c543c2bdef9d4ea5c7188e4760e7c8d7027c7575",
       "bytes": 26836
+    },
+    "59619afa65cebe98f4905cddd2752dc4c6c87eef56feef707fc2533fe762ce24": {
+      "id": "59619afa65cebe98f4905cddd2752dc4c6c87eef56feef707fc2533fe762ce24",
+      "path": "/catalog-source/page-020.webp",
+      "kind": "image",
+      "representation": "source-scan",
+      "source_pages": [
+        20
+      ],
+      "mime": "image/webp",
+      "sha256": "ffef0a8eee309c7bd7df4627b8b90085f4e36098ee91cc110a2292e93169947a",
+      "bytes": 86498
     },
     "90800dda57011905f98d88fa4dbb93bfce16c6e9c495ce31683b5cb5403b59a6": {
       "id": "90800dda57011905f98d88fa4dbb93bfce16c6e9c495ce31683b5cb5403b59a6",

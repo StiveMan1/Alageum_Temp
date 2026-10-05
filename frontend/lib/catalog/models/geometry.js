@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { resolveModelType } from './types.js';
+import { buildSourceEquipmentGeometry } from './sourceGeometry.js';
 
 // Procedural silhouettes shared by TYPE, never generated from SKU, rating or dimensions.
 // Source interpretations are documented in types.js. Unpictured types are generic
@@ -100,7 +101,8 @@ export function createEquipmentGeometry(type) {
       part.rotation.z = -side * Math.atan2(rise, width / 2);
     }
   };
-  switch (resolveModelType(type)) {
+  const sourceBuilt = buildSourceEquipmentGeometry(resolveModelType(type), { group, box, cylinder, insulator, handle, display, warning, vents });
+  if (!sourceBuilt) switch (resolveModelType(type)) {
     case 'oil-transformer': oilTank(); break;
     case 'instrument-transformer': oilTank([0, 0, 0], 1, true); break;
     case 'dry-transformer':

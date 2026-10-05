@@ -51,8 +51,8 @@ for (const record of readCatalog()) {
 }
 assert.equal(Object.keys(manifest.records).length, 238);
 assert.equal(Object.values(manifest.records).filter(record => !record.reviewed.length).length, 24);
-assert.equal(files.size, 60);
-assert.equal([...files.values()].reduce((sum, bytes) => sum + bytes.length, 0), 1452744);
+assert.equal(files.size, 61);
+assert.equal([...files.values()].reduce((sum, bytes) => sum + bytes.length, 0), 1539242);
 const outputs = new Map([
   ['backend-node/data/catalog-media-manifest.json', Buffer.from(`${JSON.stringify(manifest, null, 2)}\n`)],
   ['frontend/lib/catalog/media-manifest.json', Buffer.from(`${JSON.stringify(publicManifest, null, 2)}\n`)],
@@ -65,4 +65,4 @@ for (const [relative, bytes] of outputs) {
   else fs.writeFileSync(target, bytes);
 }
 assert.deepEqual(fs.readdirSync(mirror).sort(), [...files.keys()].sort(), 'Unexpected release mirror bytes');
-console.log(`Catalog media ${check ? 'verified' : 'generated'}: 238 associations, 24 empty, 60 raster assets, 1452744 bytes`);
+console.log(`Catalog media ${check ? 'verified' : 'generated'}: 238 associations, 24 empty, 61 raster assets, 1539242 bytes`);

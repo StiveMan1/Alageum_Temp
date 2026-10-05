@@ -1,6 +1,23 @@
 {
   "format": "alageum-catalog-media-public-v1",
   "overrides": {
+    "cat-ktps-100-1600-v007": {
+      "database_id": "28fe7075-809a-51bb-b2a9-ca6c0f1c88c7",
+      "imported": [
+        {
+          "path": "/catalog-products/cat-ktps-100-1600.webp",
+          "kind": "image",
+          "alt": "Иллюстрация серии из каталога · не фото конкретного исполнения"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/page-020.webp",
+          "kind": "image",
+          "alt": "Страница 20 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
     "cat-bktp-modular-v001": {
       "database_id": "bb8ef35d-c8e6-5913-a84f-bfc267248ed2",
       "imported": [
@@ -96,6 +113,12 @@
       "representation": "crop",
       "source_pages": [
         19
+      ]
+    },
+    "/catalog-source/page-020.webp": {
+      "representation": "source-scan",
+      "source_pages": [
+        20
       ]
     },
     "/catalog-products/cat-mtp-25-100.webp": {

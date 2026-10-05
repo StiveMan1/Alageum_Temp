@@ -141,7 +141,10 @@ test('rendered reviewed scan is correctly labeled and custom crop evidence stays
   assert.equal(edited.split('Текст для экранного диктора').length - 1, 1);
   assert.match(edited, /не фотография конкретного исполнения/);
   assert.match(edited, /href="\/catalog\/source\?page=39"/);
-  assert.doesNotMatch(edited, /page=38|странице 38|Страница 38/);
+  // The construction retains p38 provenance while independently selected media cites p39.
+  const sourceDetail = edited.match(/<details[\s\S]*<\/details>/)[0];
+  assert.doesNotMatch(sourceDetail, /page=38|странице 38|Страница 38/);
+  assert.match(edited, /data-equipment-model="single-modular-building"/);
 });
 
 test('rendered explicit empty alt and empty media remain empty, including static fallback behavior', async () => {
@@ -149,9 +152,9 @@ test('rendered explicit empty alt and empty media remain empty, including static
   assert.match(emptyAlt, /src="\/catalog-source\/page-038.webp" alt=""/);
   assert.ok(emptyAlt.includes(page38Label));
   const emptyMedia = await renderVisual(live(variant, []));
-  assert.doesNotMatch(emptyMedia, /<img|page=38|page=39/);
-  assert.match(emptyMedia, /Проверенный чертёж конструкции не предоставлен/);
-  assert.match(emptyMedia, /Условный символ не подтверждает конструкцию/);
+  assert.doesNotMatch(emptyMedia, /<img|<details|page=39/);
+  assert.match(emptyMedia, /data-equipment-model="single-modular-building"/);
+  assert.match(emptyMedia, /href="\/catalog\/source\?page=38"/);
   const staticDefault = await renderVisual(variant);
   assert.match(staticDefault, /src="\/catalog-source\/page-038.webp"/);
   assert.ok(staticDefault.includes(page38Label));
@@ -166,4 +169,19 @@ test('a mapped construction keeps its reviewed model when selected source media 
   assert.match(selected, /data-equipment-model="substation"/);
   assert.match(selected, /src="\/catalog-source\/page-038.webp" alt="Скан для сравнения"/);
   assert.ok(selected.includes(page38Label));
+});
+
+test('KTPS v007 uses the reviewed page20 scan only for its exact untouched imported row', async () => {
+  const source = productById('cat-ktps-100-1600-v007');
+  const original = baselineMedia(source);
+  assert.equal(live(source).image, '/catalog-source/page-020.webp');
+  assert.deepEqual(describe(live(source)).sourcePages, [20]);
+  assert.equal(selectApiProductImage(source.id, original, 'new-record-uuid').path, original[0].path);
+  assert.equal(live(source, []).image, null);
+  assert.equal(live(source, [{ ...original[0], alt: 'Edited source selection' }]).image, original[0].path);
+  const html = await renderVisual(live(source));
+  assert.match(html, /data-equipment-model="raised-outdoor-substation"/);
+  assert.match(html, /src="\/catalog-source\/page-020.webp"/);
+  assert.match(html, /href="\/catalog\/source\?page=20"/);
+  assert.doesNotMatch(html, /page=19|Страница 19/);
 });

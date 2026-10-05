@@ -19,7 +19,7 @@ const exception = records.find(record => record.id === "cat-bktp-modular-v001");
 
 test("all 238 native media associations are derived from unchanged records/maps and exact canonical bytes", () => {
   execFileSync(process.execPath, [path.resolve(__dirname, "../../scripts/generate-catalog-media.mjs"), "--check"], { stdio: "pipe" });
-  assert.deepEqual(verifyPackage(), { records: 238, assets: 60, bytes: 1452744 });
+  assert.deepEqual(verifyPackage(), { records: 238, assets: 61, bytes: 1539242 });
   let empty = 0;
   for (const source of records) {
     const result = options(row(source));
@@ -115,4 +115,17 @@ test("release previews fail closed for missing, corrupt, symlinked or MIME-misma
     fs.symlinkSync(path.resolve(__dirname, `../data/catalog-media/${entry.id}.webp`), target);
     assert.throws(() => readAsset(entry, directory));
   } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+});
+
+test("KTPS v007 source-hash-bound media corrects page19 to page20 and rejects stale evidence", () => {
+  const source = records.find(record => record.id === "cat-ktps-100-1600-v007");
+  const value = row(source), choices = options(value);
+  assert.equal(choices.imported[0].path, "/catalog-products/cat-ktps-100-1600.webp");
+  assert.equal(choices.reviewed[0].path, "/catalog-source/page-020.webp");
+  assert.deepEqual(choices.entries[0].source_pages, [20]);
+  assert.equal(choices.baseline_override, true);
+  assert.equal(publicManifest.overrides[source.id].database_id, importedProductId(source.id));
+  assert.deepEqual(options({ ...value, source_data: { ...source, name: "stale source" } }).entries, []);
+  validateNativeMedia(value, choices.reviewed);
+  assert.equal(preview(value, choices.entries[0].id).bytes.length, 86498);
 });
