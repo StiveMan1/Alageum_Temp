@@ -545,8 +545,14 @@ jobs:
           curl --fail --silent --max-time 10 http://127.0.0.1:8016/_health > /dev/null
           curl --location --fail --silent --max-time 10 http://127.0.0.1:8016/cms > /dev/null
           cd frontend
-          DATABASE_URL="$ALAGEUM_CMS_BROWSER_DATABASE_URL" node scripts/verify-native-cms-daily-http.mjs | tee playwright-report/cms-daily-http.log
           npx playwright test --config=playwright.cms.config.js
+          # The existing suite uses all five native editor logins. Pinned Strapi
+          # permits five per email/path/IP in five minutes. Let that real window
+          # expire before the HTTP companion and daily suite use three more.
+          # Do not disable, reset, or raise the native authentication throttle.
+          echo 'Waiting 301 seconds for the native login quota window to expire.'
+          sleep 301
+          DATABASE_URL="$ALAGEUM_CMS_BROWSER_DATABASE_URL" node scripts/verify-native-cms-daily-http.mjs | tee playwright-report/cms-daily-http.log
           PLAYWRIGHT_JSON_OUTPUT_NAME=playwright-report/cms-daily-cases.json npx --no-install playwright test --config=playwright.cms-daily.config.js --max-failures=1 --reporter=github,json
           node - <<'NODE'
           const assert = require('node:assert/strict');
