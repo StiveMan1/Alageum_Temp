@@ -137,6 +137,7 @@ function Editor({ id, categories, token, onClose, onSaved }) {
       if (active.current) setBusy(false);
     }
   }
+  const currencyErrors = fieldErrors.currency ? { ...fieldErrors, currency: `Enter a valid ISO currency code, such as KZT, USD or EUR. ${fieldErrors.currency}` } : fieldErrors;
   return <section className="alageum-editor" aria-label="Catalog product editor" aria-busy={busy}>
     <div className="alageum-toolbar"><h2>{isNew ? "Create product" : "Edit product"}</h2><button type="button" onClick={onClose}>Close editor</button></div>
     {error && <p className="alageum-error" role="alert">{error}</p>}
@@ -157,7 +158,7 @@ function Editor({ id, categories, token, onClose, onSaved }) {
         </details>)}
         <div className="alageum-grid">
           <Field label="Price mode"><select value={form.price_mode} onChange={(e) => field("price_mode", e.target.value)}><option value="on_request">On request</option><option value="fixed">Fixed price</option></select></Field>
-          {form.price_mode === "fixed" && <><SpecField label="Price" path="price" errors={fieldErrors}><input required inputMode="decimal" value={form.price} onChange={(e) => field("price", e.target.value)} /></SpecField><SpecField label="Currency" path="currency" errors={fieldErrors}><input required maxLength={3} pattern="[A-Z]{3}" value={form.currency} onChange={(e) => field("currency", e.target.value.toUpperCase())} /></SpecField></>}
+          {form.price_mode === "fixed" && <><SpecField label="Price" path="price" errors={fieldErrors}><input required inputMode="decimal" value={form.price} onChange={(e) => field("price", e.target.value)} /></SpecField><SpecField label="Currency" path="currency" errors={currencyErrors}><input required maxLength={3} pattern="[A-Z]{3}" value={form.currency} onChange={(e) => field("currency", e.target.value.toUpperCase())} /></SpecField></>}
         </div>
         <Specifications draft={specDraft} category={categories.find((c) => c.id === form.category_id)} errors={fieldErrors} onChange={(next) => { setSpecDraft(next); setSpecDirty(true); }} />
         <Media draft={mediaDraft} options={mediaOptions} optionsError={mediaOptionsError} optionsLoading={mediaOptionsLoading} productId={product.id} token={token} isNew={isNew} dirty={mediaDirty} errors={fieldErrors} onChange={(next) => { setMediaDraft(next); setMediaDirty(true); }} />

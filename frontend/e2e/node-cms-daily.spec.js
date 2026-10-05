@@ -311,6 +311,8 @@ test('missing and invalid daily fields preserve the draft and explain what needs
   expect(product.version).toBe(2);
   await expect(field(page, 'Price')).not.toHaveAttribute('aria-invalid', 'true');
   await expect(field(page, 'Currency')).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(field(page, 'Price')).toHaveAccessibleDescription('');
+  await expect(field(page, 'Currency')).toHaveAccessibleDescription('');
   await reloadProduct(page, product);
   await expect(field(page, 'Price')).toHaveValue('0.00');
   await expect(field(page, 'Currency')).toHaveValue('USD');
