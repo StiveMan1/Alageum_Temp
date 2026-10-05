@@ -362,6 +362,7 @@ backend-node/tests/native-generic-quote-storage.cjs
 backend-node/tests/quote-limit.integration-support.js
 backend-node/tests/spec-draft.test.js
 backend-node/tests/transformer-source.test.js
+backend/app/catalog/public_assets.json
 docs/catalog-transformers-2026/IMPORT.md
 docs/catalog-transformers-2026/import-changed-files.txt
 docs/catalog-transformers-2026/import-http-smoke.json

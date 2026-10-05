@@ -218,7 +218,6 @@ jobs:
   transformer-source-browser:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    needs: [frontend]
     env:
       NEXT_PUBLIC_CATALOG_SOURCE: static
       NEXT_TELEMETRY_DISABLED: '1'

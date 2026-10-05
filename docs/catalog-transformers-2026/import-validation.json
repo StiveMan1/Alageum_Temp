@@ -70,6 +70,26 @@
       "stale238Rejected": true,
       "wrong824Rejected": true,
       "dailyTestBehaviorChanged": false
+    },
+    "hostedCiCatalogManifestFollowup": {
+      "failureJob": "https://github.com/StiveMan1/Alageum_Temp/actions/runs/37299095446/job/111727280547",
+      "generatedPath": "backend/app/catalog/public_assets.json",
+      "generatorCheck": "python3 scripts/update_catalog_assets.py --check: passed",
+      "previousPublicAssets": 167,
+      "currentPublicAssets": 354,
+      "newTransformerScans": 187,
+      "removedPublicAssets": 0,
+      "legacyCatalogDataTestsPassed": 5,
+      "focusedNodeImportAndMediaTestsPassed": 51,
+      "existingExactShippedFileTest": "passed by direct function execution; full Python pytest was not rerun locally",
+      "mediaSchemaAcceptedShippedPaths": 354,
+      "mediaSchemaRejectedInvalidPaths": 5,
+      "pythonPytestLocalLimit": "pytest, SQLAlchemy and aiosqlite are not installed in this local Python environment",
+      "legacyFastApiCatalogRecordCount": 238,
+      "legacyFastApiScope": "Frozen docs/catalog-import remains unchanged; the active frontend and Node catalog has 823 records",
+      "transformerBrowserJob": "Independent CI job; its frontend needs edge was removed, while all existing audit and build gates remain",
+      "sourceAndAssetClearanceChecks": "passed; inventory digest, approved 251 geometry and 257 icon mappings unchanged",
+      "mediaPackageCheck": "passed; 823 associations, 248 raster assets, 21968700 bytes"
     }
   },
   "publication": "Prepared locally for a draft pull request; no merge or deployment.",
