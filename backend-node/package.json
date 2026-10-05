@@ -9,11 +9,11 @@
     "start": "strapi start",
     "test": "node --test tests/*.test.js",
     "test:integration": "node --test --test-concurrency=1 tests/*.integration.js",
-    "check": "node scripts/strapi-webpack-patch.js --check && node scripts/check-media-package.js && node scripts/check-syntax.js && npm test",
+    "check": "node scripts/strapi-webpack-patch.js --check && node scripts/check-media-package.js && node scripts/check-page-editor-adapter.js && node scripts/check-syntax.js && npm test",
     "postinstall": "node scripts/strapi-webpack-patch.js --apply",
-    "predevelop": "node scripts/strapi-webpack-patch.js --check && node scripts/check-media-package.js",
-    "prebuild": "node scripts/strapi-webpack-patch.js --check && node scripts/check-media-package.js",
-    "prestart": "node scripts/strapi-webpack-patch.js --check && node scripts/check-media-package.js"
+    "predevelop": "node scripts/strapi-webpack-patch.js --check && node scripts/check-media-package.js && node scripts/check-page-editor-adapter.js",
+    "prebuild": "node scripts/strapi-webpack-patch.js --check && node scripts/check-media-package.js && node scripts/check-page-editor-adapter.js",
+    "prestart": "node scripts/strapi-webpack-patch.js --check && node scripts/check-media-package.js && node scripts/check-page-editor-adapter.js"
   },
   "engines": {
     "node": ">=24 <25"

@@ -1436,7 +1436,7 @@ jobs:
         run: |
           set -euo pipefail
           timeout --signal=TERM --kill-after=10s 270s npx --no-install playwright install --with-deps chromium 2>&1 | tee ../page-delivery-evidence/chromium-install.log
-      - name: Verify native Page publication and the bounded fast-save probe
+      - name: Verify native Page publication, fast saves and input lifecycle
         timeout-minutes: 14
         shell: bash
         env:
@@ -1465,4 +1465,5 @@ jobs:
             page-delivery-evidence/
             frontend/playwright-report/pages-results/
             frontend/playwright-report/page-fast-save-results/**/fast-save-*.png
+            frontend/playwright-report/page-sync-results/**/page-sync-*.png
           retention-days: 14
