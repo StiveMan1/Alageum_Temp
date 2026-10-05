@@ -1,0 +1,79 @@
+{
+  "source": {
+    "id": "alageum-technical-catalog-2026-03-18",
+    "filePath": "source PDF: see source-manifest.json",
+    "catalogBrand": "Alageum Electric",
+    "date": "2026-03-18",
+    "dateProvenance": "Assignment; this section does not repeat the cover date",
+    "pdfPageCount": 187,
+    "assignedPhysicalPages": [
+      6,
+      45
+    ],
+    "pageNumbering": "Physical PDF and printed pages match throughout 6–45",
+    "method": "All 40 rendered pages visually inspected; numeric tables manually transcribed from rendered source. Auxiliary Russian/English OCR retained separately and is not authoritative.",
+    "sha256": "8f27b781f1ff620ce2d67f606d6e115f2d0c35fbd31698f04c392a8ae611c70e",
+    "catalogBrandProvenance": "Parent verification of source page 3; Alageum electric logo on every assigned page"
+  },
+  "notes": [
+    "144 explicit table rows across 15 named execution groups. A row is a product-model variant, not a generated complete SKU.",
+    "Every physical page 6–45 visually inspected. Printed numbers equal physical page numbers. Drawings on 46–47 are continuation evidence supplied by adjacent section worker.",
+    "Connection choices, 6/10 voltage choices, climatic choices, and heading ranges are not expanded into synthetic products.",
+    "No legal manufacturer inferred from catalog brand. АО «КТЗ» is explicitly stated only for ТМГиН-630 on page 32 within this section.",
+    "Dimension columns L, B, H, A, A1, M, K, h, h1 do not show a unit in these source tables or drawing captions. Values preserved, units null; do not silently assume mm.",
+    "No complete ordering SKU is invented from short row designation + voltage + execution. Full heading alias ТМГиН-630/10-0,4 is preserved for that model.",
+    "For standard, 01, and pole variants, multiple connection groups and their vertically aligned Pк/Uк values remain bounded configurations of one table row.",
+    "Х3К2 construction mapping is unresolved because drawings expressly mention Х3К3 and Х4К3. Do not add Х3К2 without further source evidence.",
+    "Pages 30–31 call both Х3К3 and Х4К3 ТМГвэ, whereas pages 28–29 call Х4К3 ТМГи; preserved source inconsistency.",
+    "ТМ page 14 prose says 25–2500 кВА while heading and table include 16 кВА. Source table row retained.",
+    "Unusual dimension or oil-mass values preserved as printed, particularly the 63-кВА rows on pages 27 and 29; no numerical corrections invented.",
+    "Candidate old overlaps are based on exact series, rated power and equivalent voltage values, plus shared Alageum source, never fuzzy category matching. Eight unique old IDs have candidates; exact execution/manufacturer identity remains unproven.",
+    "No assigned pages contain product photographs; all construction evidence is line drawings. Asset reuse is limited to parameterized construction topology/source illustration, not an identical detailed 3D model."
+  ],
+  "summary": {
+    "familyCount": 15,
+    "explicitModelCount": 144,
+    "configurationCount": 310,
+    "inspectedPageCount": 40,
+    "assetConstructionFamilyCount": 10,
+    "unresolvedAssetModelCount": 10,
+    "candidateOldIds": [
+      "tmg-1000",
+      "tmg-2500",
+      "tmg-400",
+      "tmg-630",
+      "tmgf-1600",
+      "tmgf-630",
+      "tmgs-160",
+      "tmgs-63"
+    ]
+  },
+  "families": {
+    "recordCount": 15,
+    "chunks": [
+      {
+        "path": "families-001.json",
+        "recordCount": 15,
+        "bytes": 40571,
+        "sha256": "00acbf423d55546d8d5958426c9e8153bdba493e868d33b2978c4a4a1112fa23"
+      }
+    ]
+  },
+  "configurations": {
+    "recordCount": 310,
+    "chunks": [
+      {
+        "path": "configurations-001.json",
+        "recordCount": 198,
+        "bytes": 59705,
+        "sha256": "7d74db13a697fe39bcaabd3eb8649b3a687cf39445a7c2d98f4b68ca8fd66f27"
+      },
+      {
+        "path": "configurations-002.json",
+        "recordCount": 112,
+        "bytes": 34399,
+        "sha256": "c45d8e28e43d2f84482b6c6590650ae169a346537176fa0e9ac4df815c9edf5b"
+      }
+    ]
+  }
+}
