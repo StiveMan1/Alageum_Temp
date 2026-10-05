@@ -287,7 +287,7 @@
     "brand": "Alageum electric",
     "descriptionSource": {
       "pdfPage": 14,
-      "text": "Маслорасширитель установлен на крышке бака; вентиляционное отверстие соединено через воздухоосушитель; регулирование ПБВ со стороны ВН ±2x2,5%; У1."
+      "text": "Маслорасширитель установлен на крышке бака; вентиляционное отверстие соединенное через воздухоочиститель; регулирование ПБВ со стороны ВН ±2x2,5%; У1."
     },
     "configurationPolicy": "Each explicit table row retained separately; connection alternatives remain configurations within that row. Power ranges are not expanded. Short designation is not a complete order code.",
     "drawingEvidencePages": [
@@ -361,7 +361,7 @@
       },
       {
         "label": "Маслорасширитель",
-        "value": "установлен на крышке бака; вентиляционное отверстие соединено через воздухоосушитель",
+        "value": "установлен на крышке бака; вентиляционное отверстие соединенное через воздухоочиститель",
         "unit": null,
         "page": 14
       },

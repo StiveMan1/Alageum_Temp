@@ -1,0 +1,2324 @@
+[
+  {
+    "id": "alageum-2026-tmpn-p64-r3",
+    "familyId": "tmpn-top",
+    "name": "ТМПНГ-250/3",
+    "sourceDesignation": "ТМПНГ-250/3",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      64,
+      65,
+      66
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "0,54",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Pк",
+        "raw": "4,2",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Iо",
+        "raw": "0,6",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "Uк",
+        "raw": "5,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "L",
+        "raw": "1300",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "B",
+        "raw": "950",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "H",
+        "raw": "1530",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "Полная масса",
+        "raw": "1375",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Масса масла",
+        "raw": "370",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "raw": "25",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "raw": "380",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "raw": "2247",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Схема соединения",
+        "raw": "Ун/У-0",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "raw": "2947-2897-2847-2797-2747-2697-2647-2597-2547-2497-2447-2397-2347-2297-2247-2197-2147-2097-2047-1997-1947-1897-1847-1797-1747",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmpn-top"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [
+      "Loss header literally says Вт although decimal magnitudes may indicate a source unit error; not converted."
+    ],
+    "series": "ТМПНГ",
+    "context": "верхние выводы по чертежу66",
+    "sourceRow": {
+      "page": 64,
+      "table": "technical",
+      "row": 3
+    },
+    "powerKva": 250,
+    "voltageRaw": "380/2247 В",
+    "designation": "ТМПНГ-250/3",
+    "execution": "верхние выводы по чертежу66",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "0,54",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Pк",
+        "value": "4,2",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Iо",
+        "value": "0,6",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "Uк",
+        "value": "5,5",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "L",
+        "value": "1300",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "B",
+        "value": "950",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "H",
+        "value": "1530",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "Полная масса",
+        "value": "1375",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Масса масла",
+        "value": "370",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "value": "25",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "value": "380",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "value": "2247",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Схема соединения",
+        "value": "Ун/У-0",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "value": "2947-2897-2847-2797-2747-2697-2647-2597-2547-2497-2447-2397-2347-2297-2247-2197-2147-2097-2047-1997-1947-1897-1847-1797-1747",
+        "unit": "В",
+        "page": 64
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmpn-p64-r4",
+    "familyId": "tmpn-top",
+    "name": "ТМПНГ-436/6",
+    "sourceDesignation": "ТМПНГ-436/6",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      64,
+      65,
+      66
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "0,8",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Pк",
+        "raw": "6,8",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Iо",
+        "raw": "0,6",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "Uк",
+        "raw": "7,0",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "L",
+        "raw": "1480",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "B",
+        "raw": "1385",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "H",
+        "raw": "1690",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "Полная масса",
+        "raw": "1980",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Масса масла",
+        "raw": "610",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "raw": "25",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "raw": "380",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "raw": "3002",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Схема соединения",
+        "raw": "Ун/Ун-0",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "raw": "3838-3762-3686-3610-3534-3458-3382-3306-3230-3154-3078-3002-2926-2850-2774-2698-2622-2546-2470-2394-2318-2242-2166-2090-2014",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmpn-top"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [
+      "Loss header literally says Вт although decimal magnitudes may indicate a source unit error; not converted."
+    ],
+    "series": "ТМПНГ",
+    "context": "верхние выводы по чертежу66",
+    "sourceRow": {
+      "page": 64,
+      "table": "technical",
+      "row": 4
+    },
+    "powerKva": 436,
+    "voltageRaw": "380/3002 В",
+    "designation": "ТМПНГ-436/6",
+    "execution": "верхние выводы по чертежу66",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "0,8",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Pк",
+        "value": "6,8",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Iо",
+        "value": "0,6",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "Uк",
+        "value": "7,0",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "L",
+        "value": "1480",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "B",
+        "value": "1385",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "H",
+        "value": "1690",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "Полная масса",
+        "value": "1980",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Масса масла",
+        "value": "610",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "value": "25",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "value": "380",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "value": "3002",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Схема соединения",
+        "value": "Ун/Ун-0",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "value": "3838-3762-3686-3610-3534-3458-3382-3306-3230-3154-3078-3002-2926-2850-2774-2698-2622-2546-2470-2394-2318-2242-2166-2090-2014",
+        "unit": "В",
+        "page": 64
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmpn-p64-r5",
+    "familyId": "tmpn-top",
+    "name": "ТМПНГ-426/6",
+    "sourceDesignation": "ТМПНГ-426/6",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      64,
+      65,
+      66
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "0,85",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Pк",
+        "raw": "6,8",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Iо",
+        "raw": "0,6",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "Uк",
+        "raw": "7,0",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "L",
+        "raw": "1335",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "B",
+        "raw": "1378",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "H",
+        "raw": "1724",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "Полная масса",
+        "raw": "2080",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Масса масла",
+        "raw": "670",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "raw": "36",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "raw": "380",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "raw": "2998",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Схема соединения",
+        "raw": "Ун/Д-11",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "raw": "4510-4438-4366-4294-4222-4150-4078-4006-3934-3862-3790-3718-3646-3574-3502-3430-3358-3286-3214-3142-3070-2998-2926-2854-2782-2710-2638-2566-2494-2422-2350-2278-2206-2134-2062-1990",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmpn-top"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [
+      "Loss header literally says Вт although decimal magnitudes may indicate a source unit error; not converted."
+    ],
+    "series": "ТМПНГ",
+    "context": "верхние выводы по чертежу66",
+    "sourceRow": {
+      "page": 64,
+      "table": "technical",
+      "row": 5
+    },
+    "powerKva": 426,
+    "voltageRaw": "380/2998 В",
+    "designation": "ТМПНГ-426/6",
+    "execution": "верхние выводы по чертежу66",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "0,85",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Pк",
+        "value": "6,8",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Iо",
+        "value": "0,6",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "Uк",
+        "value": "7,0",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "L",
+        "value": "1335",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "B",
+        "value": "1378",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "H",
+        "value": "1724",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "Полная масса",
+        "value": "2080",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Масса масла",
+        "value": "670",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "value": "36",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "value": "380",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "value": "2998",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Схема соединения",
+        "value": "Ун/Д-11",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "value": "4510-4438-4366-4294-4222-4150-4078-4006-3934-3862-3790-3718-3646-3574-3502-3430-3358-3286-3214-3142-3070-2998-2926-2854-2782-2710-2638-2566-2494-2422-2350-2278-2206-2134-2062-1990",
+        "unit": "В",
+        "page": 64
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmpn-p64-r6",
+    "familyId": "tmpn-top",
+    "name": "ТМПНГ-665/3",
+    "sourceDesignation": "ТМПНГ-665/3",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      64,
+      65,
+      66
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "0,9",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Pк",
+        "raw": "9,5",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Iо",
+        "raw": "0,6",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "Uк",
+        "raw": "7,0",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "L",
+        "raw": "1845",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "B",
+        "raw": "1500",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "H",
+        "raw": "1770",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "Полная масса",
+        "raw": "2690",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Масса масла",
+        "raw": "765",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "raw": "25",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "raw": "380",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "raw": "2810",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Схема соединения",
+        "raw": "Ун/Ун-0",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "raw": "3810-3700-3850-3490-3380-3240-3130-3020-2920-2810-2670-2560-2450-2350-2240-2100-1990-1890-1780-1670-1540-1430-1320-1210-1100",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmpn-top"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [
+      "Loss header literally says Вт although decimal magnitudes may indicate a source unit error; not converted.",
+      "Tap list literally starts3810-3700-3850 and is nonmonotonic; preserved, not corrected."
+    ],
+    "series": "ТМПНГ",
+    "context": "верхние выводы по чертежу66",
+    "sourceRow": {
+      "page": 64,
+      "table": "technical",
+      "row": 6
+    },
+    "powerKva": 665,
+    "voltageRaw": "380/2810 В",
+    "designation": "ТМПНГ-665/3",
+    "execution": "верхние выводы по чертежу66",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "0,9",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Pк",
+        "value": "9,5",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Iо",
+        "value": "0,6",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "Uк",
+        "value": "7,0",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "L",
+        "value": "1845",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "B",
+        "value": "1500",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "H",
+        "value": "1770",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "Полная масса",
+        "value": "2690",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Масса масла",
+        "value": "765",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "value": "25",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "value": "380",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "value": "2810",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Схема соединения",
+        "value": "Ун/Ун-0",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "value": "3810-3700-3850-3490-3380-3240-3130-3020-2920-2810-2670-2560-2450-2350-2240-2100-1990-1890-1780-1670-1540-1430-1320-1210-1100",
+        "unit": "В",
+        "page": 64
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmpn-p64-r7",
+    "familyId": "tmpng-side",
+    "name": "ТМПНГ-100/3 (боковой вывод)",
+    "sourceDesignation": "ТМПНГ-100/3 (боковой вывод)",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      64,
+      65,
+      67
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "0,35",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Pк",
+        "raw": "2,9",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Iо",
+        "raw": "1,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "Uк",
+        "raw": "5,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "L",
+        "raw": "1060",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "B",
+        "raw": "965",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "H",
+        "raw": "1125",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "Полная масса",
+        "raw": "680",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Масса масла",
+        "raw": "440",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "raw": "25",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "raw": "380",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "raw": "1250",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Схема соединения",
+        "raw": "Ун/Ун-0",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "raw": "1690-1646-1602-1558-1514-1470-1426-1382-1338-1294-1250-1206-1162-1118-1074-1030-986-942-898-854-810-766-722-678-634",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmpng-side"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [
+      "Loss header literally says Вт although decimal magnitudes may indicate a source unit error; not converted."
+    ],
+    "series": "ТМПНГ",
+    "context": "боковой вывод",
+    "sourceRow": {
+      "page": 64,
+      "table": "technical",
+      "row": 7
+    },
+    "powerKva": 100,
+    "voltageRaw": "380/1250 В",
+    "designation": "ТМПНГ-100/3 (боковой вывод)",
+    "execution": "боковой вывод",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "0,35",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Pк",
+        "value": "2,9",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Iо",
+        "value": "1,5",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "Uк",
+        "value": "5,5",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "L",
+        "value": "1060",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "B",
+        "value": "965",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "H",
+        "value": "1125",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "Полная масса",
+        "value": "680",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Масса масла",
+        "value": "440",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "value": "25",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "value": "380",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "value": "1250",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Схема соединения",
+        "value": "Ун/Ун-0",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "value": "1690-1646-1602-1558-1514-1470-1426-1382-1338-1294-1250-1206-1162-1118-1074-1030-986-942-898-854-810-766-722-678-634",
+        "unit": "В",
+        "page": 64
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmpn-p64-r8",
+    "familyId": "tmpng-side",
+    "name": "ТМПНГ-160/3 (боковой вывод)",
+    "sourceDesignation": "ТМПНГ-160/3 (боковой вывод)",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      64,
+      65,
+      67
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "0,41",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Pк",
+        "raw": "3,6",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Iо",
+        "raw": "2,0",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "Uк",
+        "raw": "5,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "L",
+        "raw": "1270",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "B",
+        "raw": "1025",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "H",
+        "raw": "1135",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "Полная масса",
+        "raw": "1020",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Масса масла",
+        "raw": "350",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "raw": "25",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "raw": "380",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "raw": "1360",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      },
+      {
+        "label": "Схема соединения",
+        "raw": "Ун/Ун-0",
+        "unitAsPrinted": null,
+        "sourcePage": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "raw": "3596-3476-3346-3225-3096-2975-2855-2725-2604-2475-2354-2234-2104-1983-1854-1733-1613-1483-1362-1233-1112-992-862-742-612",
+        "unitAsPrinted": "В",
+        "sourcePage": 64
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmpng-side"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [
+      "Loss header literally says Вт although decimal magnitudes may indicate a source unit error; not converted."
+    ],
+    "series": "ТМПНГ",
+    "context": "боковой вывод",
+    "sourceRow": {
+      "page": 64,
+      "table": "technical",
+      "row": 8
+    },
+    "powerKva": 160,
+    "voltageRaw": "380/1360 В",
+    "designation": "ТМПНГ-160/3 (боковой вывод)",
+    "execution": "боковой вывод",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "0,41",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Pк",
+        "value": "3,6",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Iо",
+        "value": "2,0",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "Uк",
+        "value": "5,5",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "L",
+        "value": "1270",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "B",
+        "value": "1025",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "H",
+        "value": "1135",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "Полная масса",
+        "value": "1020",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Масса масла",
+        "value": "350",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "value": "25",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "value": "380",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "value": "1360",
+        "unit": "В",
+        "page": 64
+      },
+      {
+        "label": "Схема соединения",
+        "value": "Ун/Ун-0",
+        "unit": null,
+        "page": 64
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "value": "3596-3476-3346-3225-3096-2975-2855-2725-2604-2475-2354-2234-2104-1983-1854-1733-1613-1483-1362-1233-1112-992-862-742-612",
+        "unit": "В",
+        "page": 64
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmpn-p64-r9",
+    "familyId": "tmpng-side",
+    "name": "ТМПНГ-250/3 (боковой вывод)",
+    "sourceDesignation": "ТМПНГ-250/3 (боковой вывод)",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      65,
+      67
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "0,65",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Pк",
+        "raw": "4,1",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Iо",
+        "raw": "1,9",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "Uк",
+        "raw": "7,0",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "L",
+        "raw": "1560",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "B",
+        "raw": "1135",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "H",
+        "raw": "1175",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "Полная масса",
+        "raw": "1240",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Масса масла",
+        "raw": "400",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "raw": "25",
+        "unitAsPrinted": null,
+        "sourcePage": 65
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "raw": "380",
+        "unitAsPrinted": "В",
+        "sourcePage": 65
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "raw": "2000",
+        "unitAsPrinted": "В",
+        "sourcePage": 65
+      },
+      {
+        "label": "Схема соединения",
+        "raw": "Ун/Ун-0",
+        "unitAsPrinted": null,
+        "sourcePage": 65
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "raw": "3101-3028-2942-2868-2795-2709-2636-2550-2476-2403-2317-2243-2157-2084-2010-1925-1851-1765-1692-1618-1532-1459-1373-1299-1226",
+        "unitAsPrinted": "В",
+        "sourcePage": 65
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmpng-side"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [
+      "Loss header literally says Вт although decimal magnitudes may indicate a source unit error; not converted."
+    ],
+    "series": "ТМПНГ",
+    "context": "боковой вывод",
+    "sourceRow": {
+      "page": 65,
+      "table": "technical",
+      "row": 9
+    },
+    "powerKva": 250,
+    "voltageRaw": "380/2000 В",
+    "designation": "ТМПНГ-250/3 (боковой вывод)",
+    "execution": "боковой вывод",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "0,65",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Pк",
+        "value": "4,1",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Iо",
+        "value": "1,9",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "Uк",
+        "value": "7,0",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "L",
+        "value": "1560",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "B",
+        "value": "1135",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "H",
+        "value": "1175",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "Полная масса",
+        "value": "1240",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Масса масла",
+        "value": "400",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "value": "25",
+        "unit": null,
+        "page": 65
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "value": "380",
+        "unit": "В",
+        "page": 65
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "value": "2000",
+        "unit": "В",
+        "page": 65
+      },
+      {
+        "label": "Схема соединения",
+        "value": "Ун/Ун-0",
+        "unit": null,
+        "page": 65
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "value": "3101-3028-2942-2868-2795-2709-2636-2550-2476-2403-2317-2243-2157-2084-2010-1925-1851-1765-1692-1618-1532-1459-1373-1299-1226",
+        "unit": "В",
+        "page": 65
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmpn-p64-r10",
+    "familyId": "tmpng-side",
+    "name": "ТМПНГ-630/3 (боковой вывод)",
+    "sourceDesignation": "ТМПНГ-630/3 (боковой вывод)",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      65,
+      67
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "1,1",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Pк",
+        "raw": "9,4",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 65
+      },
+      {
+        "label": "Iо",
+        "raw": "1,6",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "Uк",
+        "raw": "7,0",
+        "unitAsPrinted": "%",
+        "sourcePage": 65
+      },
+      {
+        "label": "L",
+        "raw": "1974",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "B",
+        "raw": "1355",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "H",
+        "raw": "1253",
+        "unitAsPrinted": "мм",
+        "sourcePage": 65
+      },
+      {
+        "label": "Полная масса",
+        "raw": "2145",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Масса масла",
+        "raw": "600",
+        "unitAsPrinted": "кг",
+        "sourcePage": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "raw": "25",
+        "unitAsPrinted": null,
+        "sourcePage": 65
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "raw": "380",
+        "unitAsPrinted": "В",
+        "sourcePage": 65
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "raw": "2810",
+        "unitAsPrinted": "В",
+        "sourcePage": 65
+      },
+      {
+        "label": "Схема соединения",
+        "raw": "Ун/Ун-0",
+        "unitAsPrinted": null,
+        "sourcePage": 65
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "raw": "3819-3705-3591-3477-3363-3268-3154-3040-2926-2812-2698-2584-2470-2356-2242-2128-2014-1900-1786-1672-1558-1444-1330-1216-1102",
+        "unitAsPrinted": "В",
+        "sourcePage": 65
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmpng-side"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [
+      "Loss header literally says Вт although decimal magnitudes may indicate a source unit error; not converted."
+    ],
+    "series": "ТМПНГ",
+    "context": "боковой вывод",
+    "sourceRow": {
+      "page": 65,
+      "table": "technical",
+      "row": 10
+    },
+    "powerKva": 630,
+    "voltageRaw": "380/2810 В",
+    "designation": "ТМПНГ-630/3 (боковой вывод)",
+    "execution": "боковой вывод",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "1,1",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Pк",
+        "value": "9,4",
+        "unit": "Вт",
+        "page": 65
+      },
+      {
+        "label": "Iо",
+        "value": "1,6",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "Uк",
+        "value": "7,0",
+        "unit": "%",
+        "page": 65
+      },
+      {
+        "label": "L",
+        "value": "1974",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "B",
+        "value": "1355",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "H",
+        "value": "1253",
+        "unit": "мм",
+        "page": 65
+      },
+      {
+        "label": "Полная масса",
+        "value": "2145",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Масса масла",
+        "value": "600",
+        "unit": "кг",
+        "page": 65
+      },
+      {
+        "label": "Количество ступеней регулирования",
+        "value": "25",
+        "unit": null,
+        "page": 65
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "value": "380",
+        "unit": "В",
+        "page": 65
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "value": "2810",
+        "unit": "В",
+        "page": 65
+      },
+      {
+        "label": "Схема соединения",
+        "value": "Ун/Ун-0",
+        "unit": null,
+        "page": 65
+      },
+      {
+        "label": "Напряжение ступеней регулирования",
+        "value": "3819-3705-3591-3477-3363-3268-3154-3040-2926-2812-2698-2584-2470-2356-2242-2128-2014-1900-1786-1672-1558-1444-1330-1216-1102",
+        "unit": "В",
+        "page": 65
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmto80-original",
+    "familyId": "tmto-original",
+    "name": "ТМТО-80",
+    "sourceDesignation": "ТМТО-80",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      68,
+      69
+    ],
+    "rawSpecs": [
+      {
+        "label": "Designation in purpose",
+        "raw": "ТМТО-80/0,38-У1",
+        "unitAsPrinted": null,
+        "sourcePage": 68
+      },
+      {
+        "label": "Обмотки",
+        "raw": "трехобмоточный",
+        "unitAsPrinted": null,
+        "sourcePage": 68
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "raw": "380",
+        "unitAsPrinted": "В",
+        "sourcePage": 68
+      },
+      {
+        "label": "Номинальный ток ВН",
+        "raw": "121,5",
+        "unitAsPrinted": "А",
+        "sourcePage": 68
+      },
+      {
+        "label": "Мощность/положение/напряжение ответвлений",
+        "raw": "77,5/V/95;69,34/IV/85;61,18/III/75;58,54/II/65;49,53/I/55",
+        "unitAsPrinted": "кВА / — / В",
+        "sourcePage": 68
+      },
+      {
+        "label": "Потери Х.Х",
+        "raw": "270",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 68
+      },
+      {
+        "label": "Потери К.З",
+        "raw": "2200",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 68
+      },
+      {
+        "label": "Ток холостого хода",
+        "raw": "2,3",
+        "unitAsPrinted": "%",
+        "sourcePage": 68
+      },
+      {
+        "label": "Схема и группа соединения",
+        "raw": "У/Д/Д-11/11",
+        "unitAsPrinted": null,
+        "sourcePage": 68
+      },
+      {
+        "label": "Масса масла",
+        "raw": "155",
+        "unitAsPrinted": "кг",
+        "sourcePage": 68
+      },
+      {
+        "label": "Масса полная",
+        "raw": "425",
+        "unitAsPrinted": "кг",
+        "sourcePage": 68
+      },
+      {
+        "label": "Номинальный ток СН",
+        "raw": "471 (V–III);520 (II–I)",
+        "unitAsPrinted": "А",
+        "sourcePage": 68
+      },
+      {
+        "label": "Номинальная мощность НН",
+        "raw": "25",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 68
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "raw": "42",
+        "unitAsPrinted": "В",
+        "sourcePage": 68
+      },
+      {
+        "label": "Номинальный ток НН",
+        "raw": "34,4",
+        "unitAsPrinted": "А",
+        "sourcePage": 68
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmto-three-winding"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [
+      "Source states25кВА,42В,34,4А for tertiary; retain incompatible-looking combination."
+    ],
+    "series": "ТМТО",
+    "context": "трехобмоточный",
+    "powerKva": 80,
+    "voltageRaw": "ВН380В; ответвления95/85/75/65/55В",
+    "designation": "ТМТО-80",
+    "execution": "трехобмоточный",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "sourceRow": {
+      "page": 68,
+      "designation": "ТМТО-80",
+      "execution": "трехобмоточный",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Designation in purpose",
+        "value": "ТМТО-80/0,38-У1",
+        "unit": null,
+        "page": 68
+      },
+      {
+        "label": "Обмотки",
+        "value": "трехобмоточный",
+        "unit": null,
+        "page": 68
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "value": "380",
+        "unit": "В",
+        "page": 68
+      },
+      {
+        "label": "Номинальный ток ВН",
+        "value": "121,5",
+        "unit": "А",
+        "page": 68
+      },
+      {
+        "label": "Мощность/положение/напряжение ответвлений",
+        "value": "77,5/V/95;69,34/IV/85;61,18/III/75;58,54/II/65;49,53/I/55",
+        "unit": "кВА / — / В",
+        "page": 68
+      },
+      {
+        "label": "Потери Х.Х",
+        "value": "270",
+        "unit": "Вт",
+        "page": 68
+      },
+      {
+        "label": "Потери К.З",
+        "value": "2200",
+        "unit": "Вт",
+        "page": 68
+      },
+      {
+        "label": "Ток холостого хода",
+        "value": "2,3",
+        "unit": "%",
+        "page": 68
+      },
+      {
+        "label": "Схема и группа соединения",
+        "value": "У/Д/Д-11/11",
+        "unit": null,
+        "page": 68
+      },
+      {
+        "label": "Масса масла",
+        "value": "155",
+        "unit": "кг",
+        "page": 68
+      },
+      {
+        "label": "Масса полная",
+        "value": "425",
+        "unit": "кг",
+        "page": 68
+      },
+      {
+        "label": "Номинальный ток СН",
+        "value": "471 (V–III);520 (II–I)",
+        "unit": "А",
+        "page": 68
+      },
+      {
+        "label": "Номинальная мощность НН",
+        "value": "25",
+        "unit": "кВА",
+        "page": 68
+      },
+      {
+        "label": "Номинальное напряжение НН",
+        "value": "42",
+        "unit": "В",
+        "page": 68
+      },
+      {
+        "label": "Номинальный ток НН",
+        "value": "34,4",
+        "unit": "А",
+        "page": 68
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmto80-modern",
+    "familyId": "tmto-modern",
+    "name": "ТМТО-80",
+    "sourceDesignation": "ТМТО-80",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      70,
+      71
+    ],
+    "rawSpecs": [
+      {
+        "label": "Designation in purpose",
+        "raw": "ТМТО-80/0,38-У1",
+        "unitAsPrinted": null,
+        "sourcePage": 70
+      },
+      {
+        "label": "Обмотки",
+        "raw": "двухобмоточный",
+        "unitAsPrinted": null,
+        "sourcePage": 70
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "raw": "380",
+        "unitAsPrinted": "В",
+        "sourcePage": 70
+      },
+      {
+        "label": "Номинальный ток ВН",
+        "raw": "121,5",
+        "unitAsPrinted": "А",
+        "sourcePage": 70
+      },
+      {
+        "label": "Мощность/положение/напряжение ответвлений",
+        "raw": "77,5/V/95;69,34/IV/85;61,18/III/75;58,54/II/65;49,53/I/55",
+        "unitAsPrinted": "кВА / — / В",
+        "sourcePage": 70
+      },
+      {
+        "label": "Потери Х.Х",
+        "raw": "270",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 70
+      },
+      {
+        "label": "Потери К.З",
+        "raw": "2200",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 70
+      },
+      {
+        "label": "Ток холостого хода",
+        "raw": "3,2",
+        "unitAsPrinted": "%",
+        "sourcePage": 70
+      },
+      {
+        "label": "Схема и группа соединения",
+        "raw": "У/Д-11",
+        "unitAsPrinted": null,
+        "sourcePage": 70
+      },
+      {
+        "label": "Масса масла",
+        "raw": "125",
+        "unitAsPrinted": "кг",
+        "sourcePage": 70
+      },
+      {
+        "label": "Масса полная",
+        "raw": "365",
+        "unitAsPrinted": "кг",
+        "sourcePage": 70
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmto-modern"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМТО",
+    "context": "модернизированный",
+    "powerKva": 80,
+    "voltageRaw": "ВН380В; ответвления95/85/75/65/55В",
+    "designation": "ТМТО-80",
+    "execution": "модернизированный",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "sourceRow": {
+      "page": 70,
+      "designation": "ТМТО-80",
+      "execution": "модернизированный",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Designation in purpose",
+        "value": "ТМТО-80/0,38-У1",
+        "unit": null,
+        "page": 70
+      },
+      {
+        "label": "Обмотки",
+        "value": "двухобмоточный",
+        "unit": null,
+        "page": 70
+      },
+      {
+        "label": "Номинальное напряжение ВН",
+        "value": "380",
+        "unit": "В",
+        "page": 70
+      },
+      {
+        "label": "Номинальный ток ВН",
+        "value": "121,5",
+        "unit": "А",
+        "page": 70
+      },
+      {
+        "label": "Мощность/положение/напряжение ответвлений",
+        "value": "77,5/V/95;69,34/IV/85;61,18/III/75;58,54/II/65;49,53/I/55",
+        "unit": "кВА / — / В",
+        "page": 70
+      },
+      {
+        "label": "Потери Х.Х",
+        "value": "270",
+        "unit": "Вт",
+        "page": 70
+      },
+      {
+        "label": "Потери К.З",
+        "value": "2200",
+        "unit": "Вт",
+        "page": 70
+      },
+      {
+        "label": "Ток холостого хода",
+        "value": "3,2",
+        "unit": "%",
+        "page": 70
+      },
+      {
+        "label": "Схема и группа соединения",
+        "value": "У/Д-11",
+        "unit": null,
+        "page": 70
+      },
+      {
+        "label": "Масса масла",
+        "value": "125",
+        "unit": "кг",
+        "page": 70
+      },
+      {
+        "label": "Масса полная",
+        "value": "365",
+        "unit": "кг",
+        "page": 70
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-om-0p63",
+    "familyId": "om",
+    "name": "ОМ-0,63",
+    "sourceDesignation": "ОМ-0,63",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      72,
+      73,
+      75
+    ],
+    "rawSpecs": [
+      {
+        "label": "Номинальная мощность",
+        "raw": "0,63",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 72
+      },
+      {
+        "label": "ВН options",
+        "raw": "6;10",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 72
+      },
+      {
+        "label": "НН options",
+        "raw": "0,23",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 72
+      },
+      {
+        "label": "Напряжение ступеней регулирования при6кВ",
+        "raw": "6,3-6,0-5,7",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 72
+      },
+      {
+        "label": "Напряжение ступеней регулирования при10кВ",
+        "raw": "10,5-10-9,5",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 72
+      },
+      {
+        "label": "Схема и группа соединения",
+        "raw": "1/1-0",
+        "unitAsPrinted": null,
+        "sourcePage": 72
+      },
+      {
+        "label": "Ток х.х",
+        "raw": "27",
+        "unitAsPrinted": "%",
+        "sourcePage": 72
+      },
+      {
+        "label": "Потери Х.Х",
+        "raw": "17",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 72
+      },
+      {
+        "label": "Потери К.З",
+        "raw": "45",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 72
+      },
+      {
+        "label": "Напряжение к.з",
+        "raw": "6,0",
+        "unitAsPrinted": "%",
+        "sourcePage": 73
+      },
+      {
+        "label": "Полная масса (first printed column)",
+        "raw": "40",
+        "unitAsPrinted": "кг",
+        "sourcePage": 73
+      },
+      {
+        "label": "L",
+        "raw": "470",
+        "unitAsPrinted": "мм",
+        "sourcePage": 73
+      },
+      {
+        "label": "B",
+        "raw": "327",
+        "unitAsPrinted": "мм",
+        "sourcePage": 73
+      },
+      {
+        "label": "H",
+        "raw": "630",
+        "unitAsPrinted": "мм",
+        "sourcePage": 73
+      },
+      {
+        "label": "Полная масса (last printed column)",
+        "raw": "40",
+        "unitAsPrinted": "кг",
+        "sourcePage": 73
+      },
+      {
+        "label": "Drawing H",
+        "raw": "630",
+        "unitAsPrinted": null,
+        "sourcePage": 75
+      },
+      {
+        "label": "Drawing H1",
+        "raw": "380",
+        "unitAsPrinted": null,
+        "sourcePage": 75
+      },
+      {
+        "label": "Drawing B",
+        "raw": "325",
+        "unitAsPrinted": null,
+        "sourcePage": 75
+      },
+      {
+        "label": "Drawing L",
+        "raw": "450",
+        "unitAsPrinted": null,
+        "sourcePage": 75
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-om"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [
+      "Page73 prints two different columns both labeled Полная масса, кг. Neither is silently relabeled oil mass; drawings74/75 also differ from table dimensions."
+    ],
+    "series": "ОМ",
+    "context": "однофазный масляный",
+    "powerKva": 0.63,
+    "voltageRaw": "6 или10 / 0,23 кВ",
+    "designation": "ОМ-0,63",
+    "execution": "однофазный масляный",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "sourceRow": {
+      "page": 72,
+      "designation": "ОМ-0,63",
+      "execution": "однофазный масляный",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Номинальная мощность",
+        "value": "0,63",
+        "unit": "кВА",
+        "page": 72
+      },
+      {
+        "label": "ВН options",
+        "value": "6;10",
+        "unit": "кВ",
+        "page": 72
+      },
+      {
+        "label": "НН options",
+        "value": "0,23",
+        "unit": "кВ",
+        "page": 72
+      },
+      {
+        "label": "Напряжение ступеней регулирования при6кВ",
+        "value": "6,3-6,0-5,7",
+        "unit": "кВ",
+        "page": 72
+      },
+      {
+        "label": "Напряжение ступеней регулирования при10кВ",
+        "value": "10,5-10-9,5",
+        "unit": "кВ",
+        "page": 72
+      },
+      {
+        "label": "Схема и группа соединения",
+        "value": "1/1-0",
+        "unit": null,
+        "page": 72
+      },
+      {
+        "label": "Ток х.х",
+        "value": "27",
+        "unit": "%",
+        "page": 72
+      },
+      {
+        "label": "Потери Х.Х",
+        "value": "17",
+        "unit": "Вт",
+        "page": 72
+      },
+      {
+        "label": "Потери К.З",
+        "value": "45",
+        "unit": "Вт",
+        "page": 72
+      },
+      {
+        "label": "Напряжение к.з",
+        "value": "6,0",
+        "unit": "%",
+        "page": 73
+      },
+      {
+        "label": "Полная масса (first printed column)",
+        "value": "40",
+        "unit": "кг",
+        "page": 73
+      },
+      {
+        "label": "L",
+        "value": "470",
+        "unit": "мм",
+        "page": 73
+      },
+      {
+        "label": "B",
+        "value": "327",
+        "unit": "мм",
+        "page": 73
+      },
+      {
+        "label": "H",
+        "value": "630",
+        "unit": "мм",
+        "page": 73
+      },
+      {
+        "label": "Полная масса (last printed column)",
+        "value": "40",
+        "unit": "кг",
+        "page": 73
+      },
+      {
+        "label": "Drawing H",
+        "value": "630",
+        "unit": null,
+        "page": 75
+      },
+      {
+        "label": "Drawing H1",
+        "value": "380",
+        "unit": null,
+        "page": 75
+      },
+      {
+        "label": "Drawing B",
+        "value": "325",
+        "unit": null,
+        "page": 75
+      },
+      {
+        "label": "Drawing L",
+        "value": "450",
+        "unit": null,
+        "page": 75
+      }
+    ]
+  }
+]

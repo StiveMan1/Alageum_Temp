@@ -1,0 +1,462 @@
+[
+  {
+    "id": "isolating-tmg",
+    "designation": "ТМГ",
+    "title": "ТМГ — Разделительные",
+    "sourcePages": [
+      48,
+      49
+    ],
+    "modelIds": [
+      "alageum-2026-isolating-tmg-630",
+      "alageum-2026-isolating-tmg-1000",
+      "alageum-2026-isolating-tmg-1250",
+      "alageum-2026-isolating-tmg-1600",
+      "alageum-2026-isolating-tmg-2000",
+      "alageum-2026-isolating-tmg-2500",
+      "alageum-2026-isolating-tmg-3200",
+      "alageum-2026-isolating-tmg-4000",
+      "alageum-2026-isolating-tmg-4500"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tm-20kv",
+    "designation": "ТМ",
+    "title": "ТМ — 20 кВ",
+    "sourcePages": [
+      50,
+      51,
+      52,
+      53
+    ],
+    "modelIds": [
+      "alageum-2026-tm-20kv-100",
+      "alageum-2026-tm-20kv-160",
+      "alageum-2026-tm-20kv-250",
+      "alageum-2026-tm-20kv-400",
+      "alageum-2026-tm-20kv-630",
+      "alageum-2026-tm-20kv-1000",
+      "alageum-2026-tm-20kv-1250",
+      "alageum-2026-tm-20kv-1600",
+      "alageum-2026-tm-20kv-2000",
+      "alageum-2026-tm-20kv-2500"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tmg-20kv-copper",
+    "designation": "ТМГ",
+    "title": "ТМГ — 20кВ, с медными обмотками",
+    "sourcePages": [
+      51,
+      56
+    ],
+    "modelIds": [
+      "alageum-2026-tmg-20kv-copper-25",
+      "alageum-2026-tmg-20kv-copper-40",
+      "alageum-2026-tmg-20kv-copper-63"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tmg-20kv",
+    "designation": "ТМГ",
+    "title": "ТМГ — 20кВ",
+    "sourcePages": [
+      54,
+      55,
+      56,
+      57
+    ],
+    "modelIds": [
+      "alageum-2026-tmg-20kv-100",
+      "alageum-2026-tmg-20kv-160",
+      "alageum-2026-tmg-20kv-250",
+      "alageum-2026-tmg-20kv-400",
+      "alageum-2026-tmg-20kv-630",
+      "alageum-2026-tmg-20kv-1000",
+      "alageum-2026-tmg-20kv-1250",
+      "alageum-2026-tmg-20kv-1600",
+      "alageum-2026-tmg-20kv-2000",
+      "alageum-2026-tmg-20kv-2500"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tmgsu",
+    "designation": "ТМГСУ",
+    "title": "ТМГСУ — с симметрирующим устройством",
+    "sourcePages": [
+      58,
+      59
+    ],
+    "modelIds": [
+      "alageum-2026-tmgsu-63",
+      "alageum-2026-tmgsu-100",
+      "alageum-2026-tmgsu-160",
+      "alageum-2026-tmgsu-250"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tmeg",
+    "designation": "ТМЭГ",
+    "title": "ТМЭГ — для питания электрооборудования экскаваторов",
+    "sourcePages": [
+      60,
+      61
+    ],
+    "modelIds": [
+      "alageum-2026-tmeg-40",
+      "alageum-2026-tmeg-63",
+      "alageum-2026-tmeg-100",
+      "alageum-2026-tmeg-160",
+      "alageum-2026-tmeg-250"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tmpn-top",
+    "designation": "ТМПН",
+    "title": "ТМПН — верхние выводы по чертежу66",
+    "sourcePages": [
+      62,
+      63,
+      64,
+      65,
+      66
+    ],
+    "modelIds": [
+      "alageum-2026-tmpn-p62-r1",
+      "alageum-2026-tmpn-p62-r2",
+      "alageum-2026-tmpn-p62-r3",
+      "alageum-2026-tmpn-p62-r4",
+      "alageum-2026-tmpn-p62-r5",
+      "alageum-2026-tmpn-p62-r6",
+      "alageum-2026-tmpn-p62-r7",
+      "alageum-2026-tmpn-p62-r8",
+      "alageum-2026-tmpn-p64-r1",
+      "alageum-2026-tmpn-p64-r2",
+      "alageum-2026-tmpn-p64-r3",
+      "alageum-2026-tmpn-p64-r4",
+      "alageum-2026-tmpn-p64-r5",
+      "alageum-2026-tmpn-p64-r6"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tmpng-side",
+    "designation": "ТМПНГ",
+    "title": "ТМПНГ — боковой вывод",
+    "sourcePages": [
+      64,
+      65,
+      67
+    ],
+    "modelIds": [
+      "alageum-2026-tmpn-p64-r7",
+      "alageum-2026-tmpn-p64-r8",
+      "alageum-2026-tmpn-p64-r9",
+      "alageum-2026-tmpn-p64-r10"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tmto-original",
+    "designation": "ТМТО",
+    "title": "ТМТО — трехобмоточный",
+    "sourcePages": [
+      68,
+      69
+    ],
+    "modelIds": [
+      "alageum-2026-tmto80-original"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tmto-modern",
+    "designation": "ТМТО",
+    "title": "ТМТО — модернизированный",
+    "sourcePages": [
+      70,
+      71
+    ],
+    "modelIds": [
+      "alageum-2026-tmto80-modern"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "om",
+    "designation": "ОМ",
+    "title": "ОМ — однофазный масляный",
+    "sourcePages": [
+      72,
+      73,
+      75
+    ],
+    "modelIds": [
+      "alageum-2026-om-0p63",
+      "alageum-2026-om-1p25",
+      "alageum-2026-om-2p5",
+      "alageum-2026-om-2p0-drawing"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "omp",
+    "designation": "ОМП",
+    "title": "ОМП — однофазный масляный",
+    "sourcePages": [
+      72,
+      73,
+      74
+    ],
+    "modelIds": [
+      "alageum-2026-om-4-p",
+      "alageum-2026-om-10-p"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tsl-loss-C",
+    "designation": "ТСЛ(З)",
+    "title": "ТСЛ(З) — с уровнем потерь С (стандарный)",
+    "sourcePages": [
+      77,
+      78,
+      80,
+      81
+    ],
+    "modelIds": [
+      "alageum-2026-tsl-c-25",
+      "alageum-2026-tsl-c-40",
+      "alageum-2026-tsl-c-63",
+      "alageum-2026-tsl-c-100",
+      "alageum-2026-tsl-c-160",
+      "alageum-2026-tsl-c-250",
+      "alageum-2026-tsl-c-400",
+      "alageum-2026-tsl-c-630",
+      "alageum-2026-tsl-c-1000",
+      "alageum-2026-tsl-c-1250",
+      "alageum-2026-tsl-c-1600",
+      "alageum-2026-tsl-c-2000",
+      "alageum-2026-tsl-c-2500",
+      "alageum-2026-tsl-c-3150",
+      "alageum-2026-tsl-c-4000"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tsl-loss-A",
+    "designation": "ТСЛ(З)",
+    "title": "ТСЛ(З) — с уровнем потерь А (энергоэффективный)",
+    "sourcePages": [
+      78,
+      79,
+      80,
+      81
+    ],
+    "modelIds": [
+      "alageum-2026-tsl-a-63",
+      "alageum-2026-tsl-a-100",
+      "alageum-2026-tsl-a-160",
+      "alageum-2026-tsl-a-250",
+      "alageum-2026-tsl-a-400",
+      "alageum-2026-tsl-a-630",
+      "alageum-2026-tsl-a-1000",
+      "alageum-2026-tsl-a-1250",
+      "alageum-2026-tsl-a-1600",
+      "alageum-2026-tsl-a-2000",
+      "alageum-2026-tsl-a-2500"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tsl-20kv",
+    "designation": "ТСЛ",
+    "title": "ТСЛ — класса напряжения20кВ",
+    "sourcePages": [
+      82,
+      83,
+      84
+    ],
+    "modelIds": [
+      "alageum-2026-tsl-20kv-100",
+      "alageum-2026-tsl-20kv-160",
+      "alageum-2026-tsl-20kv-250",
+      "alageum-2026-tsl-20kv-400",
+      "alageum-2026-tsl-20kv-630",
+      "alageum-2026-tsl-20kv-1000",
+      "alageum-2026-tsl-20kv-1250",
+      "alageum-2026-tsl-20kv-1600",
+      "alageum-2026-tsl-20kv-2000",
+      "alageum-2026-tsl-20kv-2500",
+      "alageum-2026-tsl-20kv-3150",
+      "alageum-2026-tsl-20kv-4000"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "dry-accessories",
+    "designation": "Комплектность и дополнительное оснащение сухих трансформаторов",
+    "title": "Комплектность и дополнительное оснащение сухих трансформаторов",
+    "sourcePages": [
+      85,
+      86
+    ],
+    "modelIds": [
+      "alageum-2026-relay-tr100",
+      "alageum-2026-sensor-pt100",
+      "alageum-2026-damper-ek290",
+      "alageum-2026-thermal-cabinet"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "ts-low-voltage",
+    "designation": "ТС(З)",
+    "title": "ТС(З) — мощность 10кВА, класс0,66кВ",
+    "sourcePages": [
+      86,
+      87,
+      88
+    ],
+    "modelIds": [
+      "alageum-2026-ts-10",
+      "alageum-2026-ts-16",
+      "alageum-2026-ts-25",
+      "alageum-2026-ts-40",
+      "alageum-2026-ts-63",
+      "alageum-2026-ts-100"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tsi-tools",
+    "designation": "ТСИ / ТСЗИ",
+    "title": "ТСИ — для питания электроинструмента",
+    "sourcePages": [
+      89,
+      90
+    ],
+    "modelIds": [
+      "alageum-2026-tsi-1p6-open",
+      "alageum-2026-tsi-2p5-open",
+      "alageum-2026-tsi-4p0-open",
+      "alageum-2026-tsi-1p6-enclosed",
+      "alageum-2026-tsi-2p5-enclosed",
+      "alageum-2026-tsi-4p0-enclosed"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "tsn-nomex",
+    "designation": "ТСН(З)",
+    "title": "ТСН(З) — с изоляцией Номекс",
+    "sourcePages": [
+      91,
+      92,
+      93,
+      94
+    ],
+    "modelIds": [
+      "alageum-2026-tsn-160",
+      "alageum-2026-tsn-250",
+      "alageum-2026-tsn-400",
+      "alageum-2026-tsn-630"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "ntmi",
+    "designation": "НТМИ",
+    "title": "НТМИ — измерительный",
+    "sourcePages": [
+      96
+    ],
+    "modelIds": [
+      "alageum-2026-ntmi-6",
+      "alageum-2026-ntmi-10"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "nom",
+    "designation": "НОМ",
+    "title": "НОМ — однофазный измерительный",
+    "sourcePages": [
+      97
+    ],
+    "modelIds": [
+      "alageum-2026-nom-6",
+      "alageum-2026-nom-10",
+      "alageum-2026-nom-3-drawing"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "nami",
+    "designation": "НАМИ",
+    "title": "НАМИ — трехфазный измерительный",
+    "sourcePages": [
+      98
+    ],
+    "modelIds": [
+      "alageum-2026-nami-6",
+      "alageum-2026-nami-10"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "zom",
+    "designation": "ЗОМ",
+    "title": "ЗОМ — измерительный, railway",
+    "sourcePages": [
+      99
+    ],
+    "modelIds": [
+      "alageum-2026-zom-1p25-35"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  },
+  {
+    "id": "znom",
+    "designation": "ЗНОМ",
+    "title": "ЗНОМ — nominal-winding-voltage option1",
+    "sourcePages": [
+      100
+    ],
+    "modelIds": [
+      "alageum-2026-znom35-config1",
+      "alageum-2026-znom35-config2"
+    ],
+    "manufacturer": null,
+    "brand": "Alageum electric"
+  }
+]

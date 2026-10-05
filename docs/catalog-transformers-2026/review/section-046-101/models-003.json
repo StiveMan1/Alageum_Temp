@@ -1,0 +1,2595 @@
+[
+  {
+    "id": "alageum-2026-tmg-20kv-copper-40",
+    "familyId": "tmg-20kv-copper",
+    "name": "ТМГ-40",
+    "sourceDesignation": "ТМГ-40",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      51,
+      56
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "190",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 51
+      },
+      {
+        "label": "Pк",
+        "raw": "770",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 51
+      },
+      {
+        "label": "Uк",
+        "raw": "6,0",
+        "unitAsPrinted": "%",
+        "sourcePage": 51
+      },
+      {
+        "label": "Iо",
+        "raw": "3,0",
+        "unitAsPrinted": "%",
+        "sourcePage": 51
+      },
+      {
+        "label": "L",
+        "raw": "996",
+        "unitAsPrinted": "мм",
+        "sourcePage": 51
+      },
+      {
+        "label": "B",
+        "raw": "680",
+        "unitAsPrinted": "мм",
+        "sourcePage": 51
+      },
+      {
+        "label": "H",
+        "raw": "1129",
+        "unitAsPrinted": "мм",
+        "sourcePage": 51
+      },
+      {
+        "label": "A",
+        "raw": "550",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "A1",
+        "raw": "550",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "M",
+        "raw": "90",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "K",
+        "raw": "250",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "h",
+        "raw": "115",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "h1",
+        "raw": "145",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "Полная масса",
+        "raw": "480",
+        "unitAsPrinted": "кг",
+        "sourcePage": 51
+      },
+      {
+        "label": "Масса масла",
+        "raw": "150",
+        "unitAsPrinted": "кг",
+        "sourcePage": 51
+      },
+      {
+        "label": "Номинальная мощность",
+        "raw": "40",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 51
+      },
+      {
+        "label": "Номинальное напряжение",
+        "raw": "20/0,4",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 51
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "raw": "У/Ун-0; Д/Ун-11",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "Обмотки",
+        "raw": "медные",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmg-20kv-small"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМГ",
+    "context": "20кВ, с медными обмотками",
+    "powerKva": 40,
+    "voltageRaw": "20/0,4 кВ",
+    "designation": "ТМГ-40",
+    "execution": "20кВ, с медными обмотками",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "sourceRow": {
+      "page": 51,
+      "designation": "ТМГ-40",
+      "execution": "20кВ, с медными обмотками",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "190",
+        "unit": "Вт",
+        "page": 51
+      },
+      {
+        "label": "Pк",
+        "value": "770",
+        "unit": "Вт",
+        "page": 51
+      },
+      {
+        "label": "Uк",
+        "value": "6,0",
+        "unit": "%",
+        "page": 51
+      },
+      {
+        "label": "Iо",
+        "value": "3,0",
+        "unit": "%",
+        "page": 51
+      },
+      {
+        "label": "L",
+        "value": "996",
+        "unit": "мм",
+        "page": 51
+      },
+      {
+        "label": "B",
+        "value": "680",
+        "unit": "мм",
+        "page": 51
+      },
+      {
+        "label": "H",
+        "value": "1129",
+        "unit": "мм",
+        "page": 51
+      },
+      {
+        "label": "A",
+        "value": "550",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "A1",
+        "value": "550",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "M",
+        "value": "90",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "K",
+        "value": "250",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "h",
+        "value": "115",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "h1",
+        "value": "145",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "Полная масса",
+        "value": "480",
+        "unit": "кг",
+        "page": 51
+      },
+      {
+        "label": "Масса масла",
+        "value": "150",
+        "unit": "кг",
+        "page": 51
+      },
+      {
+        "label": "Номинальная мощность",
+        "value": "40",
+        "unit": "кВА",
+        "page": 51
+      },
+      {
+        "label": "Номинальное напряжение",
+        "value": "20/0,4",
+        "unit": "кВ",
+        "page": 51
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "value": "У/Ун-0; Д/Ун-11",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "Обмотки",
+        "value": "медные",
+        "unit": null,
+        "page": 51
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmg-20kv-copper-63",
+    "familyId": "tmg-20kv-copper",
+    "name": "ТМГ-63",
+    "sourceDesignation": "ТМГ-63",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      51,
+      56
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "280",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 51
+      },
+      {
+        "label": "Pк",
+        "raw": "1470",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 51
+      },
+      {
+        "label": "Uк",
+        "raw": "6,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 51
+      },
+      {
+        "label": "Iо",
+        "raw": "2,3",
+        "unitAsPrinted": "%",
+        "sourcePage": 51
+      },
+      {
+        "label": "L",
+        "raw": "1015",
+        "unitAsPrinted": "мм",
+        "sourcePage": 51
+      },
+      {
+        "label": "B",
+        "raw": "705",
+        "unitAsPrinted": "мм",
+        "sourcePage": 51
+      },
+      {
+        "label": "H",
+        "raw": "1080",
+        "unitAsPrinted": "мм",
+        "sourcePage": 51
+      },
+      {
+        "label": "A",
+        "raw": "550",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "A1",
+        "raw": "550",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "M",
+        "raw": "90",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "K",
+        "raw": "260",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "h",
+        "raw": "115",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "h1",
+        "raw": "145",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "Полная масса",
+        "raw": "555",
+        "unitAsPrinted": "кг",
+        "sourcePage": 51
+      },
+      {
+        "label": "Масса масла",
+        "raw": "175",
+        "unitAsPrinted": "кг",
+        "sourcePage": 51
+      },
+      {
+        "label": "Номинальная мощность",
+        "raw": "63",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 51
+      },
+      {
+        "label": "Номинальное напряжение",
+        "raw": "20/0,4",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 51
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "raw": "У/Ун-0; Д/Ун-11",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      },
+      {
+        "label": "Обмотки",
+        "raw": "медные",
+        "unitAsPrinted": null,
+        "sourcePage": 51
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmg-20kv-small"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМГ",
+    "context": "20кВ, с медными обмотками",
+    "powerKva": 63,
+    "voltageRaw": "20/0,4 кВ",
+    "designation": "ТМГ-63",
+    "execution": "20кВ, с медными обмотками",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "sourceRow": {
+      "page": 51,
+      "designation": "ТМГ-63",
+      "execution": "20кВ, с медными обмотками",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "280",
+        "unit": "Вт",
+        "page": 51
+      },
+      {
+        "label": "Pк",
+        "value": "1470",
+        "unit": "Вт",
+        "page": 51
+      },
+      {
+        "label": "Uк",
+        "value": "6,5",
+        "unit": "%",
+        "page": 51
+      },
+      {
+        "label": "Iо",
+        "value": "2,3",
+        "unit": "%",
+        "page": 51
+      },
+      {
+        "label": "L",
+        "value": "1015",
+        "unit": "мм",
+        "page": 51
+      },
+      {
+        "label": "B",
+        "value": "705",
+        "unit": "мм",
+        "page": 51
+      },
+      {
+        "label": "H",
+        "value": "1080",
+        "unit": "мм",
+        "page": 51
+      },
+      {
+        "label": "A",
+        "value": "550",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "A1",
+        "value": "550",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "M",
+        "value": "90",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "K",
+        "value": "260",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "h",
+        "value": "115",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "h1",
+        "value": "145",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "Полная масса",
+        "value": "555",
+        "unit": "кг",
+        "page": 51
+      },
+      {
+        "label": "Масса масла",
+        "value": "175",
+        "unit": "кг",
+        "page": 51
+      },
+      {
+        "label": "Номинальная мощность",
+        "value": "63",
+        "unit": "кВА",
+        "page": 51
+      },
+      {
+        "label": "Номинальное напряжение",
+        "value": "20/0,4",
+        "unit": "кВ",
+        "page": 51
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "value": "У/Ун-0; Д/Ун-11",
+        "unit": null,
+        "page": 51
+      },
+      {
+        "label": "Обмотки",
+        "value": "медные",
+        "unit": null,
+        "page": 51
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmg-20kv-100",
+    "familyId": "tmg-20kv",
+    "name": "ТМГ-100",
+    "sourceDesignation": "ТМГ-100",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      54,
+      55,
+      56
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "330",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Pк",
+        "raw": "1620",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Uк",
+        "raw": "6,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "Iо",
+        "raw": "1,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "L",
+        "raw": "1192",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "B",
+        "raw": "820",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "H",
+        "raw": "1272",
+        "unitAsPrinted": "мм",
+        "sourcePage": 55
+      },
+      {
+        "label": "A",
+        "raw": "550",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "A1",
+        "raw": "550",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "M",
+        "raw": "90",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "K",
+        "raw": "260",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h",
+        "raw": "150",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h1",
+        "raw": "150",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "Полная масса",
+        "raw": "760",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Масса масла",
+        "raw": "244",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "raw": "100",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "raw": "20/0,4",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "raw": "У/Ун-0; Д/Ун-11",
+        "unitAsPrinted": null,
+        "sourcePage": 54
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmg-20kv-small"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМГ",
+    "context": "20кВ",
+    "powerKva": 100,
+    "voltageRaw": "20/0,4 кВ",
+    "designation": "ТМГ-100",
+    "execution": "20кВ",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "sourceRow": {
+      "page": 54,
+      "designation": "ТМГ-100",
+      "execution": "20кВ",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "330",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Pк",
+        "value": "1620",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Uк",
+        "value": "6,5",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "Iо",
+        "value": "1,5",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "L",
+        "value": "1192",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "B",
+        "value": "820",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "H",
+        "value": "1272",
+        "unit": "мм",
+        "page": 55
+      },
+      {
+        "label": "A",
+        "value": "550",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "A1",
+        "value": "550",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "M",
+        "value": "90",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "K",
+        "value": "260",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h",
+        "value": "150",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h1",
+        "value": "150",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "Полная масса",
+        "value": "760",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Масса масла",
+        "value": "244",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "value": "100",
+        "unit": "кВА",
+        "page": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "value": "20/0,4",
+        "unit": "кВ",
+        "page": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "value": "У/Ун-0; Д/Ун-11",
+        "unit": null,
+        "page": 54
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmg-20kv-160",
+    "familyId": "tmg-20kv",
+    "name": "ТМГ-160",
+    "sourceDesignation": "ТМГ-160",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      54,
+      55,
+      56
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "540",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Pк",
+        "raw": "2600",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Uк",
+        "raw": "6,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "Iо",
+        "raw": "1,4",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "L",
+        "raw": "1216",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "B",
+        "raw": "788",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "H",
+        "raw": "1272",
+        "unitAsPrinted": "мм",
+        "sourcePage": 55
+      },
+      {
+        "label": "A",
+        "raw": "550",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "A1",
+        "raw": "550",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "M",
+        "raw": "90",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "K",
+        "raw": "260",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h",
+        "raw": "150",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h1",
+        "raw": "150",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "Полная масса",
+        "raw": "880",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Масса масла",
+        "raw": "265",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "raw": "160",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "raw": "20/0,4",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "raw": "У/Ун-0; Д/Ун-11",
+        "unitAsPrinted": null,
+        "sourcePage": 54
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmg-20kv-small"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМГ",
+    "context": "20кВ",
+    "powerKva": 160,
+    "voltageRaw": "20/0,4 кВ",
+    "designation": "ТМГ-160",
+    "execution": "20кВ",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "sourceRow": {
+      "page": 54,
+      "designation": "ТМГ-160",
+      "execution": "20кВ",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "540",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Pк",
+        "value": "2600",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Uк",
+        "value": "6,5",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "Iо",
+        "value": "1,4",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "L",
+        "value": "1216",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "B",
+        "value": "788",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "H",
+        "value": "1272",
+        "unit": "мм",
+        "page": 55
+      },
+      {
+        "label": "A",
+        "value": "550",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "A1",
+        "value": "550",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "M",
+        "value": "90",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "K",
+        "value": "260",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h",
+        "value": "150",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h1",
+        "value": "150",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "Полная масса",
+        "value": "880",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Масса масла",
+        "value": "265",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "value": "160",
+        "unit": "кВА",
+        "page": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "value": "20/0,4",
+        "unit": "кВ",
+        "page": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "value": "У/Ун-0; Д/Ун-11",
+        "unit": null,
+        "page": 54
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmg-20kv-250",
+    "familyId": "tmg-20kv",
+    "name": "ТМГ-250",
+    "sourceDesignation": "ТМГ-250",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      54,
+      55,
+      56
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "720",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Pк",
+        "raw": "3600",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Uк",
+        "raw": "6,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "Iо",
+        "raw": "1,2",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "L",
+        "raw": "1402",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "B",
+        "raw": "852",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "H",
+        "raw": "1418",
+        "unitAsPrinted": "мм",
+        "sourcePage": 55
+      },
+      {
+        "label": "A",
+        "raw": "550",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "A1",
+        "raw": "550",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "M",
+        "raw": "110",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "K",
+        "raw": "280",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h",
+        "raw": "160",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h1",
+        "raw": "160",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "Полная масса",
+        "raw": "1165",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Масса масла",
+        "raw": "325",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "raw": "250",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "raw": "20/0,4",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "raw": "У/Ун-0; Д/Ун-11",
+        "unitAsPrinted": null,
+        "sourcePage": 54
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmg-20kv-small"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМГ",
+    "context": "20кВ",
+    "powerKva": 250,
+    "voltageRaw": "20/0,4 кВ",
+    "designation": "ТМГ-250",
+    "execution": "20кВ",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "sourceRow": {
+      "page": 54,
+      "designation": "ТМГ-250",
+      "execution": "20кВ",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "720",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Pк",
+        "value": "3600",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Uк",
+        "value": "6,5",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "Iо",
+        "value": "1,2",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "L",
+        "value": "1402",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "B",
+        "value": "852",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "H",
+        "value": "1418",
+        "unit": "мм",
+        "page": 55
+      },
+      {
+        "label": "A",
+        "value": "550",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "A1",
+        "value": "550",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "M",
+        "value": "110",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "K",
+        "value": "280",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h",
+        "value": "160",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h1",
+        "value": "160",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "Полная масса",
+        "value": "1165",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Масса масла",
+        "value": "325",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "value": "250",
+        "unit": "кВА",
+        "page": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "value": "20/0,4",
+        "unit": "кВ",
+        "page": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "value": "У/Ун-0; Д/Ун-11",
+        "unit": null,
+        "page": 54
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmg-20kv-400",
+    "familyId": "tmg-20kv",
+    "name": "ТМГ-400",
+    "sourceDesignation": "ТМГ-400",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      54,
+      55,
+      56
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "800",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Pк",
+        "raw": "5400",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Uк",
+        "raw": "6,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "Iо",
+        "raw": "0,6",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "L",
+        "raw": "1563",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "B",
+        "raw": "920",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "H",
+        "raw": "1538",
+        "unitAsPrinted": "мм",
+        "sourcePage": 55
+      },
+      {
+        "label": "A",
+        "raw": "660",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "A1",
+        "raw": "660",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "M",
+        "raw": "150",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "K",
+        "raw": "280",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h",
+        "raw": "160",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h1",
+        "raw": "180",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "Полная масса",
+        "raw": "1640",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Масса масла",
+        "raw": "447",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "raw": "400",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "raw": "20/0,4",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "raw": "У/Ун-0; Д/Ун-11",
+        "unitAsPrinted": null,
+        "sourcePage": 54
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmg-20kv-small"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМГ",
+    "context": "20кВ",
+    "powerKva": 400,
+    "voltageRaw": "20/0,4 кВ",
+    "designation": "ТМГ-400",
+    "execution": "20кВ",
+    "candidateOldIds": [],
+    "overlapAssessment": [
+      {
+        "oldId": "tmg-400",
+        "status": "do-not-merge",
+        "evidence": "Shared abbreviated ТМГ power label is insufficient: source is isolating construction or20kV execution, while old reference is6/10→0.4kV distribution.",
+        "autoMerge": false
+      }
+    ],
+    "sourceRow": {
+      "page": 54,
+      "designation": "ТМГ-400",
+      "execution": "20кВ",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "800",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Pк",
+        "value": "5400",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Uк",
+        "value": "6,5",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "Iо",
+        "value": "0,6",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "L",
+        "value": "1563",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "B",
+        "value": "920",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "H",
+        "value": "1538",
+        "unit": "мм",
+        "page": 55
+      },
+      {
+        "label": "A",
+        "value": "660",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "A1",
+        "value": "660",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "M",
+        "value": "150",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "K",
+        "value": "280",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h",
+        "value": "160",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h1",
+        "value": "180",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "Полная масса",
+        "value": "1640",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Масса масла",
+        "value": "447",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "value": "400",
+        "unit": "кВА",
+        "page": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "value": "20/0,4",
+        "unit": "кВ",
+        "page": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "value": "У/Ун-0; Д/Ун-11",
+        "unit": null,
+        "page": 54
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmg-20kv-630",
+    "familyId": "tmg-20kv",
+    "name": "ТМГ-630",
+    "sourceDesignation": "ТМГ-630",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      54,
+      55,
+      56
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "1150",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Pк",
+        "raw": "7350",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Uк",
+        "raw": "6,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "Iо",
+        "raw": "0,4",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "L",
+        "raw": "1632",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "B",
+        "raw": "962",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "H",
+        "raw": "1680",
+        "unitAsPrinted": "мм",
+        "sourcePage": 55
+      },
+      {
+        "label": "A",
+        "raw": "660",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "A1",
+        "raw": "660",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "M",
+        "raw": "150",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "K",
+        "raw": "280",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h",
+        "raw": "180",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h1",
+        "raw": "180",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "Полная масса",
+        "raw": "2185",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Масса масла",
+        "raw": "565",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "raw": "630",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "raw": "20/0,4",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "raw": "У/Ун-0; Д/Ун-11",
+        "unitAsPrinted": null,
+        "sourcePage": 54
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmg-20kv-small"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМГ",
+    "context": "20кВ",
+    "powerKva": 630,
+    "voltageRaw": "20/0,4 кВ",
+    "designation": "ТМГ-630",
+    "execution": "20кВ",
+    "candidateOldIds": [],
+    "overlapAssessment": [
+      {
+        "oldId": "tmg-630",
+        "status": "do-not-merge",
+        "evidence": "Shared abbreviated ТМГ power label is insufficient: source is isolating construction or20kV execution, while old reference is6/10→0.4kV distribution.",
+        "autoMerge": false
+      }
+    ],
+    "sourceRow": {
+      "page": 54,
+      "designation": "ТМГ-630",
+      "execution": "20кВ",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "1150",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Pк",
+        "value": "7350",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Uк",
+        "value": "6,5",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "Iо",
+        "value": "0,4",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "L",
+        "value": "1632",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "B",
+        "value": "962",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "H",
+        "value": "1680",
+        "unit": "мм",
+        "page": 55
+      },
+      {
+        "label": "A",
+        "value": "660",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "A1",
+        "value": "660",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "M",
+        "value": "150",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "K",
+        "value": "280",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h",
+        "value": "180",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h1",
+        "value": "180",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "Полная масса",
+        "value": "2185",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Масса масла",
+        "value": "565",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "value": "630",
+        "unit": "кВА",
+        "page": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "value": "20/0,4",
+        "unit": "кВ",
+        "page": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "value": "У/Ун-0; Д/Ун-11",
+        "unit": null,
+        "page": 54
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmg-20kv-1000",
+    "familyId": "tmg-20kv",
+    "name": "ТМГ-1000",
+    "sourceDesignation": "ТМГ-1000",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      54,
+      55,
+      57
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "1500",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Pк",
+        "raw": "11100",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Uк",
+        "raw": "6,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "Iо",
+        "raw": "0,3",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "L",
+        "raw": "1703",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "B",
+        "raw": "1080",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "H",
+        "raw": "1790",
+        "unitAsPrinted": "мм",
+        "sourcePage": 55
+      },
+      {
+        "label": "A",
+        "raw": "820",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "A1",
+        "raw": "820",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "M",
+        "raw": "190",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "K",
+        "raw": "280",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h",
+        "raw": "200",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h1",
+        "raw": "190",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "Полная масса",
+        "raw": "3200",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Масса масла",
+        "raw": "810",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "raw": "1000",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "raw": "20/0,4",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "raw": "У/Ун-0; Д/Ун-11",
+        "unitAsPrinted": null,
+        "sourcePage": 54
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmg-20kv-large"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМГ",
+    "context": "20кВ",
+    "powerKva": 1000,
+    "voltageRaw": "20/0,4 кВ",
+    "designation": "ТМГ-1000",
+    "execution": "20кВ",
+    "candidateOldIds": [],
+    "overlapAssessment": [
+      {
+        "oldId": "tmg-1000",
+        "status": "do-not-merge",
+        "evidence": "Shared abbreviated ТМГ power label is insufficient: source is isolating construction or20kV execution, while old reference is6/10→0.4kV distribution.",
+        "autoMerge": false
+      }
+    ],
+    "sourceRow": {
+      "page": 54,
+      "designation": "ТМГ-1000",
+      "execution": "20кВ",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "1500",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Pк",
+        "value": "11100",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Uк",
+        "value": "6,5",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "Iо",
+        "value": "0,3",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "L",
+        "value": "1703",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "B",
+        "value": "1080",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "H",
+        "value": "1790",
+        "unit": "мм",
+        "page": 55
+      },
+      {
+        "label": "A",
+        "value": "820",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "A1",
+        "value": "820",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "M",
+        "value": "190",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "K",
+        "value": "280",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h",
+        "value": "200",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h1",
+        "value": "190",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "Полная масса",
+        "value": "3200",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Масса масла",
+        "value": "810",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "value": "1000",
+        "unit": "кВА",
+        "page": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "value": "20/0,4",
+        "unit": "кВ",
+        "page": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "value": "У/Ун-0; Д/Ун-11",
+        "unit": null,
+        "page": 54
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmg-20kv-1250",
+    "familyId": "tmg-20kv",
+    "name": "ТМГ-1250",
+    "sourceDesignation": "ТМГ-1250",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      54,
+      55,
+      57
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "1780",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Pк",
+        "raw": "12700",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Uк",
+        "raw": "6,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "Iо",
+        "raw": "0,4",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "L",
+        "raw": "1850",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "B",
+        "raw": "1114",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "H",
+        "raw": "1835",
+        "unitAsPrinted": "мм",
+        "sourcePage": 55
+      },
+      {
+        "label": "A",
+        "raw": "820",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "A1",
+        "raw": "820",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "M",
+        "raw": "200",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "K",
+        "raw": "280",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h",
+        "raw": "200",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h1",
+        "raw": "195",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "Полная масса",
+        "raw": "3520",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Масса масла",
+        "raw": "850",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "raw": "1250",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "raw": "20/0,4",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "raw": "У/Ун-0; Д/Ун-11",
+        "unitAsPrinted": null,
+        "sourcePage": 54
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmg-20kv-large"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМГ",
+    "context": "20кВ",
+    "powerKva": 1250,
+    "voltageRaw": "20/0,4 кВ",
+    "designation": "ТМГ-1250",
+    "execution": "20кВ",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "sourceRow": {
+      "page": 54,
+      "designation": "ТМГ-1250",
+      "execution": "20кВ",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "1780",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Pк",
+        "value": "12700",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Uк",
+        "value": "6,5",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "Iо",
+        "value": "0,4",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "L",
+        "value": "1850",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "B",
+        "value": "1114",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "H",
+        "value": "1835",
+        "unit": "мм",
+        "page": 55
+      },
+      {
+        "label": "A",
+        "value": "820",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "A1",
+        "value": "820",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "M",
+        "value": "200",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "K",
+        "value": "280",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h",
+        "value": "200",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h1",
+        "value": "195",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "Полная масса",
+        "value": "3520",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Масса масла",
+        "value": "850",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "value": "1250",
+        "unit": "кВА",
+        "page": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "value": "20/0,4",
+        "unit": "кВ",
+        "page": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "value": "У/Ун-0; Д/Ун-11",
+        "unit": null,
+        "page": 54
+      }
+    ]
+  },
+  {
+    "id": "alageum-2026-tmg-20kv-1600",
+    "familyId": "tmg-20kv",
+    "name": "ТМГ-1600",
+    "sourceDesignation": "ТМГ-1600",
+    "sku": null,
+    "skuStatus": "No complete order SKU asserted; exact source designation retained.",
+    "manufacturer": null,
+    "manufacturerStatus": "Not explicitly named on these product pages",
+    "brand": "Alageum electric",
+    "sourcePages": [
+      54,
+      55,
+      57
+    ],
+    "rawSpecs": [
+      {
+        "label": "Pо",
+        "raw": "2000",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Pк",
+        "raw": "16000",
+        "unitAsPrinted": "Вт",
+        "sourcePage": 54
+      },
+      {
+        "label": "Uк",
+        "raw": "6,5",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "Iо",
+        "raw": "0,4",
+        "unitAsPrinted": "%",
+        "sourcePage": 54
+      },
+      {
+        "label": "L",
+        "raw": "1922",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "B",
+        "raw": "1242",
+        "unitAsPrinted": "мм",
+        "sourcePage": 54
+      },
+      {
+        "label": "H",
+        "raw": "1902",
+        "unitAsPrinted": "мм",
+        "sourcePage": 55
+      },
+      {
+        "label": "A",
+        "raw": "1070",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "A1",
+        "raw": "1070",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "M",
+        "raw": "210",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "K",
+        "raw": "280",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h",
+        "raw": "205",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "h1",
+        "raw": "200",
+        "unitAsPrinted": null,
+        "sourcePage": 55
+      },
+      {
+        "label": "Полная масса",
+        "raw": "3990",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Масса масла",
+        "raw": "920",
+        "unitAsPrinted": "кг",
+        "sourcePage": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "raw": "1600",
+        "unitAsPrinted": "кВА",
+        "sourcePage": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "raw": "20/0,4",
+        "unitAsPrinted": "кВ",
+        "sourcePage": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "raw": "У/Ун-0; Д/Ун-11",
+        "unitAsPrinted": null,
+        "sourcePage": 54
+      }
+    ],
+    "assetFamilyIds": [
+      "oil-tmg-20kv-large"
+    ],
+    "recordType": "explicit-model-row",
+    "uncertainties": [],
+    "series": "ТМГ",
+    "context": "20кВ",
+    "powerKva": 1600,
+    "voltageRaw": "20/0,4 кВ",
+    "designation": "ТМГ-1600",
+    "execution": "20кВ",
+    "candidateOldIds": [],
+    "overlapAssessment": [],
+    "sourceRow": {
+      "page": 54,
+      "designation": "ТМГ-1600",
+      "execution": "20кВ",
+      "kind": "explicit-model-row"
+    },
+    "technicalSpecs": [
+      {
+        "label": "Pо",
+        "value": "2000",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Pк",
+        "value": "16000",
+        "unit": "Вт",
+        "page": 54
+      },
+      {
+        "label": "Uк",
+        "value": "6,5",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "Iо",
+        "value": "0,4",
+        "unit": "%",
+        "page": 54
+      },
+      {
+        "label": "L",
+        "value": "1922",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "B",
+        "value": "1242",
+        "unit": "мм",
+        "page": 54
+      },
+      {
+        "label": "H",
+        "value": "1902",
+        "unit": "мм",
+        "page": 55
+      },
+      {
+        "label": "A",
+        "value": "1070",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "A1",
+        "value": "1070",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "M",
+        "value": "210",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "K",
+        "value": "280",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h",
+        "value": "205",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "h1",
+        "value": "200",
+        "unit": null,
+        "page": 55
+      },
+      {
+        "label": "Полная масса",
+        "value": "3990",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Масса масла",
+        "value": "920",
+        "unit": "кг",
+        "page": 55
+      },
+      {
+        "label": "Номинальная мощность",
+        "value": "1600",
+        "unit": "кВА",
+        "page": 54
+      },
+      {
+        "label": "Номинальное напряжение",
+        "value": "20/0,4",
+        "unit": "кВ",
+        "page": 54
+      },
+      {
+        "label": "Группа соединения обмоток",
+        "value": "У/Ун-0; Д/Ун-11",
+        "unit": null,
+        "page": 54
+      }
+    ]
+  }
+]

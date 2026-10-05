@@ -1,0 +1,79 @@
+{
+  "format": "alageum-transformer-review-chunks-v1",
+  "recordCount": 135,
+  "reviewStatus": "source transcription; independent review corrections in progress; runtime inactive",
+  "chunks": [
+    {
+      "path": "models-001.json",
+      "recordCount": 10,
+      "bytes": 55663,
+      "sha256": "f802522c35fbc4df0cafd066923a6193fac096488f2a5fffa824f6612c7f6d86"
+    },
+    {
+      "path": "models-002.json",
+      "recordCount": 10,
+      "bytes": 54286,
+      "sha256": "253d7d5648b788f97ad799843d498a583faf55a063e0729fe08c2ebfd90e1ca8"
+    },
+    {
+      "path": "models-003.json",
+      "recordCount": 10,
+      "bytes": 55586,
+      "sha256": "875e82b4a04cdbbb6ce369382da03247bf34a7d02ddf65cd7ef04e90a33e54b2"
+    },
+    {
+      "path": "models-004.json",
+      "recordCount": 10,
+      "bytes": 55917,
+      "sha256": "aa2dd451161f93cc7c32baf7ee613135ebcd0acb554f7195d85d15453db2c848"
+    },
+    {
+      "path": "models-005.json",
+      "recordCount": 11,
+      "bytes": 56967,
+      "sha256": "887444cdae6d462d4c7bce8466aca8abb94d893e5d2e7773c8f7ec75167bd01d"
+    },
+    {
+      "path": "models-006.json",
+      "recordCount": 11,
+      "bytes": 58003,
+      "sha256": "830793cb111663f2cfb11cb14b375423481a2ac72cebde4b203ebdca8a237952"
+    },
+    {
+      "path": "models-007.json",
+      "recordCount": 10,
+      "bytes": 59711,
+      "sha256": "92c0f8e65f505162bf13122e3439be7bea79e87521bc1c1d2ab423ad5851cf68"
+    },
+    {
+      "path": "models-008.json",
+      "recordCount": 10,
+      "bytes": 58135,
+      "sha256": "5c959b459da59d2274bd3f58a85881058e991dc7c228683c11ccbd8c9409aae1"
+    },
+    {
+      "path": "models-009.json",
+      "recordCount": 9,
+      "bytes": 54592,
+      "sha256": "aed9fa95d9dd58cb71a348bb370120c672e2295b9c018b9cf2a19ebdcc000668"
+    },
+    {
+      "path": "models-010.json",
+      "recordCount": 12,
+      "bytes": 57720,
+      "sha256": "50a1b14a85953029f90961cca30ed140888a61db0a8f74e1e2ef0f068bd3ab87"
+    },
+    {
+      "path": "models-011.json",
+      "recordCount": 18,
+      "bytes": 59276,
+      "sha256": "75995181031337578cb9afdf1218d7bf5c4f583dc64bdaecb99ca98f8b48c7f8"
+    },
+    {
+      "path": "models-012.json",
+      "recordCount": 14,
+      "bytes": 55497,
+      "sha256": "2e3f985b2617199dff67488a416edbf23a8c27ec8e6e4dacaaf606307c111623"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "format": "alageum-transformer-review-chunks-v1",
+  "recordCount": 24,
+  "reviewStatus": "source transcription; independent review corrections in progress; runtime inactive",
+  "chunks": [
+    {
+      "path": "families-001.json",
+      "recordCount": 24,
+      "bytes": 11142,
+      "sha256": "133c9d86e4f0294f18e748908b2d7cc0b97d206d0aa4a29545a1632985ae6ddf"
+    }
+  ]
+}
