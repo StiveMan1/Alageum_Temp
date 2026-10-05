@@ -11,6 +11,7 @@ const { resolve, join } = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { StringDecoder } = require("node:string_decoder");
 const { pageDeliveryOptions, extractPageProbeEvidence, assertPageProbeAcceptance } = require("./page-test-guards");
+const { extractPageSyncEvidence, assertPageSyncAcceptance } = require("./page-sync-guards");
 
 const backend = resolve(__dirname, "..");
 const frontend = resolve(backend, "../frontend");
@@ -19,6 +20,7 @@ const httpOnly = process.argv.includes("--http-only");
 const fastSaveProbe = process.argv.includes("--fast-save-probe");
 const report = { implementation: "reimplemented", kind: "native-page-delivery", startedAt: new Date().toISOString(), status: "running", cases: [], browser: { status: "not-run", reason: httpOnly ? "explicit local --http-only mode" : "not yet reached" } };
 if (fastSaveProbe) report.fastSaveProbe = { status: "not-run", reason: "not yet reached" };
+if (fastSaveProbe) report.pageInputSync = { status: "not-run", reason: "not yet reached" };
 mkdirSync(evidence, { recursive: true });
 const secrets = new Set();
 // Redact complete lines, never individual data chunks. A password or token may
@@ -329,6 +331,27 @@ async function delivered(slug, expected, { present = [], absent = [], locale = "
       assertPageProbeAcceptance(browserReport, probeEvidence);
       report.fastSaveProbe = { status: "passed", ...result, expected: 1, unexpected: 0, skipped: 0, flaky: 0, totals: probeEvidence.totals, underDebounceWindow: probeEvidence.underDebounceWindow, fastWindowCovered: probeEvidence.fastWindowCovered };
     });
+    if (fastSaveProbe) await check("seven bounded native Page input lifecycle scenarios", async () => {
+      const browserEnv = { ...process.env, E2E_PAGE_CMS_BASE_URL: `${cmsOrigin}/cms`, EDITORIAL_PAGES_BASE_URL: webOrigin, FORCE_COLOR: "0", E2E_PAGE_PROBE_EMAIL: admins.probe.email, E2E_PAGE_PROBE_PASSWORD: admins.probe.password };
+      for (const key of ["PLAYWRIGHT_JSON_OUTPUT_FILE", "PLAYWRIGHT_JSON_OUTPUT_NAME", "PLAYWRIGHT_JSON_OUTPUT_DIR"]) delete browserEnv[key];
+      browserChild = loggedChild([join(frontend, "node_modules/@playwright/test/cli.js"), "test", "--config=playwright.page-sync.config.js", "--reporter=json"], frontend, browserEnv, "sync-browser-results.json", "sync-browser-stderr.log");
+      // The browser has 150 seconds, plus a bounded reporting/cleanup margin.
+      let exceededDeadline = false;
+      const deadline = setTimeout(() => { exceededDeadline = true; void stop(browserChild); }, 165000);
+      let result;
+      try {
+        result = await new Promise((done, reject) => { browserChild.once("error", reject); browserChild.once("close", (code, signal) => done({ code, signal })); });
+      } finally { clearTimeout(deadline); }
+      report.pageInputSync = { status: "failed", ...result };
+      const browserReport = JSON.parse(readFileSync(join(evidence, "sync-browser-results.json"), "utf8"));
+      const syncEvidence = extractPageSyncEvidence(browserReport);
+      writeFileSync(join(evidence, "sync-evidence.json"), `${redact(JSON.stringify(syncEvidence, null, 2))}\n`);
+      assert.equal(exceededDeadline, false, "Page lifecycle browser exceeded its 165-second reporting/cleanup deadline");
+      assert.equal(result.signal, null);
+      assert.equal(result.code, 0);
+      assertPageSyncAcceptance(browserReport, syncEvidence);
+      report.pageInputSync = { status: "passed", ...result, expected: 1, unexpected: 0, skipped: 0, flaky: 0, totals: syncEvidence.totals };
+    });
     await check("stopping actual Strapi produces Next 500 without stale body or fixture fallback", async () => {
       const current = app; app = null; await current.destroy();
       await assert.rejects(() => fetch(`${cmsOrigin}/api/v1/pages/about?locale=ru`, { signal: AbortSignal.timeout(2000) }));
@@ -340,7 +363,7 @@ async function delivered(slug, expected, { present = [], absent = [], locale = "
     clearTimeout(watchdog);
     try { await cleanup(); } catch (error) { report.status = "failed"; report.cleanupError = redact(error.message); process.exitCode = 1; }
     saveReport();
-    console.log(JSON.stringify({ kind: report.kind, status: report.status, cases: report.cases.length, browser: report.browser, ...(fastSaveProbe ? { fastSaveProbe: report.fastSaveProbe } : {}), ...(report.error ? { error: report.error } : {}) }));
+    console.log(JSON.stringify({ kind: report.kind, status: report.status, cases: report.cases.length, browser: report.browser, ...(fastSaveProbe ? { fastSaveProbe: report.fastSaveProbe, pageInputSync: report.pageInputSync } : {}), ...(report.error ? { error: report.error } : {}) }));
     output.end(); errors.end();
     process.stdout.write = originalStdout; process.stderr.write = originalStderr;
   }
