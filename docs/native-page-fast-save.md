@@ -67,6 +67,16 @@ remains focused is not covered by this adapter's verification. Reset-dialog
 timing is measured separately; a slower dialog is not claimed as a sub-300ms
 reset. Existing hard dependency audit gates remain unchanged.
 
+The first hosted adapter run passed all seven existing Page cases and all twelve
+original fast-save attempts, each measured inside 300ms. The new keyboard create,
+publish and revision scenarios passed at 25–41ms. Its select-all/backspace clear
+sequence submitted a one-character deletion, which the server preserved exactly;
+it did not establish a lost empty-body update. The clear fixture now uses the
+explicit contenteditable `fill('')` operation and still requires native null and
+public empty content. Native selection behavior for rapid Ctrl+A/Backspace is
+not claimed by that fixture. Leave/discard confirmations are selected by their
+actual native `alertdialog` role.
+
 ## Reason for the probe
 
 An earlier PR23 browser run received a successful first-create response with the

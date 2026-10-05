@@ -189,7 +189,7 @@ async function keyboardMutation(page, report, record, expected, documentId, kind
   if (kind === 'save') expect(operation.response.publishedAt).toBeNull();
   else expect(Number.isFinite(Date.parse(operation.response.publishedAt))).toBe(true);
   expect(operation.timing.withinDebounceWindow, 'Immediate keyboard coverage must be measured within300ms').toBe(true);
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
   return operation.response.documentId;
 }
 
@@ -203,7 +203,7 @@ async function afterOldDebounce(page, record, reason) {
 
 async function leaveDialog(page) {
   await page.getByRole('link', { name: 'Back', exact: true }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = page.getByRole('alertdialog');
   await expect(dialog).toContainText('You have unsaved changes, are you sure you want to leave?');
   return dialog;
 }
@@ -211,7 +211,7 @@ async function leaveDialog(page) {
 async function discardDialog(page) {
   await action(page, 'More document actions').click();
   await page.getByRole('menuitem', { name: 'Discard changes', exact: true }).click();
-  const dialog = page.getByRole('dialog');
+  const dialog = page.getByRole('alertdialog');
   await expect(dialog).toContainText('Are you sure?');
   return dialog;
 }
@@ -306,10 +306,11 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
       await readPublic(request, publicPage, record, published, base.slug);
     });
     await scenario(4, async record => {
+      record.input = 'contenteditable-fill-empty';
       await keyboardMutation(page, report, record, cleared, documentId, 'publish', async () => {
-        await bodyField(page).click();
-        await bodyField(page).press('ControlOrMeta+A');
-        await bodyField(page).press('Backspace');
+        // Explicitly clear the contenteditable. A rapid select-all/backspace
+        // sequence can exercise a separate native Slate selection race.
+        await bodyField(page).fill('');
       });
       record.stage = 'verify-native-null-public-empty-array';
       await readDraft(page, record, documentId, cleared);
@@ -324,7 +325,7 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
       const dialog = await leaveDialog(page);
       await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
       await collectEvents(page, record, 'back');
-      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await expect(page.getByRole('alertdialog')).toHaveCount(0);
       await expectBody(page, blocks(text));
       await afterOldDebounce(page, record, 'cancel-leave');
       await expectBody(page, blocks(text));
