@@ -9,6 +9,7 @@ const plugin = `${origin}/alageum-catalog`;
 const editorEmail = 'cms-editor@node-ci.example';
 const editor = page => page.getByRole('region', { name: 'Catalog product editor', exact: true });
 const field = (page, name) => editor(page).getByLabel(name, { exact: true });
+const moneyFields = page => editor(page).locator('.alageum-grid').filter({ has: page.getByLabel('Price', { exact: true }) });
 
 test.beforeAll(() => {
   expect(process.env.APP_ENV, 'Only run against explicitly disposable local fixtures').toBe('test');
@@ -179,7 +180,7 @@ test('native daily workflow creates a draft, persists exact prices, publishes, h
   await reloadProduct(page, product);
   await expect(field(page, 'Price')).toHaveValue(product.price);
   await expect(field(page, 'Currency')).toHaveValue('EUR');
-  await evidence(page, testInfo, editor(page), 'native-cms-exact-price-desktop.png');
+  await evidence(page, testInfo, moneyFields(page), 'native-cms-exact-price-desktop.png');
   await publicState(request, product, false);
 
   const publicPage = await page.context().newPage();
@@ -228,7 +229,10 @@ test('native daily workflow creates a draft, persists exact prices, publishes, h
     await expect(field(page, 'Price')).toHaveValue('90071992547409.91');
     await expect(field(page, 'Currency')).toHaveValue('EUR');
     await page.setViewportSize({ width: 390, height: 844 });
-    await evidence(page, testInfo, editor(page), 'native-cms-republished-mobile.png');
+    // Strapi scrolls its content inside a fixed viewport. Capture visible
+    // sections separately so offscreen editor content is not clipped out.
+    await evidence(page, testInfo, editor(page).locator('.alageum-grid').first(), 'native-cms-republished-mobile.png');
+    await evidence(page, testInfo, moneyFields(page), 'native-cms-exact-price-mobile.png');
   } finally { await publicPage.close(); }
 });
 
@@ -282,7 +286,8 @@ test('missing and invalid daily fields preserve the draft and explain what needs
   expect(unchanged.price).toBeNull();
   expect(unchanged.currency).toBeNull();
   await publicState(request, product, false);
-  await evidence(page, testInfo, editor(page), 'native-cms-invalid-price-currency-desktop.png');
+  await evidence(page, testInfo, editor(page).getByRole('alert'), 'native-cms-validation-summary-desktop.png');
+  await evidence(page, testInfo, moneyFields(page), 'native-cms-invalid-price-currency-desktop.png');
   // Errors must identify the actual controls, including for screen-reader users.
   await expect(field(page, 'Price')).toHaveAttribute('aria-invalid', 'true');
   await expect(field(page, 'Price')).toHaveAccessibleDescription(/decimal|price|non-negative/i);
