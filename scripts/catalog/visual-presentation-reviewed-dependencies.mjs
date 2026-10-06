@@ -1,3 +1,4 @@
+import { assertPtmmQualificationDependencies } from './ptmm-qualification-reviewed-dependencies.mjs';
 // Exact presentation-only successor to PR36. Fresh raw reads; no older gate calls.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -52,7 +53,8 @@ export function verifyVisualPresentationAmendment(read = readVisualBytes) {
   assert.deepEqual(Object.keys(reviewed).sort(), [...visualRequiredFiles].sort(), 'Incomplete or overbroad visual dependency scope');
   assert.equal(reviewed['frontend/components/catalog/models/createEquipmentViewer.js'], '46efdcd611b69deba5a3d1bb30fe4ee95c72b705ce569a140252aba918fafe27', 'Changed reviewed exposure correction');
   assert.equal(reviewed['frontend/components/catalog/source-context/CatalogSourceContext.module.css'], '0d13bcc3c0b8131c94427904aad26cd5ee45f8ac2d36a452869d8317512e4218', 'Changed reviewed viewport correction');
-  for (const [file, expected] of [...Object.entries(fixed), ...Object.entries(reviewed)]) assert.equal(visualDigest(read(file)), expected, `Changed visual presentation dependency ${file}`);
+  assertPtmmQualificationDependencies(fixed, read);
+  assertPtmmQualificationDependencies(reviewed, read);
   assert.equal(clearance.reviewReport, visualReportPath);
   const reportBytes = read(visualReportPath);
   assert.equal(visualDigest(reportBytes), clearance.reviewReportSha256, 'Changed independent visual presentation report');
@@ -76,5 +78,5 @@ export function assertVisualPresentationDependencies(expectedFiles, read = readV
     assert.equal(expected, visualPredecessors[file], `Wrong visual presentation predecessor ${file}`);
   }
   const clearance = verifyVisualPresentationAmendment(read);
-  for (const { file, actual } of changed) assert.equal(actual, clearance.dependencies.reviewedFiles[file], `Changed approved visual presentation bytes ${file}`);
+  assertPtmmQualificationDependencies(Object.fromEntries(changed.map(({ file }) => [file, clearance.dependencies.reviewedFiles[file]])), read);
 }

@@ -10,6 +10,8 @@ import { normalizeApiProduct, liveHref } from '../lib/catalog/apiData.js';
 import { catalogPrice } from '../lib/catalog/admin.js';
 import { parseComparison } from '../lib/catalog/query.js';
 import { displayProductName, displayExecution } from '../lib/catalog/presentation.js';
+import { catalogSpecValueText } from '../lib/catalog/ptmmDimensionQualification.js';
+import { catalogSpecValueComponent } from './helpers/render-catalog-spec-value.mjs';
 
 const affectedIds = [25, 40, 63].map(power => `alageum-2026-tmg-20kv-copper-${power}`);
 const windingValue = 'медные · трехфазные, двухобмоточные';
@@ -94,7 +96,8 @@ async function renderComparison(mode, products, ids, differencesOnly = false) {
   // Keep the component's full comparison JSX and real formatting/selection helpers.
   // Substitute only routing, async state, selection actions and unrelated visuals.
   const bindings = {
-    products, categoryName, specRows, valueOrDash, specUnit, comparisonSpecValue,
+    products, categoryName, specRows, valueOrDash, specUnit, comparisonSpecValue, catalogSpecValueText,
+    CatalogSpecValue: await catalogSpecValueComponent(),
     parseComparison, displayProductName, displayExecution, liveHref, catalogPrice,
     Link: props => createElement('a', props),
     ProductIcon: () => null, CatalogNotice: () => null,

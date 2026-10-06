@@ -1,14 +1,17 @@
+import { readPtmmHistoricalBytes } from './helpers/ptmm-qualification-historical-bytes.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { visualBaselineCommit, visualBaselineTree, visualClearancePath, visualReportPath, visualRequiredFiles,
-  visualPredecessors, visualDigest as digest, readVisualBytes, verifyVisualPresentationAmendment, assertVisualPresentationDependencies,
+  visualPredecessors, visualDigest as digest, readVisualBytes as readCurrentVisualBytes, verifyVisualPresentationAmendment, assertVisualPresentationDependencies,
 } from '../../scripts/catalog/visual-presentation-reviewed-dependencies.mjs';
 import { protectionContextClearancePath, verifyProtectionContextDependencyAmendment } from '../../scripts/catalog/protection-context-reviewed-dependencies.mjs';
 import { measurementColumnClearancePath, verifyMeasurementColumnDependencyAmendment } from '../../scripts/catalog/measurement-column-reviewed-dependencies.mjs';
 import { sourceAssetClearancePath, verifySourceAssetDependencyAmendment } from '../../scripts/catalog/source-asset-reviewed-dependencies.mjs';
+
+const readVisualBytes = file => readPtmmHistoricalBytes(file, readCurrentVisualBytes);
 
 // Only this in-memory reader receives synthetic new approval. Historical
 // approvals and every ordinary dependency are their real checkout bytes.

@@ -349,3 +349,62 @@ jobs:
           if-no-files-found: error
           include-hidden-files: true
           retention-days: 7
+
+  ptmm-qualification-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      NEXT_PUBLIC_CATALOG_SOURCE: static
+      NEXT_TELEMETRY_DISABLED: '1'
+      E2E_PTMM_BASE_URL: http://127.0.0.1:3118
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare isolated PTMM qualification evidence
+        run: |
+          mkdir -p ../ptmm-qualification-evidence
+          git rev-parse HEAD > ../ptmm-qualification-evidence/head.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build the reviewed PTMM qualification site
+        timeout-minutes: 5
+        shell: bash
+        run: npm run build 2>&1 | tee ../ptmm-qualification-evidence/build.log
+      - name: Verify sixteen PTMM qualification cases separately
+        timeout-minutes: 6
+        shell: bash
+        run: |
+          npm run start -- --hostname 127.0.0.1 --port 3118 > ../ptmm-qualification-evidence/server.log 2>&1 &
+          web_pid=$!
+          cleanup() {
+            kill "${web_pid}" 2>/dev/null || true
+            wait "${web_pid}" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          deadline=$((SECONDS + 90))
+          until curl --fail --silent --connect-timeout 2 --max-time 5 "${E2E_PTMM_BASE_URL}/catalog" > /dev/null; do
+            if ! kill -0 "${web_pid}" || (( SECONDS >= deadline )); then
+              tail -80 ../ptmm-qualification-evidence/server.log
+              exit 1
+            fi
+            sleep 2
+          done
+          npx playwright test --config=playwright.ptmm-qualification.config.mjs 2>&1 | tee ../ptmm-qualification-evidence/runner-console.log
+      - name: Retain complete isolated PTMM qualification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ptmm-qualification-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ptmm-qualification-evidence/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
