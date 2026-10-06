@@ -1,3 +1,4 @@
+import { measurementColumn2026Types } from './measurementColumn2026Types.js';
 import { accessory2026Types } from './accessory2026Types.js';
 import { transformer2026Types } from './transformer2026Types.js';
 import { sourceConstructionDefinitions } from './sourceConstructions.js';
@@ -39,6 +40,6 @@ export const equipmentModelTypes = Object.freeze({
   equipment: { name: 'Электрооборудование', reference: null },
 });
 
-export const resolveModelType = (type) => Object.hasOwn(equipmentModelTypes, type) || Object.hasOwn(transformer2026Types, type) || Object.hasOwn(accessory2026Types, type) ? type : 'equipment';
-export const equipmentModelName = (type) => (accessory2026Types[type] || transformer2026Types[type] || equipmentModelTypes[resolveModelType(type)]).name;
+export const resolveModelType = (type) => Object.hasOwn(equipmentModelTypes, type) || Object.hasOwn(transformer2026Types, type) || Object.hasOwn(accessory2026Types, type) || Object.hasOwn(measurementColumn2026Types, type) ? type : 'equipment';
+export const equipmentModelName = (type) => (measurementColumn2026Types[type] || accessory2026Types[type] || transformer2026Types[type] || equipmentModelTypes[resolveModelType(type)]).name;
 export const MODEL_DISCLOSURE = 'Иллюстративная 3D-модель типа; не CAD и не чертёж конкретного исполнения';

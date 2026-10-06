@@ -33,3 +33,11 @@
 
 .catalog-family-source-references{padding:18px 22px;background:#fafbfc;border:1px solid var(--line);font-size:13px;line-height:1.7}.catalog-family-source-references h2{font-size:20px;margin:0 0 10px}.catalog-family-source-references p{margin:0;color:var(--muted)}.catalog-family-source-references ul{margin:12px 0 0;padding-left:20px}.catalog-family-source-references li{margin:7px 0}.catalog-family-source-references a{color:var(--brand-red)}.catalog-source-panel[id]{scroll-margin-top:110px}
 .catalog-configuration summary>.configuration-designation{margin:0;color:var(--ink);font-size:12px;font-weight:600}.catalog-configuration summary>.configuration-qualifier{color:var(--ink);font-size:12px}.catalog-configuration dl>div{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(60px,90px)}.configuration-source{display:grid;align-content:start;gap:6px;color:var(--muted);font-size:10px}
+
+/* Opaque ordered icon layers use the actual catalogue surface, including selection. */
+.catalog-table,.comparison-table,.selection-product,.variant-grid,.family-selected-heading{--equipment-icon-surface:var(--canvas,#fff)}
+.product-thumb.shared-type-icon{--equipment-icon-surface:#f3f5f7}
+.catalog-table tbody tr:hover{--equipment-icon-surface:var(--surface-hover)}
+.catalog-table tbody tr.is-selected,.catalog-table tbody tr.is-selected:hover,.variant-grid>a:hover{--equipment-icon-surface:#fff1f3}
+/* Keep the new layered icon and its surface synchronized during hover changes. */
+.catalog-table tbody tr:has([data-icon-type="tr26-measurement-column-zom-znom-source"]){transition:none}

@@ -23,3 +23,7 @@
 .viewer[data-model-status="error"] .preview { padding-bottom:123px; }
 .viewer[data-model-status="error"] .preview>svg { width:105px; height:105px; }
 @media(max-width:640px) { .viewport { height:300px; } .topline { padding:14px 16px 0; } .help,.disclosure { padding-left:16px; padding-right:16px; } .controls { gap:4px; padding-left:8px; padding-right:8px; } .controls button { min-width:38px; } }
+
+/* This accepted icon has opaque occlusion layers. Its new type uses a solid
+   preview surface so every fill matches exactly, including no-WebGL fallback. */
+.viewer[data-equipment-model="tr26-measurement-column-zom-znom-source"] .viewport { background:#f3f4f1; --equipment-icon-surface:#f3f4f1; }

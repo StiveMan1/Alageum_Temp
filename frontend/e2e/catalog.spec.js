@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import catalogRelease from "../../backend-node/data/catalog-release.json" with { type: "json" };
+import measurementColumnReview from "../../docs/catalog-transformers-2026/review/measurement-column-completion/prototype-independent-review.json" with { type: "json" };
 import { expectCatalogViewport, expectReceivesPointer } from "./helpers/catalog-viewport";
 
 const selectionKey = "alageum.catalog.selection.v1";
@@ -632,18 +633,18 @@ test("transformer source: shared construction survives family navigation without
   await expect(page.locator("canvas")).toHaveCount(0);
 });
 
-test("transformer source: independently approved icon-only records keep their source image and no 3D", async ({ page }) => {
-  const id = "alageum-2026-zom-1p25-35";
+test("catalog source: independently approved icon-only records keep their source image and no 3D", async ({ page }) => {
+  const id = "cat-ptm-tded";
   await page.goto(`/catalog/${id}`);
-  await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-type", "tr26-instrument-column");
+  await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-type", "paired-protection-enclosures");
   await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-confidence", "source-based");
   await expect(page.locator("[data-equipment-model]")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Открыть 3D-модель", exact: true })).toHaveCount(0);
   await expect(page.locator("canvas")).toHaveCount(0);
   await expectDecodedImage(page.locator(".product-visual img"));
   await page.getByRole("tab", { name: /^Документы/ }).click();
-  await page.getByRole("tabpanel").getByRole("link", { name: "стр. 99", exact: true }).click();
-  await expect(page).toHaveURL(/source=transformers-2026&page=99/);
+  await page.getByRole("tabpanel").getByRole("link", { name: "стр. 69", exact: true }).click();
+  await expect(page).toHaveURL(/\/catalog\/source\?page=69$/);
   await expectDecodedImage(page.locator(".source-page-image img"));
   await page.goBack();
   await expect(page.locator("[data-equipment-model]")).toHaveCount(0);
@@ -1195,3 +1196,326 @@ for (const specimen of [
   await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
   await expectShell(page);
 });
+
+// This independent review, rather than the runtime binding being tested, fixes
+// the required page-specific disclosure for the three accepted records.
+const measurementColumnType = 'tr26-measurement-column-zom-znom-source';
+const measurementColumnRecords = measurementColumnReview.records;
+const measurementColumnDisclosure = specimen => [specimen.requiredMainVisibleWording,
+  measurementColumnReview.requiredVisibleSimplificationNote, specimen.requiredSourceContextCaveat];
+
+async function measurementColumnDto(id) {
+  const [{ productById }, { measurementColumn2026CompletionManifest }, { familyPresentationBindings }] = await Promise.all([
+    import('../lib/catalog/data.js'), import('../lib/catalog/models/measurementColumn2026Completion.js'),
+    import('../lib/catalog/familyPresentation.js'),
+  ]);
+  const record = productById(id);
+  const entry = measurementColumn2026CompletionManifest.records[id] || familyPresentationBindings[id];
+  return { id: entry.database_id, public_key: id, slug: id, sku: record.sku,
+    category_public_key: record.category, translations: { ru: { name: record.name, description: record.description } },
+    specs: record, provenance: record, media: [{ path: record.image, kind: 'image', alt: record.imageCaption }],
+    comparable: true, price_mode: 'on_request', currency: 'KZT' };
+}
+
+async function expectMeasurementColumnDisclosure(panel, specimen) {
+  const provenance = panel.locator('.visual-provenance');
+  await expect(provenance).toBeVisible();
+  for (const wording of measurementColumnDisclosure(specimen)) {
+    await expect(provenance).toContainText(wording);
+    await expect(provenance.getByText(wording, { exact: false })).toBeVisible();
+  }
+  await expect(provenance).not.toContainText('стр. 99/100');
+  await expect(provenance.getByRole('link', { name: `стр. ${specimen.sourcePage}`, exact: true }))
+    .toHaveAttribute('href', `/catalog/source?source=transformers-2026&page=${specimen.sourcePage}`);
+}
+
+async function measurementColumnPanelEvidence(panel, specimen, testInfo, name) {
+  await expectMeasurementColumnDisclosure(panel, specimen);
+  // Capture the whole visual stack, including the caveats below the canvas.
+  // Canvas-only crops cannot demonstrate that the source context remains visible.
+  await testInfo.attach(`${name}-full-panel.png`, { body: await panel.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  await testInfo.attach(`${name}-source-caveat.png`, { body: await panel.locator('.visual-provenance').screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  await testInfo.attach(`${name}-panel-context.json`, { body: Buffer.from(JSON.stringify({
+    recordId: specimen.id, sourcePage: specimen.sourcePage,
+    status: await panel.locator('[data-equipment-model]').getAttribute('data-model-status'),
+    disclosure: await panel.locator('.visual-provenance').innerText(),
+    bounds: await panel.boundingBox(),
+  })), contentType: 'application/json' });
+}
+
+async function expectMeasurementColumnIconSurface(svg, testInfo, name) {
+  const { measurementColumn2026IconDefinitions } = await import('../lib/catalog/models/measurementColumn2026Icons.js');
+  const layers = measurementColumn2026IconDefinitions[measurementColumnType].layers;
+  await expect(svg).toBeVisible();
+  await expect(svg).toHaveAttribute('stroke-width', '1.1');
+  await expect(svg.locator('g')).toHaveAttribute('transform', 'translate(2 1) scale(.94)');
+  expect(await svg.locator('path[data-feature]').evaluateAll(paths => paths.map(path => ({
+    feature: path.getAttribute('data-feature'), d: path.getAttribute('d'), solid: path.hasAttribute('fill'),
+  })))).toEqual(layers.map(({ feature, d, solid }) => ({ feature, d, solid })));
+  await expect(svg.locator('path[data-feature^="cover-bushing-"]')).toHaveCount(5);
+  for (const layer of layers.filter(layer => layer.solid)) {
+    await expect(svg.locator(`path[data-feature="${layer.feature}"]`))
+      .toHaveAttribute('fill', /var\(--equipment-icon-surface,\s*#fff\)/);
+  }
+  const metrics = await svg.evaluate(element => {
+    const transparent = color => color === 'transparent' || color === 'rgba(0, 0, 0, 0)';
+    let surfaceElement = element;
+    while (surfaceElement && transparent(getComputedStyle(surfaceElement).backgroundColor)) surfaceElement = surfaceElement.parentElement;
+    const surface = surfaceElement ? getComputedStyle(surfaceElement).backgroundColor : null;
+    return { surface, backgroundImage: surfaceElement ? getComputedStyle(surfaceElement).backgroundImage : null,
+      fills: [...element.querySelectorAll('path[fill]')].map(path => ({
+        feature: path.dataset.feature, fill: getComputedStyle(path).fill, opacity: getComputedStyle(path).fillOpacity,
+      })) };
+  });
+  expect(metrics.surface, 'The opaque icon must have an actual containing surface').toBeTruthy();
+  expect(metrics.backgroundImage, 'The icon occlusion fill must not sit on a gradient').toBe('none');
+  for (const path of metrics.fills) {
+    expect(path.fill, `${name}: ${path.feature} must occlude using its actual background`).toBe(metrics.surface);
+    expect(path.opacity).toBe('1');
+  }
+  await testInfo.attach(`${name}-icon-surface.json`, { body: Buffer.from(JSON.stringify(metrics)), contentType: 'application/json' });
+}
+
+for (const specimen of measurementColumnRecords) for (const mode of ['static', 'api']) {
+  test(`measurement column completion: ${mode} ${specimen.id} keeps caveats through render, rotation, reopen and history`, async ({ page }, testInfo) => {
+    test.setTimeout(90_000);
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    await observeSourceAssetContexts(page);
+    if (mode === 'api') {
+      const dto = await measurementColumnDto(specimen.id);
+      await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: 1, items: [dto] } }));
+    }
+    const suffix = mode === 'api' ? '?source=api' : '';
+    await page.goto(`/catalog/${specimen.id}${suffix}`);
+    const panel = page.locator('.product-visual-stack');
+    const viewer = panel.locator(`[data-equipment-model="${measurementColumnType}"]`);
+    const icon = viewer.locator(`svg[data-equipment-type="${measurementColumnType}"]`);
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await expect(page.locator('canvas')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__sourceAssetContexts.created)).toBe(0);
+    await expectMeasurementColumnIconSurface(icon, testInfo, `${mode}-${specimen.id}-idle`);
+    await measurementColumnPanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-idle`);
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+    const canvas = viewer.locator('canvas');
+    await expect.poll(() => canvas.evaluate(element => {
+      const gl = element.getContext('webgl2') || element.getContext('webgl');
+      return Boolean(gl && !gl.isContextLost() && gl.drawingBufferWidth > 0 && gl.drawingBufferHeight > 0);
+    })).toBe(true);
+    const opened = await canvasEvidence(canvas, testInfo, `${mode}-${specimen.id}-open`);
+    await measurementColumnPanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-open`);
+    await viewer.getByRole('button', { name: 'Повернуть модель влево', exact: true }).click();
+    await viewer.getByRole('button', { name: 'Повернуть модель влево', exact: true }).click();
+    const rotated = await canvasEvidence(canvas, testInfo, `${mode}-${specimen.id}-rotated`, opened);
+    expect(rotated.changedPixels).toBeGreaterThan(opened.width * opened.height * 0.001);
+    await measurementColumnPanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-rotated`);
+    await canvas.press('Home');
+    await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.__sourceAssetContexts.lost)).toBe(1);
+    await expect(viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true })).toBeFocused();
+    await expectMeasurementColumnDisclosure(panel, specimen);
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'ready');
+    await canvasEvidence(canvas, testInfo, `${mode}-${specimen.id}-reopened`);
+    await panel.locator('.visual-provenance').getByRole('link', { name: `стр. ${specimen.sourcePage}`, exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`source=transformers-2026&page=${specimen.sourcePage}$`));
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.__sourceAssetContexts.lost)).toBe(2);
+    await expectDecodedImage(page.locator('.source-page-image img'));
+    await page.goBack();
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await expectMeasurementColumnDisclosure(panel, specimen);
+    await panel.locator('.product-original-illustration summary').click();
+    await expectDecodedImage(panel.locator('.product-original-illustration img'));
+    await expect(panel.locator('.product-original-illustration img')).toHaveAttribute('src', new RegExp(`page-${String(specimen.sourcePage).padStart(3, '0')}\\.webp`));
+    await expectShell(page);
+    expect(errors).toEqual([]);
+  });
+}
+
+for (const mode of ['static', 'api']) test(`measurement column completion: ${mode} rapid close cancels lazy activation without resurrecting a canvas`, async ({ page }) => {
+  test.setTimeout(60_000);
+  const specimen = measurementColumnRecords[0];
+  await observeSourceAssetContexts(page);
+  if (mode === 'api') {
+    const dto = await measurementColumnDto(specimen.id);
+    await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: 1, items: [dto] } }));
+  }
+  await page.goto(`/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}`);
+  const viewer = page.locator(`[data-equipment-model="${measurementColumnType}"]`);
+  await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+  let releaseImports;
+  const importGate = new Promise(resolve => { releaseImports = resolve; });
+  const imports = [];
+  const holdImport = async route => { imports.push(route.request()); await importGate; await route.continue(); };
+  await page.route('**/_next/static/chunks/**', holdImport);
+  try {
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'loading');
+    await expect.poll(() => imports.length).toBeGreaterThan(0);
+    await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+  } finally {
+    releaseImports();
+    // Keep the released interceptor until this isolated page fixture tears down.
+    // Removing its last route can handle held requests before route.continue().
+  }
+  await Promise.all(imports.map(async request => {
+    const response = await request.response();
+    expect(response, `The held chunk must receive a response: ${request.url()}`).not.toBeNull();
+    expect(response.ok(), `The held chunk must load successfully: ${request.url()}`).toBe(true);
+    expect(await response.finished(), `The held chunk response must finish: ${request.url()}`).toBeNull();
+  }));
+  await expect(viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true })).toBeFocused();
+  await expect(page.locator('canvas')).toHaveCount(0);
+  expect(await page.evaluate(() => window.__sourceAssetContexts.created)).toBe(0);
+  await expectMeasurementColumnDisclosure(page.locator('.product-visual-stack'), specimen);
+  await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+  await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+  await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
+  await expect.poll(() => page.evaluate(() => window.__sourceAssetContexts)).toEqual({ created: 1, lost: 1 });
+});
+
+test('measurement column completion: API UUID, edited shape and raw media guards suppress all three records', async ({ page }) => {
+  test.setTimeout(90_000);
+  let current;
+  await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: 1, items: [current] } }));
+  for (const specimen of measurementColumnRecords) {
+    const original = await measurementColumnDto(specimen.id);
+    for (const patch of [
+      { id: '10000000-0000-4000-8000-000000000001' },
+      { specs: { ...original.specs, execution: 'Изменённое исполнение владельца' } },
+      { media: [{ ...original.media[0], path: `/catalog-source/transformers-2026/page-${specimen.sourcePage === 99 ? '100' : '099'}.webp` }] },
+    ]) {
+      current = { ...original, ...patch };
+      await page.goto(`/catalog/${specimen.id}?source=api`);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+      await expect(page.locator(`svg[data-equipment-type="${measurementColumnType}"]`)).toHaveCount(0);
+      await expect(page.locator('canvas')).toHaveCount(0);
+      await page.goto('/catalog?source=api');
+      const icon = page.locator(`[data-product-icon="${specimen.id}"]`);
+      await expect(icon).toHaveAttribute('data-icon-confidence', 'source-only');
+      await expect(icon).not.toHaveAttribute('data-icon-type', measurementColumnType);
+    }
+  }
+});
+
+for (const mode of ['static', 'api']) test(`measurement column completion: ${mode} no-WebGL retry preserves all page-specific caveats and source scans`, async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (kind, ...args) { return /webgl/i.test(kind) ? null : original.call(this, kind, ...args); };
+  });
+  if (mode === 'api') {
+    const dtos = await Promise.all(measurementColumnRecords.map(specimen => measurementColumnDto(specimen.id)));
+    await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: dtos.length, items: dtos } }));
+  }
+  for (const specimen of measurementColumnRecords) {
+    await page.goto(`/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}`);
+    const panel = page.locator('.product-visual-stack');
+    const viewer = panel.locator(`[data-equipment-model="${measurementColumnType}"]`);
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'error');
+    await expect(viewer).toContainText('Выше показана отдельно проверенная иконка');
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await expectMeasurementColumnIconSurface(viewer.locator(`svg[data-equipment-type="${measurementColumnType}"]`), testInfo, `${mode}-${specimen.id}-fallback`);
+    await measurementColumnPanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-fallback`);
+    await viewer.getByRole('button', { name: 'Попробовать снова', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'error');
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await expectMeasurementColumnDisclosure(panel, specimen);
+    await panel.locator('.product-original-illustration summary').click();
+    await expectDecodedImage(panel.locator('.product-original-illustration img'));
+    await expect(panel.locator('.product-original-illustration img')).toHaveAttribute('src', new RegExp(`page-${String(specimen.sourcePage).padStart(3, '0')}\\.webp`));
+  }
+  await expectShell(page);
+});
+
+for (const mode of ['static', 'api']) test(`measurement column completion: ${mode} listing surfaces and comparison keep three distinct records`, async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  await observeSourceAssetContexts(page);
+  if (mode === 'api') {
+    const dtos = await Promise.all(measurementColumnRecords.map(specimen => measurementColumnDto(specimen.id)));
+    await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: dtos.length, items: dtos } }));
+  }
+  for (const specimen of measurementColumnRecords) {
+    await page.goto(`/catalog?source=${mode}&q=${encodeURIComponent(specimen.sourcePage === 99 ? 'ЗОМ' : 'ЗНОМ')}`);
+    const row = page.locator('.catalog-table tbody tr').filter({ has: page.locator(`[data-product-icon="${specimen.id}"]`) });
+    const icon = row.locator(`[data-product-icon="${specimen.id}"]`);
+    await expect(icon).toHaveAttribute('data-icon-type', measurementColumnType);
+    for (const wording of measurementColumnDisclosure(specimen)) expect(await icon.getAttribute('title')).toContain(wording);
+    const svg = icon.locator('svg');
+    await page.getByRole('heading', { level: 1 }).hover();
+    await expectMeasurementColumnIconSurface(svg, testInfo, `${mode}-${specimen.id}-listing-normal`);
+    await row.hover();
+    await expectMeasurementColumnIconSurface(svg, testInfo, `${mode}-${specimen.id}-listing-hover`);
+    await row.getByRole('checkbox').check();
+    await page.getByRole('heading', { level: 1 }).hover();
+    await expect(row.getByRole('checkbox')).toBeChecked();
+    await expectMeasurementColumnIconSurface(svg, testInfo, `${mode}-${specimen.id}-listing-selected`);
+    await testInfo.attach(`${mode}-${specimen.id}-selected-row.png`, { body: await row.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  }
+  await page.goto(`/catalog/compare?${mode === 'api' ? 'source=api&' : ''}ids=${measurementColumnRecords.map(specimen => specimen.id).join(',')}`);
+  for (const specimen of measurementColumnRecords) {
+    const icon = page.locator(`.comparison-table [data-product-icon="${specimen.id}"]`);
+    await expect(icon).toHaveAttribute('data-icon-type', measurementColumnType);
+    for (const wording of measurementColumnDisclosure(specimen)) expect(await icon.getAttribute('title')).toContain(wording);
+    await expectMeasurementColumnIconSurface(icon.locator('svg'), testInfo, `${mode}-${specimen.id}-comparison`);
+    await expect(page.locator(`.comparison-table a[href="/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}"]`)).toBeVisible();
+  }
+  const highVoltage = page.locator('.comparison-table tbody tr').filter({ has: page.getByRole('rowheader', { name: mode === 'api' ? 'ВН, кВ' : 'ВН', exact: true }) });
+  await expect(highVoltage.getByRole('cell')).toHaveText(mode === 'api' ? ['27,5', '27,5', '35/√3'] : ['27,5 кВ', '27,5 кВ', '35/√3 кВ']);
+  for (const [label, values] of [['Масса не более полная', ['20', '80', '80']], ['Масса не более масла', ['80', '20', '20']]]) {
+    const mass = page.locator('.comparison-table tbody tr').filter({ has: page.getByRole('rowheader', { name: `${label}${mode === 'api' ? ', кг' : ''}`, exact: true }) });
+    await expect(mass.getByRole('cell')).toHaveText(values.map(value => `${value}${mode === 'api' ? '' : ' кг'}`));
+  }
+  const printedPower = page.locator('.comparison-table tbody tr').filter({ has: page.getByRole('rowheader', { name: mode === 'api' ? 'Номинальная мощность, кВ' : 'Номинальная мощность', exact: true }) }).filter({ hasText: '1,25' });
+  await expect(printedPower.getByRole('cell')).toHaveText([mode === 'api' ? '1,25' : '1,25 кВ', '—', '—']);
+  await expect(page.locator('canvas')).toHaveCount(0);
+  expect(await page.evaluate(() => window.__sourceAssetContexts.created)).toBe(0);
+  await attachSourceEvidence(page.locator('.comparison-table-wrap'), testInfo, `${mode}-measurement-column-comparison`);
+});
+
+for (const familyId of ['tr2026-family-zom', 'tr2026-family-znom']) for (const mode of ['static', 'api']) {
+  test(`measurement column completion: ${mode} ${familyId} requires an explicit member and preserves selected context`, async ({ page }, testInfo) => {
+    test.setTimeout(90_000);
+    await observeSourceAssetContexts(page);
+    const specimens = measurementColumnRecords.filter(specimen => familyId.endsWith('-zom') ? specimen.sourcePage === 99 : specimen.sourcePage === 100);
+    if (mode === 'api') {
+      const dtos = await Promise.all([familyId, ...specimens.map(specimen => specimen.id)].map(measurementColumnDto));
+      await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: dtos.length, items: dtos } }));
+    }
+    await page.goto(`/catalog/${familyId}${mode === 'api' ? '?source=api' : ''}`);
+    const selector = page.getByRole('combobox', { name: 'Запись для просмотра', exact: true });
+    await expect(selector).toHaveValue('');
+    await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+    await expect(page.locator('canvas')).toHaveCount(0);
+    for (const specimen of specimens) {
+      const option = selector.locator(`option[value="${specimen.id}"]`);
+      await expect(option).toContainText(`стр. ${specimen.sourcePage}`);
+      await expect(option).toContainText(specimen.id.endsWith('config2') ? '35/√3' : '27,5');
+      await selector.selectOption(specimen.id);
+      const selected = page.locator(`[data-selected-member="${specimen.id}"]`);
+      const panel = selected.locator('.product-visual-stack');
+      const viewer = panel.locator(`[data-equipment-model="${measurementColumnType}"]`);
+      await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+      await expectMeasurementColumnIconSurface(selected.locator('.family-selected-heading svg'), testInfo, `${mode}-${specimen.id}-family-heading`);
+      await measurementColumnPanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-family-idle`);
+      await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+      await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+      await canvasEvidence(viewer.locator('canvas'), testInfo, `${mode}-${specimen.id}-family-open`);
+      await measurementColumnPanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-family-open`);
+      await testInfo.attach(`${mode}-${specimen.id}-family-context.png`, { body: await selected.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+      await expect(selected.getByRole('link', { name: 'Открыть отдельную карточку →', exact: true }))
+        .toHaveAttribute('href', `/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}`);
+      await selector.selectOption('');
+      await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+      await expect(page.locator('canvas')).toHaveCount(0);
+      await expect.poll(() => page.evaluate(() => window.__sourceAssetContexts.created === window.__sourceAssetContexts.lost)).toBe(true);
+    }
+    await expectShell(page);
+  });
+}

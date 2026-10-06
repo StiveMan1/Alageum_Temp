@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 import { officialProducts } from '../frontend/lib/catalog/data.js';
 import { transformerImport } from '../frontend/lib/catalog/transformers2026.js';
 import { sourceAssetCompletionManifest as manifest, getSourceAssetCompletion } from '../frontend/lib/catalog/models/sourceAssetCompletion.js';
@@ -9,9 +8,10 @@ import { transformerRecordShape, recordShapeDigest } from '../frontend/lib/catal
 import { transformerRuntimeManifest } from '../frontend/lib/catalog/models/transformer2026Runtime.js';
 import { accessory2026TypeIds } from '../frontend/lib/catalog/models/accessory2026Types.js';
 import { getSourcePageAsset } from '../frontend/lib/catalog/sources.js';
-import { catalogAssetSnapshot, importedProductId } from './catalog/catalog-asset-snapshot.mjs';
+import { importedProductId } from './catalog/catalog-asset-snapshot.mjs';
 import { digest, rawFileHash, readBytes, sourceAssetClearancePath, verifySourceAssetDependencyAmendment } from './catalog/source-asset-reviewed-dependencies.mjs';
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+import { verifyMeasurementColumnPreservation } from './check-measurement-column-completion.mjs';
+import { measurementColumnBaselineCommit, measurementColumnClearancePath, verifyMeasurementColumnDependencyAmendment } from './catalog/measurement-column-reviewed-dependencies.mjs';
 const reviewDir = 'docs/catalog-transformers-2026/review/source-asset-completion';
 export const sourceAssetExactIds = Object.freeze([
   'alageum-2026-relay-tr100', 'alageum-2026-sensor-pt100', 'alageum-2026-damper-ek290',
@@ -71,24 +71,38 @@ export function verifySourceAssetScope() {
 }
 export async function verifySourceAssetPreservation() {
   const baseline = JSON.parse(readBytes(`${reviewDir}/baseline-outputs.json`));
-  const candidate = await catalogAssetSnapshot(root);
-  assert.equal(Object.keys(candidate.products).length, 843);
-  assert.deepEqual(Object.keys(candidate.products), Object.keys(baseline.products), 'Changed ordered catalogue identities');
-  for (const key of ['legacyIds', 'modelOutputs', 'iconOutputs', 'executionManifest', 'identities']) assert.deepEqual(candidate[key], baseline[key], `Changed historical ${key}`);
+  // PR32's claim is checked at its frozen checkpoint. The current catalogue is
+  // separately checked against that checkpoint; its three later bindings are
+  // never attributed to the historical thirteen-record approval.
+  const checkpointBytes = readBytes('docs/catalog-transformers-2026/review/measurement-column-completion/baseline-outputs.json');
+  assert.equal(digest(checkpointBytes), 'dda99f863f2a27a114e2b36ad597d338395868ef8b36655827f6a52540d69c2f', 'Changed frozen PR32 checkpoint');
+  const checkpoint = JSON.parse(checkpointBytes);
+  assert.equal(Object.keys(checkpoint.products).length, 843);
+  assert.deepEqual(Object.keys(checkpoint.products), Object.keys(baseline.products), 'Changed ordered catalogue identities');
+  for (const key of ['legacyIds', 'executionManifest', 'identities']) assert.deepEqual(checkpoint[key], baseline[key], `Changed historical ${key}`);
+  for (const key of ['modelOutputs', 'iconOutputs']) {
+    const historicalOutputs = Object.fromEntries(Object.keys(baseline[key]).map(id => [id, checkpoint[key][id]]));
+    assert.deepEqual(historicalOutputs, baseline[key], `Changed historical ${key}`);
+    assert.deepEqual(Object.keys(checkpoint[key]).filter(id => !Object.hasOwn(baseline[key], id)).sort(), [...accessory2026TypeIds].sort(), 'PR32 added exactly its three accessory types');
+  }
   const affected = new Set(sourceAssetExactIds), changed = [];
   for (const [id, old] of Object.entries(baseline.products)) {
-    const current = candidate.products[id];
+    const current = checkpoint.products[id];
     for (const key of ['body', 'choices', 'panels', 'staticMedia', 'apiMedia']) assert.equal(current[key], old[key], `Changed ${id}/${key}`);
     if (!affected.has(id)) assert.deepEqual(current, old, `Changed unapproved product output ${id}`);
     if (current.static !== old.static || current.api !== old.api) changed.push(id);
   }
-  assert.deepEqual(changed.sort(), [...sourceAssetExactIds].sort(), 'Only the thirteen exact bindings may change');
-  return { productBodies: 843, unaffectedRecords: 830, legacyRecords: 238, choiceRecords: 36, choices: 74,
-    oldModelTypes: Object.keys(baseline.modelOutputs).length, oldIconTypes: Object.keys(baseline.iconOutputs).length };
+  assert.deepEqual(changed.sort(), [...sourceAssetExactIds].sort(), 'PR32 changed only its thirteen exact bindings');
+  const forwardPreservation = await verifyMeasurementColumnPreservation();
+  return { historicalCheckpoint: { commit: measurementColumnBaselineCommit,
+    productBodies: 843, unaffectedRecords: 830, legacyRecords: 238, choiceRecords: 36, choices: 74,
+    oldModelTypes: Object.keys(baseline.modelOutputs).length, oldIconTypes: Object.keys(baseline.iconOutputs).length },
+  forwardPreservation };
 }
 export async function verifySourceAssetCompletion({ candidate = false } = {}) {
   const scope = verifySourceAssetScope(), preservation = await verifySourceAssetPreservation();
   if (!candidate) {
+    verifyMeasurementColumnDependencyAmendment(JSON.parse(readBytes(measurementColumnClearancePath)));
     const clearance = verifySourceAssetDependencyAmendment(JSON.parse(readBytes(sourceAssetClearancePath)));
     const protectedFiles = JSON.parse(readBytes(`${reviewDir}/immutable-dependencies.json`));
     for (const [file, hash] of Object.entries(protectedFiles)) {
@@ -99,7 +113,7 @@ export async function verifySourceAssetCompletion({ candidate = false } = {}) {
     assert.equal(clearance.bindingsSha256, rawFileHash('frontend/lib/catalog/models/sourceAssetCompletionManifest.json'));
     assert.equal(clearance.baselineOutputsSha256, digest(readBytes(`${reviewDir}/baseline-outputs.json`)));
   }
-  return { status: candidate ? 'candidate-checks-only-independent-approval-required' : 'approved-bounded-source-assets', ...scope, ...preservation };
+  return { status: candidate ? 'candidate-checks-only-independent-approval-required' : 'approved-source-assets-with-bounded-measurement-column-amendment', ...scope, ...preservation };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   console.log(JSON.stringify(await verifySourceAssetCompletion({ candidate: process.argv.includes('--candidate') })));

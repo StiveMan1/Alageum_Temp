@@ -1,3 +1,4 @@
+import { getMeasurementColumn2026Completion } from './measurementColumn2026Completion.js';
 import { getSourceAssetCompletion } from './sourceAssetCompletion.js';
 import { getReviewedTransformerAsset, isTransformer2026Record } from './transformer2026Runtime.js';
 import { sourceRecordVisuals } from './sourceConstructions.js';
@@ -690,6 +691,8 @@ const genericType = (product) => {
 
 /** Source-family visual evidence; do not substitute equipmentTypeFor() for this. */
 export function getEquipmentVisual(product = {}) {
+  const columnCompletion = getMeasurementColumn2026Completion(product, 'geometry');
+  if (columnCompletion) return columnCompletion;
   const sourceCompletion = getSourceAssetCompletion(product, 'geometry');
   if (sourceCompletion) return sourceCompletion;
   const completion = getReviewedLegacyCompletion(product, 'geometry');

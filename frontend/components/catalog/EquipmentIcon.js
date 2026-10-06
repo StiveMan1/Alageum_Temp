@@ -1,3 +1,4 @@
+import { measurementColumn2026IconDefinitions } from '@/lib/catalog/models/measurementColumn2026Icons';
 import { accessory2026IconDefinitions } from '@/lib/catalog/models/accessory2026Icons';
 import { transformer2026IconDefinitions } from '@/lib/catalog/models/transformer2026Icons';
 import { sourceIconShapes, resolveIconType, equipmentIconName } from '@/lib/catalog/models/iconTypes';
@@ -22,8 +23,10 @@ const Transformer = ({ instrument = false }) => <>
 
 export default function EquipmentIcon({ type, size = 48, title, className = '', ...props }) {
   const resolved = resolveIconType(type);
+  const columnIcon = Object.hasOwn(measurementColumn2026IconDefinitions, resolved) ? measurementColumn2026IconDefinitions[resolved] : null;
   let drawing;
-  if (Object.hasOwn(accessory2026IconDefinitions, resolved)) drawing = <>{accessory2026IconDefinitions[resolved].paths.map((d, index) => <path key={index} d={d}/>)}</>;
+  if (columnIcon) drawing = <g transform="translate(2 1) scale(.94)">{columnIcon.layers.map(item => <path key={item.feature} data-feature={item.feature} d={item.d} fill={item.solid ? 'var(--equipment-icon-surface, #fff)' : undefined}/>)}</g>;
+  else if (Object.hasOwn(accessory2026IconDefinitions, resolved)) drawing = <>{accessory2026IconDefinitions[resolved].paths.map((d, index) => <path key={index} d={d}/>)}</>;
   else if (Object.hasOwn(transformer2026IconDefinitions, resolved)) drawing = <>{transformer2026IconDefinitions[resolved].paths.map((d, index) => <path key={index} d={d}/>)}</>;
   else if (Object.hasOwn(sourceIconShapes, resolved)) drawing = <>{sourceIconShapes[resolved].paths.map((d, index) => <path key={index} d={d}/>)}</>;
   else if (resolved === 'oil-transformer' || resolved === 'instrument-transformer') drawing = <Transformer instrument={resolved === 'instrument-transformer'}/>;
@@ -45,5 +48,5 @@ export default function EquipmentIcon({ type, size = 48, title, className = '', 
   else if (resolved === 'outdoor-floor-cabinet') drawing = <><path d="M17 14h30v40H17zM15 9h34v5H15zM17 54v5h30v-5M47 14l7-5v40l-7 5M49 9h5M21 20h22v30H21zM25 32v8" fill="currentColor" fillOpacity=".04"/><Bolt x={34} y={30}/></>;
   else if (resolved === 'equipment') drawing = <><path d="M13 20 32 10l20 10v29L32 59 13 49zM13 20l19 11 20-11M32 31v28"/><Bolt x={24} y={37}/></>;
   else drawing = <Cabinet kind={resolved}/>;
-  return <svg width={size} height={size} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className={`equipment-icon ${className}`} role={title ? 'img' : undefined} aria-label={title ? (typeof title === 'string' ? title : equipmentIconName(resolved)) : undefined} aria-hidden={title ? undefined : true} focusable="false" data-equipment-type={resolved} {...props}>{title && <title>{typeof title === 'string' ? title : equipmentIconName(resolved)}</title>}{drawing}</svg>;
+  return <svg width={size} height={size} viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth={columnIcon ? "1.1" : "1.7"} strokeLinecap="round" strokeLinejoin="round" className={`equipment-icon ${className}`} role={title ? 'img' : undefined} aria-label={title ? (typeof title === 'string' ? title : equipmentIconName(resolved)) : undefined} aria-hidden={title ? undefined : true} focusable="false" data-equipment-type={resolved} {...props}>{title && <title>{typeof title === 'string' ? title : equipmentIconName(resolved)}</title>}{drawing}</svg>;
 }

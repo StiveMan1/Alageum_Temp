@@ -1,3 +1,4 @@
+import { getMeasurementColumn2026Completion } from './measurementColumn2026Completion.js';
 import { getSourceAssetCompletion } from './sourceAssetCompletion.js';
 import { getReviewedTransformerAsset, isTransformer2026Record } from './transformer2026Runtime.js';
 import { equipmentVisualAudit, getEquipmentVisual } from './visualMap.js';
@@ -13,6 +14,8 @@ export const iconConfidenceLabel = icon => icon.confidence === 'source-based'
   : 'Условная схема типа; внешний вид исполнения не подтверждён';
 
 export function getEquipmentIcon(product = {}) {
+  const columnCompletion = getMeasurementColumn2026Completion(product, 'icons');
+  if (columnCompletion) return columnCompletion;
   const sourceCompletion = getSourceAssetCompletion(product, 'icons');
   if (sourceCompletion) return sourceCompletion;
   const completion = getReviewedLegacyCompletion(product, 'icons');

@@ -10,7 +10,7 @@ let component;
 export async function renderEquipmentIcon(type, size = 64, title = type) {
   if (!component) {
     const file = new URL('../../components/catalog/EquipmentIcon.js', import.meta.url);
-    const source = (await readFile(file, 'utf8')).replace("'@/lib/catalog/models/accessory2026Icons'", JSON.stringify(new URL('../../lib/catalog/models/accessory2026Icons.js', import.meta.url).href)).replace("'@/lib/catalog/models/transformer2026Icons'", JSON.stringify(new URL('../../lib/catalog/models/transformer2026Icons.js', import.meta.url).href)).replace("'@/lib/catalog/models/iconTypes'", JSON.stringify(new URL('../../lib/catalog/models/iconTypes.js', import.meta.url).href));
+    const source = (await readFile(file, 'utf8')).replace(/(['"])@\/([^'"]+)\1/g, (_, quote, relative) => JSON.stringify(new URL(`../../${relative}.js`, import.meta.url).href));
     await loadBindings();
     const compiled = await transform(source, { filename: file.pathname, jsc: { parser: { syntax:'ecmascript', jsx:true }, transform: { react: { runtime:'automatic' } } }, module: { type:'es6' } });
     const code = compiled.code.replaceAll('"react/jsx-runtime"', JSON.stringify(pathToFileURL(require.resolve('react/jsx-runtime')).href));
