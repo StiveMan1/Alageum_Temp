@@ -6,6 +6,52 @@ candidate adds the scoped input adapter described below; it does not rewrite
 Strapi vendor code, change dependency versions, or grant roles in an existing
 database.
 
+## Native clear-event diagnostic, 2026-10-06
+
+PR36 head `c83265e76c3c671e84e97ed6d8527f788abe46e8` reproduced another
+clear/publish failure with the PR35 application fix unchanged
+([retained evidence](https://github.com/StiveMan1/Alageum_Temp/actions/runs/37513290504/artifacts/11435976850)).
+The initial clear's shortcut occurred 24.7ms after `beforeinput`; both request
+and HTTP 200 response contained the preceding body. The first three lifecycle
+scenarios passed, the fourth failed, and later scenarios were not reached.
+Ordinary Page cases and the twelve-attempt fast-save probe passed. PR35's earlier
+success remains historical evidence, not proof that this path is closed.
+
+The installed Slate implementation flushes queued selection handlers before
+handling input, but it does not necessarily read the current DOM selection if
+no selection event was queued or reconciliation is temporarily suppressed. Its
+forward-delete path ignores native target ranges and operates on Slate's stored
+selection. A null selection or a collapsed caret at the end can produce no edit
+operation; in that case the Page callback and its form-commit flush never run.
+This path is reproducible with the native Slate core, but the retained browser
+record does not identify it conclusively. Missing DOM `input` is also normal for
+a successful Slate-managed deletion and cannot settle the question.
+
+The next checkpoint therefore changes diagnostics only. A test-only React
+DevTools hook locates the mounted editor and nearest native Page Form. Capture
+is allowed only on the loopback Page route for the exact synthetic UUID slug
+created by this fixture. It records bounded beforeinput/selection observations,
+native operation types, and allowlisted Page body snapshots around the real
+callback. It never serializes React fibers, renderer internals, arbitrary Form
+fields, authentication state, tokens or browser storage. Existing hooks and
+incompatible editor references must be rejected explicitly.
+
+The real callback is observed and forwarded; no selection is forced, no form
+value is set, and no timeout, automatic retry or publication delay is added.
+Instrumentation can still affect scheduling, so an instrumented pass cannot
+establish absence of the race. The strict request/native reload/public-content
+assertions and existing timing limits remain mandatory. This checkpoint does
+not claim a further application fix; its purpose is to distinguish a lost
+native deletion from a later callback, form-commit or reset failure before
+choosing a correction. Hosted diagnostic execution and review are still needed.
+Local verification passed all 562 frontend unit checks (including 18 controlled
+probe tests), frontend lint, lifecycle discovery and 16 unchanged native Page
+commit/integrity/evidence checks. Independent review confirmed fixture-only
+capture and callback forwarding; failure paths also drain the probe before
+reporting the original operation failure. Native browser attachment remains
+unverified locally because Chromium cannot create its IPC socket in this
+environment. No application, dependency, workflow or vendor file is changed.
+
 ## Form commitment follow-up, 2026-10-06
 
 The unchanged adapter later failed the strict clear-and-keyboard-publish case at
