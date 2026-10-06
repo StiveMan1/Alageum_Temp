@@ -137,11 +137,13 @@ function nativePageForm({ mode = "application", model = "api::page.page", name =
       "./BlocksEditor.js": { BlocksEditor: CaptureEditor },
     });
     const options = loadModule(path.join(backendRoot, "src/admin/page-editor-options.mjs"), {}, { transform: true });
+    const bridge = loadModule(path.join(backendRoot, "src/admin/components/PageSelectionBridge.jsx"), {}, { transform: true });
     const application = loadModule(path.join(backendRoot, "src/admin/components/PageBlocksInput.jsx"), {
       "@strapi/admin/strapi-admin": { useField },
       "@strapi/content-manager/strapi-admin": { unstable_useContentManagerContext: () => ({ model }) },
       "../../../node_modules/@strapi/content-manager/dist/admin/pages/EditView/components/FormInputs/BlocksInput/BlocksInput.mjs": nativeInput,
       "../page-editor-options.mjs": options,
+      "./PageSelectionBridge": bridge,
     }, { transform: true });
     function Probe() { form = useForm("PageCommitProbe", state => state); return null; }
     const Input = mode === "native" ? nativeInput.BlocksInput : application.default;
