@@ -21,12 +21,24 @@ test.afterEach(async ({ page }, testInfo) => {
   expect(result.capture.pageErrorCount, 'No uncaught page error, including events beyond the retention cap').toBe(0);
 });
 
+function retainReadabilityGeometry(measured, label) {
+  if (!measured.diagnostics?.rawCellWidthOverflow || measured.violations.length) return;
+  // Keep a bounded witness of any full-Range/word difference even on success.
+  // This can confirm or refute the hosted hanging-space hypothesis.
+  const annotations = test.info().annotations, type = 'readability-range-geometry';
+  if (annotations.filter(item => item.type === type).length < 6) {
+    annotations.push({ type, description: JSON.stringify({ label, ...measured.diagnostics }) });
+  } else if (!annotations.some(item => item.type === `${type}-truncated`)) {
+    annotations.push({ type: `${type}-truncated`, description: 'Further geometry witnesses omitted after six per case' });
+  }
+}
 async function expectReadableNode(node, label) {
   await expect(node).toHaveCount(1);
   await node.scrollIntoViewIfNeeded();
   await expect(node).toBeVisible();
   const measured = await node.evaluate(measurePtmmReadability);
-  expect(measured.violations, `${label}: text must be visible and reachable through every clipping/scrolling ancestor`).toEqual([]);
+  retainReadabilityGeometry(measured, label);
+  expect(measured.violations, `${label}: text must be visible and reachable through every clipping/scrolling ancestor; geometry=${JSON.stringify(measured.diagnostics)}`).toEqual([]);
 }
 async function expectReadable(context, mode) {
   // The reviewed component has exactly one direct source-value span and one
@@ -42,7 +54,7 @@ async function expectReadable(context, mode) {
   const link = context.getByRole('link', { name: 'Стр. 68', exact: true });
   await link.scrollIntoViewIfNeeded();
   const linkMeasured = await link.evaluate(measurePtmmReadability, { requireTargetInViewport: true });
-  expect(linkMeasured.violations, 'The source link must be visible after ordinary scrolling').toEqual([]);
+  expect(linkMeasured.violations, `The source link must be visible after ordinary scrolling; geometry=${JSON.stringify(linkMeasured.diagnostics)}`).toEqual([]);
   await link.click({ trial: true });
 }
 async function expectQualified(page, dto, mode) {

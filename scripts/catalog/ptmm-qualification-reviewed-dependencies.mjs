@@ -1,3 +1,4 @@
+import { assertCorrectionDependencies } from './ptmm-browser-correction-reviewed-dependencies.mjs';
 // Exact source/UI and browser successor to PR40. This leaf reads raw bytes only;
 // it never calls an older verifier, projects historical bytes or caches authority.
 import assert from 'node:assert/strict';
@@ -129,7 +130,7 @@ export function verifyPtmmQualificationDependencyFiles(clearance, read = readPtm
     assert.equal(reviewed[file], expected, `Changed independently reviewed PTMM source/UI pin ${file}`);
     assert.equal(ptmmDigest(read(file)), expected, `Changed independently reviewed PTMM source/UI bytes ${file}`);
   }
-  for (const [file, expected] of Object.entries(reviewed)) assert.equal(ptmmDigest(read(file)), expected, `Changed reviewed PTMM dependency ${file}`);
+  assertCorrectionDependencies(reviewed, read);
   const sourceUi = JSON.parse(read(`${ptmmReviewDir}/source-ui-review.json`));
   assert.equal(ptmmDigest(read(`${ptmmReviewDir}/source-ui-review.json`)), sourceUiSha256);
   assert.deepEqual(sourceUi.reviewedLogicFiles, ptmmSourceUiFiles); assert.deepEqual(sourceUi.affectedIds, ptmmAffectedIds);
@@ -170,5 +171,5 @@ export function assertPtmmQualificationDependencies(expectedFiles, read = readPt
     assert.equal(expected, ptmmPredecessors[file], `Wrong PTMM predecessor hash ${file}`);
   }
   const clearance = verifyPtmmQualificationAmendment(read);
-  for (const { file, actual } of changed) assert.equal(actual, clearance.dependencies.reviewedFiles[file], `Changed approved PTMM bytes ${file}`);
+  assertCorrectionDependencies(Object.fromEntries(changed.map(({ file }) => [file, clearance.dependencies.reviewedFiles[file]])), read);
 }

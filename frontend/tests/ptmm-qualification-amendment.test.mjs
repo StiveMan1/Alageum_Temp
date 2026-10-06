@@ -1,16 +1,19 @@
+import { readCorrectionHistoricalBytes } from './helpers/ptmm-browser-correction-historical-bytes.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { ptmmReviewDir, ptmmBaselineCommit, ptmmBaselineTree, ptmmClearancePath, ptmmReportPath, ptmmRequiredFiles, ptmmPredecessors, ptmmSourceUiFiles, ptmmAffectedIds,
-  ptmmDigest as digest, readPtmmBytes, verifyPtmmQualificationDependencyFiles, verifyPtmmQualificationAmendment, assertPtmmQualificationDependencies,
+  ptmmDigest as digest, readPtmmBytes as readCurrentPtmmBytes, verifyPtmmQualificationDependencyFiles, verifyPtmmQualificationAmendment, assertPtmmQualificationDependencies,
 } from '../../scripts/catalog/ptmm-qualification-reviewed-dependencies.mjs';
 import { protectionContextClearancePath, verifyProtectionContextDependencyAmendment } from '../../scripts/catalog/protection-context-reviewed-dependencies.mjs';
 import { verifyVisualPresentationAmendment } from '../../scripts/catalog/visual-presentation-reviewed-dependencies.mjs';
 import { verifyBrowserAssertionAmendment } from '../../scripts/catalog/catalog-browser-reviewed-dependencies.mjs';
 import { measurementColumnClearancePath, verifyMeasurementColumnDependencyAmendment } from '../../scripts/catalog/measurement-column-reviewed-dependencies.mjs';
 import { sourceAssetClearancePath, verifySourceAssetDependencyAmendment } from '../../scripts/catalog/source-asset-reviewed-dependencies.mjs';
+
+const readPtmmBytes = file => readCorrectionHistoricalBytes(file, readCurrentPtmmBytes);
 
 // Synthetic new approval is confined to this in-memory test reader. It never
 // creates a report or authorizes the checkout; default readers stay pending.
@@ -35,9 +38,9 @@ const fullChain = read => {
 };
 
 test('normal reader keeps the real checkout pending until its independent successor is approved', () => {
-  const clearance = JSON.parse(readPtmmBytes(ptmmClearancePath));
+  const clearance = JSON.parse(readCurrentPtmmBytes(ptmmClearancePath));
   verifyPtmmQualificationDependencyFiles(clearance);
-  if (clearance.status === 'approved-bounded-ptmm-qualification') fullChain(readPtmmBytes);
+  if (clearance.status === 'approved-bounded-ptmm-qualification') fullChain(readCurrentPtmmBytes);
   else assert.throws(() => verifyPtmmQualificationAmendment(), /requires independent approval/);
 });
 
