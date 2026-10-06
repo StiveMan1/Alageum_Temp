@@ -1,3 +1,4 @@
+import { readVisualPresentationHistoricalBytes } from './helpers/visual-presentation-historical-bytes.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -6,9 +7,11 @@ import path from 'node:path';
 import {
   browserBaselineCommit, browserBaselineTree, browserClearancePath, browserReportPath,
   browserCorrections, browserPredecessors, browserRequiredFiles, browserTestPath,
-  browserDigest as digest, readBrowserBytes, verifyBrowserAssertionAmendment, assertBrowserAssertionDependencies,
+  browserDigest as digest, readBrowserBytes as readCurrentBrowserBytes, verifyBrowserAssertionAmendment, assertBrowserAssertionDependencies,
 } from '../../scripts/catalog/catalog-browser-reviewed-dependencies.mjs';
 import { protectionContextClearancePath, verifyProtectionContextDependencyAmendment } from '../../scripts/catalog/protection-context-reviewed-dependencies.mjs';
+
+const readBrowserBytes = file => readVisualPresentationHistoricalBytes(file, readCurrentBrowserBytes);
 
 // Clearly synthetic approval, confined to this in-memory reader. It cannot
 // approve the checkout; the real default gate needs the independent report.

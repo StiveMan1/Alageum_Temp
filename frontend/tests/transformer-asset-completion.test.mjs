@@ -1,3 +1,4 @@
+import { visualRequiredFiles, visualClearancePath, visualReportPath } from '../../scripts/catalog/visual-presentation-reviewed-dependencies.mjs';
 import { historicalDependencyHash, sourceAssetClearancePath } from '../../scripts/catalog/source-asset-reviewed-dependencies.mjs';
 import { measurementColumnClearancePath } from '../../scripts/catalog/measurement-column-reviewed-dependencies.mjs';
 import { protectionContextClearancePath } from '../../scripts/catalog/protection-context-reviewed-dependencies.mjs';
@@ -193,7 +194,8 @@ test('historical release refuses pending forward approval; approved integration 
     ...Object.keys(sourceClearance.dependencies.reviewedFiles), measurementColumnClearancePath, successorClearance.reviewReport,
     ...Object.keys(successorClearance.dependencies.reviewedFiles), protectionContextClearancePath, protectionClearance.reviewReport,
     ...Object.keys(protectionClearance.dependencies.reviewedFiles),
-    ...browserRequiredFiles, browserClearancePath, browserReportPath])) write(file, fs.readFileSync(new URL(file, root)));
+    ...browserRequiredFiles, browserClearancePath, browserReportPath,
+    ...visualRequiredFiles, visualClearancePath, visualReportPath])) write(file, fs.readFileSync(new URL(file, root)));
   try {
     const { assertReviewedTransformerDependency: verify } = await import(pathToFileURL(path.join(scratch, verifier)).href);
     const original = fs.readFileSync(path.join(scratch, changedFile));

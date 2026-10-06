@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createEquipmentGeometry, disposeEquipmentGeometry } from '@/lib/catalog/models/geometry';
+import { resolveProtectionExampleType } from '@/lib/catalog/models/protectionExampleTypes';
 
 /** Called only after the user activates 3D. No render loop, autoplay or remote assets. */
 export function createEquipmentViewer(canvas, type, onFailure) {
@@ -30,7 +31,10 @@ export function createEquipmentViewer(canvas, type, onFailure) {
     renderer.setClearColor(0xffffff, 0);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.45;
+    // Page-69 examples use pale neutral faces: hosted captures at 1.45 put
+    // even the side face above RGB 200. Use neutral exposure for these two
+    // schematic examples; retain the reviewed lighting of all other types.
+    renderer.toneMappingExposure = resolveProtectionExampleType(type) ? 1.0 : 1.45;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     const scene = new THREE.Scene();

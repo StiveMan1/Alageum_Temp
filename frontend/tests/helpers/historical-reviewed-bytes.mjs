@@ -1,3 +1,4 @@
+import { readVisualPresentationHistoricalBytes } from './visual-presentation-historical-bytes.mjs';
 // Self-contained historical test inputs work in shallow CI checkouts. This is
 // never imported by runtime or release verifiers and supplies no approval.
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ export function historicalReviewedBytes(checkpoint, file) {
   assert.ok(Object.hasOwn(fixture.checkpoints, checkpoint), 'Unknown historical checkpoint');
   const files = fixture.checkpoints[checkpoint].files;
   assert.ok(Object.hasOwn(files, file), `Unpinned historical input ${file}`);
-  const entry = files[file], bytes = entry.base64 ? Buffer.from(entry.base64, 'base64') : fs.readFileSync(new URL(`../../../${file}`, import.meta.url));
+  const entry = files[file], bytes = entry.base64 ? Buffer.from(entry.base64, 'base64') : readVisualPresentationHistoricalBytes(file, current => fs.readFileSync(new URL(`../../../${current}`, import.meta.url)));
   assert.equal(digest(bytes), entry.sha256, `Changed historical test input ${file}`);
   return bytes;
 }

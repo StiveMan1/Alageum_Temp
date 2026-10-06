@@ -17,7 +17,10 @@
 .figures > :only-child { grid-column: 1 / -1; max-width: 60rem; }
 .figure { margin: 0; min-width: 0; border: 1px solid #cbd5e1; border-radius: .65rem; background: #fff; }
 .imageLink { display: block; padding: .75rem; border-radius: .65rem .65rem 0 0; background: #fff; }
-.image { display: block; width: 100%; height: auto; max-height: 39rem; object-fit: contain; }
+/* Reserve the site's 96px scroll padding, 1.5rem link padding and 1.5rem
+   clearance. At 720px/16px this caps the image at 576px, so its 600px link
+   fits the 624px scroll area. Keep the full source available through its link. */
+.image { display: block; width: 100%; height: auto; max-height: min(39rem, max(1rem, calc(100svh - 96px - 3rem))); object-fit: contain; }
 .caption { padding: 1rem; border-top: 1px solid #e2e8f0; }
 .caption h4 { margin: 0 0 .5rem; font-size: 1rem; line-height: 1.4; }
 .caption p { margin: .6rem 0; }
