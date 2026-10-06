@@ -1234,6 +1234,7 @@ async function measurementColumnPanelEvidence(panel, specimen, testInfo, name) {
   // Capture the whole visual stack, including the caveats below the canvas.
   // Canvas-only crops cannot demonstrate that the source context remains visible.
   await testInfo.attach(`${name}-full-panel.png`, { body: await panel.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  await testInfo.attach(`${name}-source-caveat.png`, { body: await panel.locator('.visual-provenance').screenshot({ animations: 'disabled' }), contentType: 'image/png' });
   await testInfo.attach(`${name}-panel-context.json`, { body: Buffer.from(JSON.stringify({
     recordId: specimen.id, sourcePage: specimen.sourcePage,
     status: await panel.locator('[data-equipment-model]').getAttribute('data-model-status'),
@@ -1356,9 +1357,18 @@ for (const mode of ['static', 'api']) test(`measurement column completion: ${mod
     await expect.poll(() => imports.length).toBeGreaterThan(0);
     await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
     await expect(viewer).toHaveAttribute('data-model-status', 'idle');
-  } finally { releaseImports(); }
-  await Promise.all(imports.map(request => request.finished()));
-  await page.unroute('**/_next/static/chunks/**', holdImport);
+  } finally {
+    releaseImports();
+    // Remove only this interceptor before collecting response completions. The
+    // recorded request set is then fixed; running handlers can still continue.
+    await page.unroute('**/_next/static/chunks/**', holdImport);
+  }
+  await Promise.all(imports.map(async request => {
+    const response = await request.response();
+    expect(response, `The held chunk must receive a response: ${request.url()}`).not.toBeNull();
+    expect(response.ok(), `The held chunk must load successfully: ${request.url()}`).toBe(true);
+    expect(await response.finished(), `The held chunk response must finish: ${request.url()}`).toBeNull();
+  }));
   await expect(viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true })).toBeFocused();
   await expect(page.locator('canvas')).toHaveCount(0);
   expect(await page.evaluate(() => window.__sourceAssetContexts.created)).toBe(0);

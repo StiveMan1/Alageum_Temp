@@ -61,7 +61,7 @@
       },
       "frontend/e2e/catalog.spec.js": {
         "baselineSha256": "5e363b9dd2ca333bf1efb7ada607f2294888eef989e66a3889b02fe97d97ddf5",
-        "reviewedSha256": "39ab2d6e94b7aba5f6932820dbd4bc64abd3596679d2dad3d214fb80162d6d7d"
+        "reviewedSha256": "49f1d543021320ceacad9811e2be0bf5eb256333707f6f74e9fa2b42da3486f5"
       }
     },
     "reviewedFiles": {
@@ -225,7 +225,7 @@
       "frontend/components/catalog/models/EquipmentModel.module.css": "4a6c15f9775b07811f83bee54e711bdb8b26dfa30af0e315e7a9df6ab758cc86",
       "frontend/components/catalog/models/createEquipmentViewer.js": "145ea78f14dc5f2a211bf7c7befadf851cefe2a3ecf1c1942086f069811a65e7",
       "frontend/components/catalog/useUrlComparison.js": "f2f1691994d6f674c4f914985292739fc66ca54da457218766b6f0b2dfc5a47e",
-      "frontend/e2e/catalog.spec.js": "39ab2d6e94b7aba5f6932820dbd4bc64abd3596679d2dad3d214fb80162d6d7d",
+      "frontend/e2e/catalog.spec.js": "49f1d543021320ceacad9811e2be0bf5eb256333707f6f74e9fa2b42da3486f5",
       "frontend/lib/catalog/apiData.js": "75a499eca5aa761599ce19f8f48530e0e9f78859003566ba7ceee17161c0828b",
       "frontend/lib/catalog/familyPresentation.js": "97a46b15d98e55fb4ec85f7cabfef7c62716a929bcdb51ee16a6bd7714d3c1d2",
       "frontend/lib/catalog/grouping.js": "1e850ada566574e0b2a85a7e46245daa5f14300caab69b7773642e06ed2abbf6",
@@ -306,5 +306,5 @@
     }
   },
   "reviewReport": "docs/catalog-transformers-2026/review/measurement-column-completion/independent-review.json",
-  "reviewReportSha256": "9d20fe90c6da8a407bf3ac453c1aabafd92675e865827672dd472a4b26dd349a"
+  "reviewReportSha256": "a84254602bcd6a400e8c4369e8a3fffd9af332785618740c7afef48fa3256ee7"
 }
