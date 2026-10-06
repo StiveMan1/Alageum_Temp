@@ -1359,9 +1359,8 @@ for (const mode of ['static', 'api']) test(`measurement column completion: ${mod
     await expect(viewer).toHaveAttribute('data-model-status', 'idle');
   } finally {
     releaseImports();
-    // Remove only this interceptor before collecting response completions. The
-    // recorded request set is then fixed; running handlers can still continue.
-    await page.unroute('**/_next/static/chunks/**', holdImport);
+    // Keep the released interceptor until this isolated page fixture tears down.
+    // Removing its last route can handle held requests before route.continue().
   }
   await Promise.all(imports.map(async request => {
     const response = await request.response();
