@@ -17,10 +17,10 @@ const compiled = new Map();
 async function component(name) {
   if (compiled.has(name)) return compiled.get(name);
   const file = new URL(`../components/catalog/${name}.js`, import.meta.url);
-  let source = (await readFile(file, 'utf8')).replace("import Link from 'next/link';", 'const Link = props => <a {...props}/>;');
+  let source = (await readFile(file, 'utf8')).replace("'react'", JSON.stringify(pathToFileURL(require.resolve('react')).href)).replace("import Link from 'next/link';", 'const Link = props => <a {...props}/>;');
   if (source.includes("'./CatalogConfigurations'")) source = source.replace("'./CatalogConfigurations'", JSON.stringify(await component('CatalogConfigurations')));
   source = source.replace("'@/lib/catalog/models/legacyAssetCompletion'", JSON.stringify(new URL('../lib/catalog/models/legacyAssetCompletion.js', import.meta.url).href));
-  for (const moduleName of ['identityCompletion', 'presentation', 'sources']) source = source.replace(`'@/lib/catalog/${moduleName}'`, JSON.stringify(new URL(`../lib/catalog/${moduleName}.js`, import.meta.url).href));
+  for (const moduleName of ['identityCompletion', 'presentation', 'sources', 'familySourceReferences']) source = source.replace(`'@/lib/catalog/${moduleName}'`, JSON.stringify(new URL(`../lib/catalog/${moduleName}.js`, import.meta.url).href));
   const { transform, loadBindings } = require('next/dist/build/swc');
   await loadBindings();
   const output = await transform(source, { filename: file.pathname, jsc: { parser: { syntax: 'ecmascript', jsx: true }, transform: { react: { runtime: 'automatic' } } }, module: { type: 'es6' } });
@@ -177,5 +177,37 @@ test('SHR11 primary construction citation renders only for the exact static or o
   }
   for (const row of [{ ...approvedApi, databaseId: 'reused-uuid' }, { ...approvedApi, name: 'changed' }, productById('cat-pr-shr11-v001'), productById('cat-pr-shr11-v003')]) {
     assert.equal(await render('CatalogSourceEvidence', row), '');
+  }
+});
+
+test('family source references render separately and every link reaches a guarded canonical panel anchor', async () => {
+  const family = productById('tr2026-family-tmg-standard');
+  const html = await render('CatalogSourceEvidence', family);
+  assert.equal((html.match(/data-source-reference=/g) || []).length, 4);
+  assert.match(html, /не добавляют исполнения в семейство/);
+  assert.doesNotMatch(html, /<select|<button|class="summary-specs"|class="variant-grid"/);
+  const href = '/catalog/tmg-400#source-panel-alageum-tmg-standard-400';
+  assert.ok(html.includes(`href="${href}"`));
+  const target = await render('CatalogSourceEvidence', productById('tmg-400'));
+  assert.match(target, /id="source-panel-alageum-tmg-standard-400"/);
+  assert.equal(await render('CatalogSourceEvidence', { ...family, name: 'changed' }), '');
+});
+
+test('manual API configuration preserves exact designation and multiline value independently of unit and page evidence', async () => {
+  const literal = '0007\nSecond literal source line';
+  const product = { ...productById('alageum-tmg-standard-16'), source: 'api', configurations: [{
+    designation: 'CMS fixture configuration', specifications: [{ label: 'CMS fixture code', value: literal, unit: 'мм', page: 32 }],
+  }] };
+  const html = await render('CatalogConfigurations', product);
+  assert.match(html, /<span class="configuration-designation">CMS fixture configuration<\/span>/);
+  assert.equal(html.match(/<dd class="catalog-spec-text">([\s\S]*?)<\/dd>/)?.[1], literal);
+  assert.match(html, /<span>мм<\/span>/);
+  assert.match(html, /href="\/catalog\/source\?source=transformers-2026&amp;page=32"/);
+  assert.doesNotMatch(html.match(/<summary[\s\S]*?<\/summary>/)?.[0], /стр\./);
+  for (const page of [undefined, null, 0, -1, 1.5, '32', 188]) {
+    const invalid = { ...product, configurations: [{ designation: 'CMS fixture configuration', page, specifications: [{ label: 'Literal', value: literal, unit: 'мм', page }] }] };
+    const rendered = await render('CatalogConfigurations', invalid);
+    assert.doesNotMatch(rendered, /стр\.|page=/, String(page));
+    assert.equal(rendered.match(/<dd class="catalog-spec-text">([\s\S]*?)<\/dd>/)?.[1], literal);
   }
 });

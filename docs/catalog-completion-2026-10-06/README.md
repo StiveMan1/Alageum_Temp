@@ -18,6 +18,8 @@ Aliases do not change database UUID derivation, saved selections, quote referenc
 
 Every official record now has a visible description based on its existing source facts. Source labels and raw values remain intact. There are 102 family selectors with no default child: 26 legacy families and 76 transformer families. A generic reactor overview presents its 15 printed configuration rows separately, without creating fictitious product combinations. Source tables, dimensions and uncertainties remain accessible on the cards.
 
+Five source-family overviews also link directly to ten source-specific panels on the existing canonical cards. These links remain outside member selection and summary aggregation, require both family and target guards, and respect the currently visible API records. NTMI keeps its existing instrument-transformer cards and read-only aliases.
+
 The exact per-record ledger is [coverage.json](./coverage.json). Counts come from the same guarded selectors used by the site:
 
 | Coverage | All 843 records | 687 explicit source entries |
@@ -37,13 +39,15 @@ This completion adds 25 transformer default model/icon bindings and eight choice
 
 One old ШР11 entry now reuses the existing open-panel model and icon after the manufacturer's dedicated page corroborated the source drawing. [Independent review](./shr11-independent-review.json) limits that mapping to `cat-pr-shr11-v002`; ПР and ПР-11 remain excluded. All other 237 legacy visual/icon mappings stay unchanged.
 
-No raster or geometry mesh was added. The package remains 248 raster assets, 21,968,700 bytes, including all 187 optimized pages of the new PDF. Missing high-voltage and execution-specific construction evidence is preserved as a gap; category-level models are not substituted.
+No raster or geometry mesh was added. The package remains 248 raster assets, 21,968,700 bytes, including all 187 optimized pages of the new PDF. Missing high-voltage and execution-specific construction evidence is preserved as a gap; category-level models are not substituted. [Remaining source gaps](./remaining-source-gaps.json) group the 259 explicit entries into 33 source families: 43 legacy entries and 216 new-catalog entries.
 
 ## Verification and release status
 
-This is a draft catalog change, not a deployment or production-readiness claim. Local final validation passed 432 frontend tests, ESLint, the 894-page production build, and 577 backend aggregate tests. The hosted catalog suite contains 90 desktop/mobile cases; exact-head hosted results must be read alongside the PR checks. The first checkpoint `f834fe9` passed all 14 functional Node jobs, including the native Page fast-save regression; six new catalog browser cases exposed a locator issue, corrected in this batch without removing assertions.
+This is a draft catalog change, not a deployment or production-readiness claim. Local validation passed 437 frontend tests, ESLint, the 894-page production build, and 577 backend aggregate tests. The final hosted catalog suite contains 94 desktop/mobile cases, including source-reference click/back/forward flows and retained success screenshots. Exact-head hosted results must be read alongside the PR checks.
 
-Security audits remain enforced and failed on that checkpoint: frontend 6 high; Node 29 high and 3 moderate. No dependency, release gate, deploy workflow or CMS editor implementation is changed by this completion.
+The published `43bea601` preflight passed all 104 PostgreSQL cases, including 823→843 migration, repeat import, preservation of edited/hidden records and NTMI UUID/snapshot replay. Native Page fast-save and input-lifecycle protection also passed. Its remaining stale category-count assertion and shared configuration-renderer regression are corrected in this follow-up: designation and literal multiline value keep separate text nodes, while units and source pages remain separate. Existing native CMS assertions are retained.
+
+Security audits remain enforced and failed on that preflight: frontend 6 high; Node 29 high and 3 moderate. No dependency, release gate, deploy workflow or CMS editor implementation is changed by this completion.
 
 Reproduce the source and asset checks from the repository root:
 
@@ -57,4 +61,4 @@ Reproduce the source and asset checks from the repository root:
     npm --prefix frontend run check
     npm --prefix backend-node run check
 
-The original [phase-one summary](./phase1-summary.json) and isolated identity/asset manifests are retained as historical checkpoints. The current coverage ledger and the final PR head are authoritative for combined counts and bindings.
+The original [phase-one summary](./phase1-summary.json), [phase-two summary](./phase2-summary.json), and isolated identity/asset manifests are retained as historical checkpoints. The current coverage ledger and the final PR head are authoritative for combined counts and bindings.

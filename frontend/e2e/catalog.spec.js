@@ -26,6 +26,15 @@ async function expectDecodedImage(image) {
   }).toBe(true);
 }
 
+async function attachSourceEvidence(table, testInfo, name) {
+  await testInfo.attach(`${name}.png`, { body: await table.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  if (await table.evaluate(element => element.scrollWidth > element.clientWidth + 1)) {
+    await table.evaluate(element => { element.scrollLeft = element.scrollWidth; });
+    await testInfo.attach(`${name}-right-columns.png`, { body: await table.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+    await table.evaluate(element => { element.scrollLeft = 0; });
+  }
+}
+
 async function canvasEvidence(canvas, testInfo, name, previous = null) {
   const png = await canvas.screenshot({ animations: "disabled" });
   // Decode actual Playwright screenshots with built-in browser APIs. Detached
@@ -372,7 +381,7 @@ test("category navigation preserves individual models and global search", async 
   await expect(page.getByRole("button", { name: `Все товары (${catalogRelease.recordCount})`, exact: true })).toBeVisible();
   const filters = await openFilters(page);
   await filters.getByRole("button", { name: /^Трансформаторы/ }).click();
-  await expect(foundCount(page)).toHaveText("Найдено: 570");
+  await expect(foundCount(page)).toHaveText("Найдено: 590");
   await filters.getByRole("button", { name: /^Масляные трансформаторы/ }).click();
   await expect(page).toHaveURL(/equipmentType=oil-transformer/);
   await expect(catalogRows(page)).toHaveCount(6);
@@ -749,7 +758,7 @@ test('catalog completion: AsiaTrafo family overview shows technical source data 
   await expectShell(page);
 });
 
-test('identity completion: source comparison keeps dimensions and series context separated from the canonical card', async ({ page }) => {
+test('identity completion: source comparison keeps dimensions and series context separated from the canonical card', async ({ page }, testInfo) => {
   await page.goto('/catalog/tmg-400');
   const panel = page.locator('[data-catalog-source-panel="alageum-tmg-standard-400"]');
   await expect(panel).toBeVisible();
@@ -757,11 +766,13 @@ test('identity completion: source comparison keeps dimensions and series context
   await expect(length).toContainText('1294');
   await expect(length).toContainText('1309');
   await expect(length).toContainText('Единица в источнике не указана');
+  await attachSourceEvidence(panel.locator('.source-comparison-wrap'), testInfo, 'tmg400-source-comparison');
   await panel.locator('.catalog-source-facts summary').filter({ hasText: 'Общие сведения серии' }).click();
   await expect(panel).toContainText('Климатические диапазоны и опции не приписываются одному конкретному исполнению');
   await expect(panel.getByRole('button', { name: /В подборку/ })).toHaveCount(0);
   await page.locator('.catalog-related-references a[href="/catalog/alageum-tmg-copper-400"]').click();
   await expect(page.getByRole('heading', { level: 1 })).toContainText('медными обмотками');
+  await testInfo.attach('tmg400-copper-overview.png', { body: await page.locator('.product-overview').screenshot({ animations: 'disabled' }), contentType: 'image/png' });
   await expect(page.locator('[data-catalog-source-panel]')).toHaveCount(0);
   await expectShell(page);
 });
@@ -804,13 +815,15 @@ test('identity completion: dry TS classification and fifteen reactor table rows 
   await expectShell(page);
 });
 
-test('identity completion: NTMI read alias preserves source unit disagreements and canonical comparison ID', async ({ page }) => {
+test('identity completion: NTMI read alias preserves source unit disagreements and canonical comparison ID', async ({ page }, testInfo) => {
   await page.goto('/catalog/alageum-2026-ntmi-6');
   await expect(page.getByRole('heading', { level: 1 })).toContainText('НТМИ-6');
   const panel = page.locator('[data-catalog-source-panel="alageum-2026-ntmi-6"]');
   await expect(panel.locator('[data-source-field="maximumPowerValue"]')).toContainText('630 ВА');
   await expect(panel.locator('[data-source-field="maximumPowerValue"]')).toContainText('630 кВА');
   await expect(panel).toContainText('кА (заголовок сайта)');
+  await testInfo.attach('ntmi6-card-summary.png', { body: await page.locator('.product-summary').screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  await attachSourceEvidence(panel.locator('.source-comparison-wrap'), testInfo, 'ntmi6-source-units');
   await expect(page.locator('.product-actions a')).toHaveAttribute('href', '/catalog?compare=ntmi-6');
   await expectShell(page);
 });
@@ -843,5 +856,64 @@ test('identity completion: reviewed SHR11 panel renders with its scoped caption 
     await page.goto(`/catalog/${id}`);
     await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
   }
+  await expectShell(page);
+});
+
+test('family source references: static links open the exact panel and preserve family selection through history', async ({ page }, testInfo) => {
+  await page.goto('/catalog/tr2026-family-tmg-standard');
+  const references = page.getByRole('region', { name: 'Сопоставления источников этой серии', exact: true });
+  await expect(references.locator('a')).toHaveCount(4);
+  const member = page.getByRole('combobox', { name: 'Запись для просмотра', exact: true });
+  await expect(member).toHaveValue('');
+  await expect(member.locator('option[value="tmg-400"]')).toHaveCount(0);
+  const summary = await page.locator('.summary-specs').textContent();
+  const link = references.locator('[data-source-reference="alageum-tmg-standard-400"]');
+  await expect(link).toHaveAttribute('href', '/catalog/tmg-400#source-panel-alageum-tmg-standard-400');
+  await link.click();
+  await expect(page).toHaveURL(/\/catalog\/tmg-400#source-panel-alageum-tmg-standard-400$/);
+  const panel = page.locator('#source-panel-alageum-tmg-standard-400');
+  await expect(panel).toBeInViewport();
+  await expect(panel.locator('[data-source-field="Lmm"]')).toContainText('1309');
+  await page.goBack();
+  await expect(page).toHaveURL(/\/catalog\/tr2026-family-tmg-standard$/);
+  await expect(member).toHaveValue('');
+  await expect(page.locator('.summary-specs')).toHaveText(summary);
+  await expect(references.locator('a')).toHaveCount(4);
+  await testInfo.attach('family-source-reference-list.png', { body: await references.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  await page.goForward();
+  await expect(panel).toBeInViewport();
+  await expectShell(page);
+});
+
+test('family source references: API links wait for a guarded panel and omit a reused target UUID', async ({ page }) => {
+  const [{ productById }, { familyPresentationBindings }, { catalogIdentityCompletion }] = await Promise.all([
+    import('../lib/catalog/data.js'), import('../lib/catalog/familyPresentation.js'), import('../lib/catalog/identityCompletion.js'),
+  ]);
+  const family = productById('tr2026-family-tmg-standard');
+  const target = productById('tmg-400');
+  const dto = (record, id) => ({ id, public_key: record.id, slug: record.id, sku: record.sku, category_public_key: record.category,
+    translations: { ru: { name: record.name, description: record.description } }, specs: record, provenance: record,
+    media: record.image ? [{ path: record.image, kind: 'image', alt: record.imageCaption }] : [], price_mode: 'on_request', currency: 'KZT', comparable: true });
+  const familyDto = dto(family, familyPresentationBindings[family.id].database_id);
+  let targetDto = dto(target, catalogIdentityCompletion.guards[target.id].databaseId);
+  await page.route('**/api/v1/catalog/products?*', async route => {
+    await new Promise(resolve => setTimeout(resolve, 120));
+    await route.fulfill({ json: { total: 2, items: [familyDto, targetDto] } });
+  });
+  await page.goto('/catalog/tr2026-family-tmg-standard?source=api');
+  const references = page.getByRole('region', { name: 'Сопоставления источников этой серии', exact: true });
+  await expect(references.locator('a')).toHaveCount(1);
+  const link = references.locator('a');
+  await expect(link).toHaveAttribute('href', '/catalog/tmg-400?source=api#source-panel-alageum-tmg-standard-400');
+  await link.click();
+  await expect(page).toHaveURL(/\/catalog\/tmg-400\?source=api#source-panel-alageum-tmg-standard-400$/);
+  const panel = page.locator('#source-panel-alageum-tmg-standard-400');
+  await expect(panel).toBeInViewport();
+  await page.goBack();
+  await expect(references.locator('a')).toHaveCount(1);
+  targetDto = { ...targetDto, id: '10000000-0000-4000-8000-000000000001' };
+  await page.reload();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(family.name);
+  await expect(references).toHaveCount(0);
   await expectShell(page);
 });

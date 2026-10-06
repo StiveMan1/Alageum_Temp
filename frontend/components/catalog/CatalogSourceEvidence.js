@@ -1,6 +1,10 @@
+'use client';
+
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { getCatalogRelatedReferences, getCatalogSourceComparisons } from '@/lib/catalog/identityCompletion';
 import { sourcePageUrl } from '@/lib/catalog/sources';
+import { getCatalogFamilySourceReferences, sourcePanelAnchor } from '@/lib/catalog/familySourceReferences';
 import { getReviewedLegacyCompletion } from '@/lib/catalog/models/legacyAssetCompletion';
 import { displayExecution, displayProductName, displaySpecLabel } from '@/lib/catalog/presentation';
 import CatalogConfigurations from './CatalogConfigurations';
@@ -20,19 +24,27 @@ function SourceFacts({ source, specs }) {
 
 export default function CatalogSourceEvidence({ product, records = [] }) {
   const panels = getCatalogSourceComparisons(product);
+  const familyReferences = getCatalogFamilySourceReferences(product, records);
+  const anchorIds = panels.map(panel => sourcePanelAnchor(panel.id)).join('|');
+  useEffect(() => {
+    // API panels arrive after navigation; scroll only to this record's guarded source anchor.
+    const requested = window.location.hash.slice(1);
+    if (requested && anchorIds.split('|').includes(requested)) document.getElementById(requested)?.scrollIntoView({ block: 'start' });
+  }, [anchorIds]);
   const references = getCatalogRelatedReferences(product).filter(reference => records.some(record => record.id === reference.id));
   const reviewedConstruction = getReviewedLegacyCompletion(product, 'geometry');
   const constructionSource = reviewedConstruction?.sourceUrl && reviewedConstruction.sourceUrl !== product.sourceUrl ? reviewedConstruction.sourceUrl : null;
-  if (!panels.length && !references.length && !constructionSource) return null;
+  if (!panels.length && !references.length && !familyReferences.length && !constructionSource) return null;
   const liveSuffix = product.source === 'api' ? '?source=api' : '';
   return <section className="catalog-source-evidence" aria-label="Источники и связанные записи">
+    {!!familyReferences.length && <section className="catalog-family-source-references" aria-label="Сопоставления источников этой серии"><h2>Другие источники по этой серии</h2><p>Эти ссылки открывают сопоставления в существующих карточках. Они не добавляют исполнения в семейство и не подтверждают эквивалентность оборудования.</p><ul>{familyReferences.map(reference => <li key={reference.panelId}><Link href={reference.href} data-source-reference={reference.panelId}>Сопоставление источников: {reference.designation} →</Link></li>)}</ul></section>}
     {constructionSource && <p className="catalog-source-line"><a className="site-text-link" href={constructionSource} target="_blank" rel="noopener noreferrer">Источник сопоставления {product.designation || displayProductName(product)} ↗</a><span>Официальный раздел производителя</span></p>}
     {panels.map(panel => {
       const comparison = panel.comparison || {};
       const compared = comparison.comparedSpecs || [];
       const comparedFields = new Set(compared.map(row => row.field));
       const additionalConflicts = (comparison.conflicts || []).filter(row => !comparedFields.has(row.field));
-      return <article className="catalog-source-panel" data-catalog-source-panel={panel.id} key={panel.id}>
+      return <article id={sourcePanelAnchor(panel.id)} className="catalog-source-panel" data-catalog-source-panel={panel.id} key={panel.id}>
         <p className="catalog-kicker">СВЕДЕНИЯ С УКАЗАНИЕМ ИСТОЧНИКА</p>
         <h2>{panel.representation === 'alias' ? 'Дополнительный источник для этой модели' : 'Сопоставление источников'}</h2>
         <h3>{panel.designation}{displayExecution(panel) ? ` · ${displayExecution(panel)}` : ''}</h3>
