@@ -37,17 +37,19 @@ Family overviews are not physical products requiring invented geometry. The 345 
 
 This completion adds 25 transformer default model/icon bindings and eight choices for four additional TSL rows. Thirteen copper TMG bindings rely on the coherent copper subsection on physical pages 40–43, bounded by the next execution on page 44. This is a reviewed subsection inference, not an explicit copper figure caption. Optional rollers, fuse and instrumentation details do not become order specifications. The separate [asset review](../catalog-transformers-2026/review/asset-completion/README.md) pins source pages, record shapes, API UUIDs and exact helper dependencies.
 
+The two existing NTMI references also offer separate, explicitly activated source-panel previews using the reviewed page-96 topology and icon. Their canonical records, default visuals and source conflicts remain unchanged; the preview carries its own 2026 PDF attribution and scan link. These two source-context previews are counted separately from default bindings and the 36/74 construction choices. [Independent NTMI review](../catalog-transformers-2026/review/ntmi-source-preview/independent-review.json) binds the exact canonical/API records and source panels.
+
 One old ШР11 entry now reuses the existing open-panel model and icon after the manufacturer's dedicated page corroborated the source drawing. [Independent review](./shr11-independent-review.json) limits that mapping to `cat-pr-shr11-v002`; ПР and ПР-11 remain excluded. All other 237 legacy visual/icon mappings stay unchanged.
 
-No raster or geometry mesh was added. The package remains 248 raster assets, 21,968,700 bytes, including all 187 optimized pages of the new PDF. Missing high-voltage and execution-specific construction evidence is preserved as a gap; category-level models are not substituted. [Remaining source gaps](./remaining-source-gaps.json) group the 259 explicit entries into 33 source families: 43 legacy entries and 216 new-catalog entries.
+No raster or geometry mesh was added. The package remains 248 raster assets, 21,968,700 bytes, including all 187 optimized pages of the new PDF. Missing high-voltage and execution-specific construction evidence is preserved as a gap; category-level models are not substituted. [Remaining source gaps](./remaining-source-gaps.json) group the 259 explicit entries into 33 source families: 43 legacy entries and 216 new-catalog entries. This is a lack of confirmed construction binding, not always a lack of drawings. In particular, ten X4K3 entries have drawings on pages 30–31, but their ТМГвэ captions differ from the ТМГи table names; [the documented naming conflict](./x4k3-caption-note.json) remains unapproved for binding. X3K2 is also excluded because the drawing caption names a different loss class.
 
 ## Verification and release status
 
-This is a draft catalog change, not a deployment or production-readiness claim. Local validation passed 437 frontend tests, ESLint, the 894-page production build, and 577 backend aggregate tests. The final hosted catalog suite contains 94 desktop/mobile cases, including source-reference click/back/forward flows and retained success screenshots. Exact-head hosted results must be read alongside the PR checks.
+This is a draft catalog change, not a deployment or production-readiness claim. Local validation passed 443 frontend tests, ESLint and the 894-page production build. The final catalog browser inventory contains 100 desktop/mobile cases, including six new NTMI preview cases; their exact-head hosted result is read from the PR checks.
 
-The published `43bea601` preflight passed all 104 PostgreSQL cases, including 823→843 migration, repeat import, preservation of edited/hidden records and NTMI UUID/snapshot replay. Native Page fast-save and input-lifecycle protection also passed. Its remaining stale category-count assertion and shared configuration-renderer regression are corrected in this follow-up: designation and literal multiline value keep separate text nodes, while units and source pages remain separate. Existing native CMS assertions are retained.
+The preceding `a0a71958` checkpoint passed all 94 catalog browser cases and all 14 functional Node jobs: 577 backend tests, 104 PostgreSQL tests, 437 frontend tests, the unchanged native CMS configuration assertions, daily/admin/RFQ flows, 54 print cases and final real-database printing. Migration, repeat import, edited/hidden-record preservation and NTMI UUID/snapshot replay passed explicitly. The native Page fast-save and input-lifecycle regressions also passed. This NTMI preview addition changes no backend, source records, default assets, dependencies or release workflow.
 
-Security audits remain enforced and failed on that preflight: frontend 6 high; Node 29 high and 3 moderate. No dependency, release gate, deploy workflow or CMS editor implementation is changed by this completion.
+Security audits remain enforced and failed on that checkpoint: frontend 6 high; Node 29 high and 3 moderate. No dependency, release gate, deploy workflow or CMS editor implementation is changed by this completion.
 
 Reproduce the source and asset checks from the repository root:
 
@@ -56,6 +58,7 @@ Reproduce the source and asset checks from the repository root:
     node scripts/approve-transformer-assets.mjs docs/catalog-transformers-2026/review/assets-clearance.json --check
     node scripts/approve-transformer-execution-choices.mjs docs/catalog-transformers-2026/review/execution-choice-clearance.json --check
     node scripts/approve-transformer-asset-completion.mjs docs/catalog-transformers-2026/review/asset-completion/clearance.json --check
+    node scripts/check-ntmi-source-previews.mjs
     node scripts/generate-catalog-media.mjs --check
     node scripts/audit-catalog-completion.mjs --check
     npm --prefix frontend run check

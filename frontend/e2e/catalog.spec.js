@@ -917,3 +917,109 @@ test('family source references: API links wait for a guarded panel and omit a re
   await expect(references).toHaveCount(0);
   await expectShell(page);
 });
+
+test('NTMI source preview: explicit 3D, page96 scan and gallery history preserve the canonical card', async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  await page.addInitScript(() => {
+    window.__ntmiWebglContexts = 0;
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+      if (String(type).startsWith('webgl')) window.__ntmiWebglContexts++;
+      return original.call(this, type, ...args);
+    };
+  });
+  await page.goto('/catalog/alageum-2026-ntmi-6');
+  const preview = page.locator('[data-source-preview="alageum-2026-ntmi-6"]');
+  const viewer = preview.locator('[data-equipment-model="tr26-instrument-three-triangle"]');
+  await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+  await expect(preview).toContainText('18.03.2026, стр. 96');
+  await expect(preview).toContainText('не CAD, не размеры и не точная модель исполнения');
+  await expect(page.locator('.product-overview [data-equipment-model]')).toHaveAttribute('data-equipment-model', 'instrument-transformer');
+  await expect(page.locator('.product-actions a')).toHaveAttribute('href', '/catalog?compare=ntmi-6');
+  await expect(page.locator('canvas')).toHaveCount(0);
+  expect(await page.evaluate(() => window.__ntmiWebglContexts)).toBe(0);
+  await preview.locator('details summary').click();
+  await expectDecodedImage(preview.locator('img'));
+  await expect(preview.locator('img')).toHaveAttribute('src', /page-096\.webp/);
+  await testInfo.attach('ntmi6-source-preview-idle.png', { body: await preview.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  await preview.locator('details summary').click();
+  await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+  await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+  expect(await page.evaluate(() => window.__ntmiWebglContexts)).toBeGreaterThan(0);
+  await canvasEvidence(viewer.locator('canvas'), testInfo, 'ntmi6-source-preview-active');
+  await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
+  await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+  await expect(viewer.locator('canvas')).toHaveCount(0);
+  await expect(viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true })).toBeFocused();
+  await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+  await expect(viewer).toHaveAttribute('data-model-status', 'ready');
+  const sourceLink = preview.getByRole('link', { name: 'Открыть чертёж в каталоге: стр. 96', exact: true });
+  await expect(sourceLink).toHaveAttribute('href', '/catalog/source?source=transformers-2026&page=96');
+  await sourceLink.click();
+  await expect(page).toHaveURL(/\/catalog\/source\?source=transformers-2026&page=96$/);
+  await expect(page.locator('[data-source-preview]')).toHaveCount(0);
+  await expectDecodedImage(page.locator('img[src*="page-096.webp"]'));
+  await page.goBack();
+  await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+  await expect(viewer.locator('canvas')).toHaveCount(0);
+  await page.goto('/catalog/ntmi-10');
+  await expect(page.locator('[data-source-preview="alageum-2026-ntmi-10"] [data-equipment-model]')).toHaveAttribute('data-model-status', 'idle');
+  await expect(page.locator('[data-source-preview="alageum-2026-ntmi-6"]')).toHaveCount(0);
+  await expectShell(page);
+});
+
+test('NTMI source preview: exact API records work while reused UUIDs and edited source shapes stay closed', async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  const [{ productById }, { ntmiSourcePreviewManifest }] = await Promise.all([import('../lib/catalog/data.js'), import('../lib/catalog/ntmiSourcePreview.js')]);
+  let records = ['ntmi-6', 'ntmi-10'].map(id => {
+    const record = productById(id);
+    return { id: ntmiSourcePreviewManifest.records[id].databaseId, public_key: id, slug: id, sku: record.sku,
+      category_public_key: record.category, translations: { ru: { name: record.name, description: record.description } },
+      specs: record, provenance: record, media: record.image ? [{ path: record.image, kind: 'image', alt: record.imageCaption }] : [], comparable: true, price_mode: 'on_request', currency: 'KZT' };
+  });
+  await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: records.length, items: records } }));
+  for (const id of ['ntmi-6', 'ntmi-10']) {
+    await page.goto(`/catalog/alageum-2026-${id}?source=api`);
+    const preview = page.locator(`[data-source-preview="alageum-2026-${id}"]`);
+    await expect(preview.locator('[data-equipment-model]')).toHaveAttribute('data-model-status', 'idle');
+    await expect(preview.getByRole('link')).toHaveAttribute('href', '/catalog/source?source=transformers-2026&page=96');
+    await preview.locator('details summary').click();
+    await expectDecodedImage(preview.locator('img'));
+    await preview.locator('details summary').click();
+  }
+  const viewer = page.locator('[data-source-preview] [data-equipment-model]');
+  await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+  await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+  await canvasEvidence(viewer.locator('canvas'), testInfo, 'ntmi10-api-source-preview');
+  records = records.map(record => ({ ...record, id: '10000000-0000-4000-8000-000000000001' }));
+  await page.goto('/catalog/ntmi-10?source=api');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('НТМИ-10');
+  await expect(page.locator('[data-source-preview]')).toHaveCount(0);
+  await page.goto('/catalog/alageum-2026-ntmi-10?source=api');
+  await expect(page.getByRole('heading', { name: 'Товар недоступен', exact: true })).toBeVisible();
+  await expect(page.locator('[data-source-preview]')).toHaveCount(0);
+  records = records.map(record => ({ ...record, id: ntmiSourcePreviewManifest.records[record.public_key].databaseId, specs: { ...record.specs, power: 1 } }));
+  await page.goto('/catalog/ntmi-6?source=api');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('НТМИ-6');
+  await expect(page.locator('[data-source-preview]')).toHaveCount(0);
+  await expectShell(page);
+});
+
+test('NTMI source preview: unavailable WebGL retains only the separately reviewed icon and source links', async ({ page }) => {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type, ...args) {
+      return String(type).startsWith('webgl') ? null : original.call(this, type, ...args);
+    };
+  });
+  await page.goto('/catalog/ntmi-6');
+  const preview = page.locator('[data-source-preview]'), viewer = preview.locator('[data-equipment-model]');
+  await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+  await expect(viewer).toHaveAttribute('data-model-status', 'error');
+  await expect(viewer).toContainText('Выше показана отдельно проверенная иконка');
+  await expect(viewer.locator('canvas')).toHaveCount(0);
+  await expect(preview.getByRole('link')).toHaveAttribute('href', '/catalog/source?source=transformers-2026&page=96');
+  await viewer.getByRole('button', { name: 'Попробовать снова', exact: true }).click();
+  await expect(viewer).toHaveAttribute('data-model-status', 'error');
+  await expectShell(page);
+});

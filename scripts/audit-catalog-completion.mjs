@@ -11,12 +11,14 @@ import { getEquipmentIcon } from '../frontend/lib/catalog/models/iconMap.js';
 import { getEquipmentConstructionChoices } from '../frontend/lib/catalog/models/transformerExecutionChoices.js';
 import { catalogIdentityCompletion, getCatalogSourceComparisons } from '../frontend/lib/catalog/identityCompletion.js';
 import { getCatalogFamilySourceReferences } from '../frontend/lib/catalog/familySourceReferences.js';
+import { getNtmiSourcePreview } from '../frontend/lib/catalog/ntmiSourcePreview.js';
 import { transformerRecordShape, recordShapeDigest } from '../frontend/lib/catalog/models/transformer2026Shape.js';
 import sourceRegistry from '../backend-node/data/catalog-sources.json' with { type: 'json' };
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const check = process.argv.includes('--check');
 const rows = products.map(product => {
   const geometry = getEquipmentVisual(product), icon = getEquipmentIcon(product);
+  const sourcePreview = getNtmiSourcePreview(product);
   const choices = getEquipmentConstructionChoices(product), members = catalogFamilyMembers(product, products);
   const source = Object.values(sourceRegistry.sources).find(source => source.source_url === product.sourceUrl);
   for (const [field, key] of [['sourceId', 'id'], ['sourceFileId', 'source_file_id'], ['sourceSha256', 'source_sha256']]) {
@@ -38,6 +40,10 @@ const rows = products.map(product => {
     geometry: { type: geometry.type, confidence: geometry.confidence, pages: geometry.sourcePages, reason: geometry.reason },
     icon: { type: icon.type, confidence: icon.confidence, pages: icon.sourcePages },
     constructionChoices: choices.map(choice => ({ id: choice.id, type: choice.geometryType, pages: choice.sourcePages, label: choice.label })),
+    sourceContextPreviews: sourcePreview ? [{ panelId: sourcePreview.panelId, geometryType: sourcePreview.geometryType,
+      iconType: sourcePreview.iconType, sourceId: sourcePreview.sourceId, sourceFileId: sourcePreview.sourceFileId,
+      sourceSha256: sourcePreview.sourceSha256, pages: sourcePreview.sourcePages, href: sourcePreview.sourceHref,
+      caption: sourcePreview.caption, dimensionAccurate: false }] : [],
     sourcePanels: getCatalogSourceComparisons(product).map(panel => panel.id),
   };
 });
@@ -49,6 +55,8 @@ const counts = items => ({
   noDefault3D: items.filter(row => !row.geometry.type).length,
   explicitChoiceRecords: items.filter(row => row.constructionChoices.length).length,
   explicitChoices: items.reduce((sum, row) => sum + row.constructionChoices.length, 0),
+  sourceContextPreviewRecords: items.filter(row => row.sourceContextPreviews.length).length,
+  sourceContextPreviews: items.reduce((sum, row) => sum + row.sourceContextPreviews.length, 0),
   noDefaultOrChoice3D: items.filter(row => !row.geometry.type && !row.constructionChoices.length).length,
   icons: tally(items, row => row.icon.confidence),
   familySelectors: items.filter(row => row.familyMembers.length).length,
@@ -66,7 +74,7 @@ const ledger = { format: 'alageum-catalog-completion-coverage-v1', reviewedDate:
   aliases: catalogIdentityCompletion.aliases, sourceRepresentation: catalogIdentityCompletion.counts,
   records: rows,
 };
-const missing = rows.filter(row => row.role === 'explicit-source-entry' && !row.geometry.type && !row.constructionChoices.length);
+const missing = rows.filter(row => row.role === 'explicit-source-entry' && !row.geometry.type && !row.constructionChoices.length && !row.sourceContextPreviews.length);
 const byId = new Map(rows.map(row => [row.id, row]));
 const families = [...new Set(missing.map(row => row.familyId))].sort().map(familyId => {
   const family = byId.get(familyId), entries = missing.filter(row => row.familyId === familyId);

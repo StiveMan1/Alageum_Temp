@@ -8,6 +8,7 @@ import { getCatalogFamilySourceReferences, sourcePanelAnchor } from '@/lib/catal
 import { getReviewedLegacyCompletion } from '@/lib/catalog/models/legacyAssetCompletion';
 import { displayExecution, displayProductName, displaySpecLabel } from '@/lib/catalog/presentation';
 import CatalogConfigurations from './CatalogConfigurations';
+import CatalogSourcePreview from './CatalogSourcePreview';
 
 function PageLink({ source, page }) {
   const href = sourcePageUrl(source, page);
@@ -55,6 +56,7 @@ export default function CatalogSourceEvidence({ product, records = [] }) {
           return <tr key={`${row.field}-${index}`} data-source-field={row.field} className={differs ? 'has-difference' : ''}><th scope="row">{displaySpecLabel(row.label)}{differs && <small className="source-comparison-status">Есть расхождение</small>}</th><td><Value value={row.legacySourceValue} unit={row.legacyUnit} label={row.label}/></td><td><Value value={row.newCatalogValue} unit={row.newUnit} label={row.label}/><PageLink source={panel} page={row.newSourcePage}/></td></tr>;
         })}</tbody></table></div>}
         <div className="catalog-source-line"><a href={panel.sourceUrl} target="_blank" rel="noopener noreferrer">{panel.sourceTitle} ↗</a><span>{panel.sourcePages.map(page => <PageLink key={page} source={panel} page={page}/>)}</span></div>
+        <CatalogSourcePreview product={product} panelId={panel.id}/>
         <details className="catalog-source-facts"><summary>Все характеристики этой записи в печатном каталоге</summary><SourceFacts source={panel} specs={panel.technicalSpecs || []}/><CatalogConfigurations product={panel}/></details>
         {(panel.description || panel.familySpecs?.length > 0) && <details className="catalog-source-facts"><summary>Общие сведения серии из печатного каталога</summary><p className="filter-help">Эти сведения описывают серию и её варианты. Климатические диапазоны и опции не приписываются одному конкретному исполнению.</p>{panel.description && <p>{panel.description}</p>}<SourceFacts source={panel} specs={panel.familySpecs || []}/></details>}
         {!!panel.notes?.length && <details className="catalog-data-warning"><summary>Примечания этого источника ({panel.notes.length})</summary><ul>{panel.notes.map((note, index) => <li key={index}>{note}</li>)}</ul></details>}

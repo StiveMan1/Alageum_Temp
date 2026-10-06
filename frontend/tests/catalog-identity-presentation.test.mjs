@@ -19,8 +19,12 @@ async function component(name) {
   const file = new URL(`../components/catalog/${name}.js`, import.meta.url);
   let source = (await readFile(file, 'utf8')).replace("'react'", JSON.stringify(pathToFileURL(require.resolve('react')).href)).replace("import Link from 'next/link';", 'const Link = props => <a {...props}/>;');
   if (source.includes("'./CatalogConfigurations'")) source = source.replace("'./CatalogConfigurations'", JSON.stringify(await component('CatalogConfigurations')));
+  if (source.includes("'./CatalogSourcePreview'")) source = source.replace("'./CatalogSourcePreview'", JSON.stringify(await component('CatalogSourcePreview')));
+  source = source.replace("import Image from 'next/image';", 'const Image = props => <img {...props}/>;')
+    .replace("import EquipmentModel from './EquipmentModel';", 'const EquipmentModel = props => <section data-equipment-model={props.type} data-preview-icon={props.previewIconType}/>;')
+    .replace("import styles from './CatalogSourcePreview.module.css';", 'const styles = {};');
   source = source.replace("'@/lib/catalog/models/legacyAssetCompletion'", JSON.stringify(new URL('../lib/catalog/models/legacyAssetCompletion.js', import.meta.url).href));
-  for (const moduleName of ['identityCompletion', 'presentation', 'sources', 'familySourceReferences']) source = source.replace(`'@/lib/catalog/${moduleName}'`, JSON.stringify(new URL(`../lib/catalog/${moduleName}.js`, import.meta.url).href));
+  for (const moduleName of ['identityCompletion', 'presentation', 'sources', 'familySourceReferences', 'ntmiSourcePreview']) source = source.replace(`'@/lib/catalog/${moduleName}'`, JSON.stringify(new URL(`../lib/catalog/${moduleName}.js`, import.meta.url).href));
   const { transform, loadBindings } = require('next/dist/build/swc');
   await loadBindings();
   const output = await transform(source, { filename: file.pathname, jsc: { parser: { syntax: 'ecmascript', jsx: true }, transform: { react: { runtime: 'automatic' } } }, module: { type: 'es6' } });
@@ -210,4 +214,19 @@ test('manual API configuration preserves exact designation and multiline value i
     assert.doesNotMatch(rendered, /стр\.|page=/, String(page));
     assert.equal(rendered.match(/<dd class="catalog-spec-text">([\s\S]*?)<\/dd>/)?.[1], literal);
   }
+});
+
+test('NTMI previews render inside their exact source panels with the PDF edition, scan and gallery route', async () => {
+  for (const id of ['ntmi-6', 'ntmi-10']) {
+    const product = productById(id), html = await render('CatalogSourceEvidence', product);
+    assert.match(html, new RegExp(`data-source-preview="alageum-2026-${id}"`));
+    assert.match(html, /data-equipment-model="tr26-instrument-three-triangle"/);
+    assert.match(html, /18\.03\.2026, стр\. 96/);
+    assert.match(html, /не CAD, не размеры и не точная модель исполнения/);
+    assert.match(html, /href="\/catalog\/source\?source=transformers-2026&amp;page=96"/);
+    assert.match(html, /src="\/catalog-source\/transformers-2026\/page-096.webp"/);
+    assert.doesNotMatch(html, /page-097|data-equipment-model="instrument-transformer"/);
+    assert.equal(await render('CatalogSourceEvidence', { ...product, power: 1 }), '');
+  }
+  assert.doesNotMatch(await render('CatalogSourceEvidence', productById('tmg-400')), /data-source-preview/);
 });
