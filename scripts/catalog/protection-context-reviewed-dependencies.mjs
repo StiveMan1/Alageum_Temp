@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { assertBrowserAssertionDependencies } from './catalog-browser-reviewed-dependencies.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const protectionContextReviewDir = 'docs/catalog-transformers-2026/review/protection-context-integration';
@@ -128,10 +129,10 @@ export function verifyProtectionContextDependencyFiles(clearance, read = readPro
   }
   for (const file of protectionContextAmendmentFiles) {
     assert.equal(amendments[file].baselineSha256, baseline[file], `Wrong protection/context baseline ${file}`);
-    assert.equal(amendments[file].reviewedSha256, hash(file), `Changed successor amendment ${file}`);
+    assert.equal(amendments[file].reviewedSha256, reviewedFiles[file], `Changed successor amendment pin ${file}`);
     assert.notEqual(amendments[file].reviewedSha256, baseline[file], `Unnecessary successor amendment ${file}`);
   }
-  for (const [file, expected] of Object.entries(reviewedFiles)) assert.equal(hash(file), expected, `Changed reviewed protection/context file ${file}`);
+  assertBrowserAssertionDependencies(reviewedFiles, read);
   const prototype = JSON.parse(read(`${protectionContextReviewDir}/protection-prototype-frozen-files.json`));
   for (const entry of prototype.files) {
     const file = entry.path.endsWith('/protection-example-prototype.test.mjs') ? `${protectionContextReviewDir}/protection-prototype-test.mjs` : entry.path;
@@ -174,9 +175,9 @@ export function assertProtectionContextForwardDependencies(expectedFiles, read =
   if (!changed.length) return;
   for (const { file } of changed) assert.ok(protectionContextAmendmentFiles.includes(file), `Changed unreviewed protection/context dependency ${file}`);
   const clearance = verifyProtectionContextDependencyAmendment(JSON.parse(read(protectionContextClearancePath)), read);
-  for (const { file, expected, actual } of changed) {
+  for (const { file, expected } of changed) {
     assert.equal(clearance.dependencies.amendments[file].baselineSha256, expected, `Wrong historical protection/context dependency ${file}`);
-    assert.equal(clearance.dependencies.amendments[file].reviewedSha256, actual, `Changed protection/context amended bytes ${file}`);
+    assertBrowserAssertionDependencies({ [file]: clearance.dependencies.amendments[file].reviewedSha256 }, read);
   }
 }
 export function assertProtectionContextForwardDependency(file, expected, read = readProtectionContextBytes) {
@@ -191,7 +192,7 @@ export function protectionContextHistoricalHash(file, read = readProtectionConte
   const baseline = JSON.parse(read(`${protectionContextReviewDir}/baseline-dependencies.json`));
   if (actual === baseline[file]) return actual;
   const clearance = verifyProtectionContextDependencyAmendment(JSON.parse(read(protectionContextClearancePath)), read);
-  assert.equal(clearance.dependencies.amendments[file].reviewedSha256, actual);
+  assertBrowserAssertionDependencies({ [file]: clearance.dependencies.amendments[file].reviewedSha256 }, read);
   return clearance.dependencies.amendments[file].baselineSha256;
 }
 

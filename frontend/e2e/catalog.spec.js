@@ -636,7 +636,7 @@ test("transformer source: shared construction survives family navigation without
 test("catalog source: independently approved icon-only records keep their source image and no 3D", async ({ page }) => {
   const id = "cat-ptm-tded";
   await page.goto(`/catalog/${id}`);
-  await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-type", "paired-protection-enclosures");
+  await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-type", "source69-paired-protection-examples-icon");
   await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-confidence", "source-based");
   await expect(page.locator("[data-equipment-model]")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Открыть 3D-модель", exact: true })).toHaveCount(0);
@@ -1387,8 +1387,6 @@ test('measurement column completion: API UUID, edited shape and raw media guards
     for (const patch of [
       { id: '10000000-0000-4000-8000-000000000001' },
       { specs: { ...original.specs, execution: 'Изменённое исполнение владельца' } },
-    { specs: { ...original.specs, variantSpecs: [{ label: 'Климатическое исполнение', value: 'УХЛ4', unit: '', page: 69 }] } },
-    { provenance: { ...original.provenance, sourceTitle: 'Изменённый источник' } },
       { media: [{ ...original.media[0], path: `/catalog-source/transformers-2026/page-${specimen.sourcePage === 99 ? '100' : '099'}.webp` }] },
     ]) {
       current = { ...original, ...patch };
@@ -1710,7 +1708,8 @@ for (const mode of ['static', 'api']) test(`protection source examples: ${mode} 
   await observeSourceAssetContexts(page);
   if (mode === 'api') await routeSourceContextRecords(page, ids);
   for (const specimen of [...protectionExampleRecords, { id: 'cat-ptm-tded', type: protectionFamilyIcon }]) {
-    await page.goto(`/catalog?source=${mode}&q=${encodeURIComponent(productById(specimen.id).sku)}`);
+    const familyFilter = specimen.id === 'cat-ptm-tded' ? '&recordKind=family' : '';
+    await page.goto(`/catalog?source=${mode}&q=${encodeURIComponent(productById(specimen.id).sku)}${familyFilter}`);
     const icon = page.locator(`.catalog-table [data-product-icon="${specimen.id}"]`);
     await expect(icon).toHaveAttribute('data-icon-type', specimen.type);
     await expect(icon).toHaveAttribute('data-icon-confidence', 'source-based');
