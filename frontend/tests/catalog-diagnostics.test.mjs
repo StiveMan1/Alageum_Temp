@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { crc32, deflateSync } from 'node:zlib';
-import { diagnosticGroup, prepareCatalogDiagnostics, MAX_GROUP_BYTES } from '../scripts/prepare-catalog-diagnostics.mjs';
+import { diagnosticGroup, prepareCatalogDiagnostics, MAX_GROUP_BYTES, planMobileParts, verifyMobilePartitions, validateFullArtifact } from '../scripts/prepare-catalog-diagnostics.mjs';
 
 const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=', 'base64');
 const metric = Buffer.from('{ "darkPixels": 52, "width": 10, "height": 10 }\r\n');
@@ -35,6 +35,7 @@ function fixture(t, reportValue = report()) {
   return { temp, sourceRoot, outputRoot, write, run: options => prepareCatalogDiagnostics({ sourceRoot, outputRoot, ...options }) };
 }
 function manifest(f, group) { return readJSON(path.join(f.outputRoot, group, 'manifest.json')); }
+const fullArtifact = { id: '1234', url: 'https://github.com/test/fixture/actions/runs/1/artifacts/1234', sha256: 'a'.repeat(64), repository: 'test/fixture', runId: '1', outcome: 'success' };
 function index(f) { return readJSON(path.join(f.outputRoot, 'report', 'derived/catalog-index.json')); }
 
 function chunk(type, body) {
@@ -51,6 +52,126 @@ function syntheticPNG({ width = 1, height = 1, raw = Buffer.from([0, 0, 0, 0, 25
   header[8] = 8; header[9] = 6;
   return Buffer.concat([png.subarray(0, 8), chunk('IHDR', header), chunk('IDAT', compressed), chunk('IEND', Buffer.alloc(0))]);
 }
+
+function paddedPNG(size = 6500) {
+  return Buffer.concat([png.subarray(0, png.length - 12), chunk('tEXt', Buffer.alloc(size, 65)), png.subarray(png.length - 12)]);
+}
+function partitionFixture(t, count = 3) {
+  return fixture(t, report(Array.from({ length: count }, (_, i) => ({ name: `${i}.png`, contentType: 'image/png', body: paddedPNG().toString('base64') })), 'catalog-mobile'));
+}
+
+test('mobile packing is deterministic, reserves manifest bytes and rejects overflow or collisions', () => {
+  const file = (name, size) => ({ path: `derived/${name}.png`, size, sha256: 'a'.repeat(64) });
+  const files = [file('d', 3000), file('b', 3000), file('a', 6000), file('c', 6000)];
+  const first = planMobileParts(files, 12000);
+  assert.deepEqual(first, planMobileParts([...files].reverse(), 12000));
+  assert.deepEqual(first.map(part => part.files.map(value => value.path)), [['derived/a.png', 'derived/b.png'], ['derived/c.png', 'derived/d.png']]);
+  assert.equal(planMobileParts([file('boundary', 9000)], 12000)[0].sourceBytes, 9000);
+  assert.throws(() => planMobileParts([file('too-large', 9001)], 12000), /single file/);
+  assert.equal(planMobileParts(Array.from({ length: 4 }, (_, i) => file(String(i), 9000)), 12000).length, 4);
+  assert.throws(() => planMobileParts(Array.from({ length: 5 }, (_, i) => file(String(i), 9000)), 12000), /four bounded parts/);
+  assert.throws(() => planMobileParts([file('same', 1), file('same', 1)], 12000), /duplicate/);
+  assert.throws(() => planMobileParts([{ ...file('safe', 1), path: '../escape.png' }], 12000), /Invalid/);
+});
+
+test('mobile parts preserve all bytes and raw-report retention requires the matching full receipt', t => {
+  const f = partitionFixture(t);
+  const result = f.run({ fullArtifact, maxGroupBytes: 12000 });
+  assert.equal(result.ok, true);
+  assert.equal(result.mobilePartCount, 3);
+  const master = manifest(f, 'mobile');
+  assert.equal(master.status, 'complete-partitioned');
+  assert.equal(master.files.length, 3);
+  assert.equal(master.exportedBytes, master.sourceBytes);
+  assert.equal(result.coverage.rawReport.disposition, 'full-artifact-only');
+  assert.equal(result.coverage.rawReport.fullArtifact.id, '1234');
+  assert.equal(result.coverage.derivedReport.status, 'complete-non-body-fields');
+  for (const item of index(f).attachments) {
+    assert.equal(item.exportStatus, 'complete');
+    assert.deepEqual(fs.readFileSync(path.join(f.outputRoot, item.partition, item.path)), paddedPNG());
+  }
+  for (const part of master.parts) assert.ok(part.rawBytes <= 12000);
+  assert.deepEqual(verifyMobilePartitions(f.outputRoot, 12000), { parts: 3, files: 3, exportedBytes: paddedPNG().length * 3 });
+});
+
+test('the derived projection preserves every non-body field and hashes supported or excluded inline bodies', t => {
+  const pngBody = paddedPNG().toString('base64');
+  const rawMetric = Buffer.from('{ "darkPixels": 45 }\r\n');
+  const unsupported = Buffer.from('existing opaque archive bytes');
+  const data = report([
+    { name: 'one.png', contentType: 'image/png', body: pngBody, extraField: ['unchanged', null] },
+    { name: 'two.png', contentType: 'image/png', body: pngBody },
+    { name: 'three.png', contentType: 'image/png', body: pngBody },
+    { name: 'opened-pixels.json', contentType: 'application/json', body: rawMetric.toString('base64') },
+    { name: 'trace.zip', contentType: 'application/zip', body: unsupported.toString('base64') },
+  ], 'catalog-mobile');
+  data.config = { metadata: { arbitrary: [0, false, 'literal'], body: 'not an attachment body' }, projects: [{ name: 'catalog-mobile' }] };
+  data.body = { kept: true };
+  data.suites[0].specs[0].tests[0].results[0].duration = 133;
+  data.suites[0].specs[0].tests[0].results[0].stdout = [{ text: 'raw log' }];
+  data.suites[0].specs[0].tests[0].results[0].steps = [{ title: 'retained', duration: 7, body: ['unchanged'] }];
+  const f = fixture(t, data);
+  assert.equal(f.run({ fullArtifact, maxGroupBytes: 20000 }).ok, true);
+  const derived = readJSON(path.join(f.outputRoot, 'report/derived/catalog-report.json'));
+  const i = index(f);
+  for (const item of i.attachments) {
+    const projected = item.pointer.split('/').slice(1).reduce((value, key) => value[key], derived);
+    const original = item.pointer.split('/').slice(1).reduce((value, key) => value[key], data);
+    assert.deepEqual(projected.body, { diagnosticAttachmentPointer: item.pointer });
+    projected.body = original.body;
+    assert.equal(item.sha256, sha(Buffer.from(original.body, 'base64')));
+    assert.equal(item.size, Buffer.from(original.body, 'base64').length);
+  }
+  assert.deepEqual(derived, data);
+  assert.equal(i.attachments[4].status, 'excluded-type');
+  assert.equal(i.attachments[4].partition, null);
+  assert.deepEqual(fs.readFileSync(path.join(f.outputRoot, 'report', i.attachments[3].path)), rawMetric);
+  assert.equal(i.coverage.rawReport.fullArtifact.sha256, fullArtifact.sha256);
+});
+
+test('missing, mismatched or failed upload provenance cannot approve omitted raw report retention', t => {
+  for (const receipt of [undefined, {}, { ...fullArtifact, outcome: 'failure' }, { ...fullArtifact, id: '5678' }, { ...fullArtifact, runId: '2' }, { ...fullArtifact, sha256: 'not-a-digest' }, { ...fullArtifact, url: `${fullArtifact.url}?alternate=1` }]) {
+    const f = partitionFixture(t);
+    const result = f.run({ fullArtifact: receipt, maxGroupBytes: 12000 });
+    assert.equal(result.ok, false);
+    assert.equal(result.coverage.rawReport.fullArtifact, null);
+    assert.match(manifest(f, 'report').issues.join('\n'), /provenance|receipt/);
+  }
+  assert.equal(validateFullArtifact(fullArtifact).url, fullArtifact.url);
+});
+
+test('mobile overflow and a manifest that itself exceeds the cap fail without changing original evidence', t => {
+  const f = partitionFixture(t, 5);
+  const result = f.run({ fullArtifact, maxGroupBytes: 12000 });
+  assert.equal(result.ok, false);
+  assert.equal(result.mobilePartCount, 0);
+  assert.equal(manifest(f, 'mobile').files.length, 5);
+  assert.equal(manifest(f, 'mobile').exportedBytes, 0);
+  assert.ok(manifest(f, 'mobile').files.every(file => file.partition === null));
+  const many = fixture(t, report(Array.from({ length: 100 }, (_, i) => ({ name: `${i}.png`, contentType: 'image/png', body: png.toString('base64') })), 'catalog-mobile'));
+  const original = fs.readFileSync(path.join(many.sourceRoot, 'playwright-report/catalog-results.json'));
+  assert.throws(() => many.run({ fullArtifact, maxGroupBytes: 12000 }), /Manifest.*cap|Manifest.*limit/);
+  assert.deepEqual(fs.readFileSync(path.join(many.sourceRoot, 'playwright-report/catalog-results.json')), original);
+});
+
+test('mobile verification rejects missing parts, changed bytes, manifest tampering and extra parts', t => {
+  const mutations = [
+    f => fs.rmSync(path.join(f.outputRoot, 'mobile-part-002'), { recursive: true }),
+    f => fs.appendFileSync(path.join(f.outputRoot, manifest(f, 'mobile').files[0].partition, manifest(f, 'mobile').files[0].path), 'tampered'),
+    f => fs.appendFileSync(path.join(f.outputRoot, 'mobile-part-001/manifest.json'), ' '),
+    f => fs.mkdirSync(path.join(f.outputRoot, 'mobile-part-004')),
+    f => fs.writeFileSync(path.join(f.outputRoot, 'mobile-part-001/unlisted.bin'), 'unaccounted'),
+    f => fs.symlinkSync('/does-not-exist', path.join(f.outputRoot, 'mobile-part-001/link')),
+    f => { const m = manifest(f, 'mobile'); m.files[1].path = m.files[0].path; fs.writeFileSync(path.join(f.outputRoot, 'mobile/manifest.json'), JSON.stringify(m)); },
+    f => { const m = manifest(f, 'mobile'); m.files[0].partition = 'mobile-part-002'; fs.writeFileSync(path.join(f.outputRoot, 'mobile/manifest.json'), JSON.stringify(m)); },
+  ];
+  for (const mutate of mutations) {
+    const f = partitionFixture(t);
+    assert.equal(f.run({ fullArtifact, maxGroupBytes: 12000 }).ok, true);
+    mutate(f);
+    assert.throws(() => verifyMobilePartitions(f.outputRoot, 12000));
+  }
+});
 
 test('CRC corruption and invalid compressed PNG data fail without replacing valid later evidence', t => {
   const badCRC = Buffer.from(png); badCRC[52] ^= 1;
@@ -186,7 +307,7 @@ test('preserves exact file bytes and paths, both projects and retry screenshots'
     const m = manifest(f, group);
     assert.equal(m.files[0].path, `frontend/${names[i]}`);
     assert.equal(m.files[0].sha256, sha(png));
-    assert.deepEqual(fs.readFileSync(path.join(f.outputRoot, group, 'frontend', names[i])), png);
+    assert.deepEqual(fs.readFileSync(path.join(f.outputRoot, m.files[0].partition || group, 'frontend', names[i])), png);
   }
   for (const name of ['catalog-browser.log', 'playwright-report/catalog-results.json', 'test-results/.last-run.json']) {
     assert.deepEqual(fs.readFileSync(path.join(f.outputRoot, 'report/frontend', name)), fs.readFileSync(path.join(f.sourceRoot, name)));
@@ -204,12 +325,12 @@ test('decodes existing inline PNG and JSON bodies losslessly with pointers and s
   ], 'catalog-mobile');
   const f = fixture(t, data);
   f.write('test-results/case-catalog-mobile/test-failed-1.png', png);
-  assert.equal(f.run().ok, true);
+  assert.equal(f.run({ fullArtifact }).ok, true);
   const i = index(f);
   assert.equal(i.sourceSha256, sha(Buffer.from(JSON.stringify(data))));
   assert.equal(i.attachments[0].pointer, '/suites/0/specs/0/tests/0/results/0/attachments/0');
   assert.equal(i.attachments[0].group, 'mobile');
-  assert.deepEqual(fs.readFileSync(path.join(f.outputRoot, 'mobile', i.attachments[0].path)), png);
+  assert.deepEqual(fs.readFileSync(path.join(f.outputRoot, i.attachments[0].partition, i.attachments[0].path)), png);
   assert.deepEqual(fs.readFileSync(path.join(f.outputRoot, 'report', i.attachments[1].path)), metric);
   assert.equal(i.attachments[1].sha256, sha(metric));
   assert.equal(i.attachments[2].status, 'excluded-type');
@@ -303,19 +424,19 @@ test('oversize screenshot group exports only an explicit failure manifest, other
   assert.equal(manifest(f, 'desktop').status, 'oversize');
   assert.equal(manifest(f, 'desktop').exportedBytes, 0);
   assert.equal(manifest(f, 'desktop').files[0].sha256, sha(Buffer.alloc(20_000)));
-  assert.equal(manifest(f, 'mobile').status, 'complete');
+  assert.equal(manifest(f, 'mobile').status, 'complete-partitioned');
   for (const group of result.results) assert.ok(group.rawBytes <= 12_000);
 });
 
-test('oversize original report stays intact while its compact index and metric remain usable', t => {
+test('oversize non-body projection fails explicitly while the complete original remains intact', t => {
   const data = report([{ name: 'opened-pixels.json', contentType: 'application/json', body: metric.toString('base64') }]);
   data.largeUnusedField = 'x'.repeat(20_000);
   const f = fixture(t, data);
   assert.equal(f.run({ maxGroupBytes: 12_000 }).ok, false);
-  assert.equal(manifest(f, 'report').status, 'incomplete');
+  assert.equal(manifest(f, 'report').status, 'oversize');
   const original = manifest(f, 'report').excluded.find(file => file.status === 'oversize-retained-in-full-artifact');
   assert.equal(original.sha256, sha(Buffer.from(JSON.stringify(data))));
-  assert.equal(index(f).attachments[0].status, 'decoded');
+  assert.equal(manifest(f, 'report').exportedBytes, 0);
   assert.equal(fs.readFileSync(path.join(f.sourceRoot, 'playwright-report/catalog-results.json'), 'utf8'), JSON.stringify(data));
 });
 
