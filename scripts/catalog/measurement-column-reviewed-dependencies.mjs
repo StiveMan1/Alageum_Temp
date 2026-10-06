@@ -1,3 +1,4 @@
+import { assertProtectionContextForwardDependencies } from './protection-context-reviewed-dependencies.mjs';
 // One forward amendment of PR32. This leaf verifier uses raw bytes only, so
 // historical approval adapters cannot authorize themselves through a cycle.
 import assert from 'node:assert/strict';
@@ -88,22 +89,22 @@ export function verifyMeasurementColumnDependencyFiles(clearance, read = readMea
   assert.equal(clearance.format, 'alageum-measurement-column-completion-clearance-v1');
   assert.equal(clearance.baselineCommit, measurementColumnBaselineCommit);
   assert.equal(clearance.baselineTree, measurementColumnBaselineTree);
-  for (const [file, expected] of Object.entries(fixedFiles)) assert.equal(hash(file), expected, `Changed frozen measurement-column input ${file}`);
   const historical = JSON.parse(read(`${historicalDir}/clearance.json`));
   const originalFiles = historical.dependencies.reviewedFiles;
   assert.equal(Object.keys(originalFiles).length, 202);
   const { amendments, reviewedFiles } = clearance.dependencies;
+  for (const [file, expected] of Object.entries(fixedFiles)) assert.equal(reviewedFiles[file], expected, `Changed frozen measurement-column input ${file}`);
   assert.deepEqual(Object.keys(amendments).sort(), [...measurementColumnAmendmentFiles].sort(), 'Incomplete or overbroad measurement-column amendment');
   const required = [...new Set([...Object.keys(originalFiles), ...measurementColumnRequiredFiles])].sort();
   assert.deepEqual(Object.keys(reviewedFiles).sort(), required, 'Incomplete or overbroad measurement-column dependency scope');
   for (const [file, expected] of Object.entries(originalFiles)) {
     if (measurementColumnAmendmentFiles.includes(file)) {
       assert.equal(amendments[file].baselineSha256, expected, `Wrong PR32 dependency ${file}`);
-      assert.equal(amendments[file].reviewedSha256, hash(file), `Changed amended measurement-column dependency ${file}`);
+      assert.equal(reviewedFiles[file], amendments[file].reviewedSha256, `Missing exact measurement-column amendment pin ${file}`);
       assert.notEqual(amendments[file].reviewedSha256, expected, `Unnecessary measurement-column amendment ${file}`);
-    } else assert.equal(hash(file), expected, `Changed historical source approval/dependency ${file}`);
+    } else assert.equal(reviewedFiles[file], expected, `Changed historical measurement-column dependency pin ${file}`);
   }
-  for (const [file, expected] of Object.entries(reviewedFiles)) assert.equal(hash(file), expected, `Changed reviewed measurement-column file ${file}`);
+  assertProtectionContextForwardDependencies(reviewedFiles, read);
   const prototype = JSON.parse(read(`${reviewDir}/prototype-independent-review.json`));
   for (const entry of prototype.acceptedFiles) assert.equal(hash(entry.path), entry.sha256, `Changed accepted measurement-column prototype ${entry.path}`);
   assert.equal(clearance.bindingsSha256, hash(manifestPath), 'Changed measurement-column bindings');
@@ -136,12 +137,19 @@ export function verifyMeasurementColumnDependencyAmendment(clearance, read = rea
 }
 
 /** Compare to one historical hash without changing any raw hashing semantics. */
-export function assertMeasurementColumnForwardDependency(file, expectedPR32Hash, read = readMeasurementColumnBytes) {
-  const actual = digest(read(file));
-  if (actual === expectedPR32Hash) return;
-  assert.ok(measurementColumnAmendmentFiles.includes(file), `Changed reviewed source-asset file ${file}`);
-  const clearance = verifyMeasurementColumnDependencyAmendment(JSON.parse(read(measurementColumnClearancePath)), read);
-  const amendment = clearance.dependencies.amendments[file];
-  assert.equal(amendment.baselineSha256, expectedPR32Hash, `Wrong historical forward-amendment dependency ${file}`);
-  assert.equal(amendment.reviewedSha256, actual, `Changed amended measurement-column dependency ${file}`);
+export function assertMeasurementColumnForwardDependencies(expectedFiles, read = readMeasurementColumnBytes) {
+  const changed = Object.entries(expectedFiles).filter(([file, expected]) => digest(read(file)) !== expected);
+  if (!changed.length) return;
+  const needsMeasurementReview = changed.some(([file]) => measurementColumnAmendmentFiles.includes(file));
+  const clearance = needsMeasurementReview ? verifyMeasurementColumnDependencyAmendment(JSON.parse(read(measurementColumnClearancePath)), read) : null;
+  const successorFiles = Object.fromEntries(changed.map(([file, expected]) => {
+    if (!measurementColumnAmendmentFiles.includes(file)) return [file, expected];
+    const amendment = clearance.dependencies.amendments[file];
+    assert.equal(amendment.baselineSha256, expected, `Wrong historical forward-amendment dependency ${file}`);
+    return [file, amendment.reviewedSha256];
+  }));
+  assertProtectionContextForwardDependencies(successorFiles, read);
+}
+export function assertMeasurementColumnForwardDependency(file, expected, read = readMeasurementColumnBytes) {
+  return assertMeasurementColumnForwardDependencies({ [file]: expected }, read);
 }

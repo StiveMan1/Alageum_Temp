@@ -41,7 +41,20 @@ test('database overlay reassembles all238 canonical records exactly',()=>{
  assert.equal(overlay.recordCount,238);assert.deepEqual(overlay.order.map(id=>records.get(id)),officialProducts);
 });
 test('live imported identity preserves reviewed icon mapping',()=>{
- for(const source of officialProducts){const live=normalizeApiProduct({...product,public_key:source.id,category_public_key:source.category,specs:source,provenance:source});assert.equal(getEquipmentIcon(live).type,getEquipmentIcon(source).type);}
+ const protectedIds={
+  'cat-ptm-tded':'878abd26-7425-5419-a7d4-a689acdff2ab',
+  'cat-ptm-tded-v012':'d96ccf51-505d-5061-83de-7611dd1aef7a',
+  'cat-ptm-tded-v013':'9af03c31-ebcc-5d9f-be2e-0a101abd7abc',
+ };
+ for(const source of officialProducts){
+  const raw={...product,public_key:source.id,category_public_key:source.category,specs:source,provenance:source};
+  if(Object.hasOwn(protectedIds,source.id)){
+   // A borrowed public key with edited content has no successor icon authority.
+   assert.equal(getEquipmentIcon(normalizeApiProduct(raw)).type,'equipment',source.id);
+   Object.assign(raw,{id:protectedIds[source.id],sku:source.sku,translations:{ru:{name:source.name,description:source.description}},media:[{path:source.image,kind:'image',alt:source.imageCaption}]});
+  }
+  assert.equal(getEquipmentIcon(normalizeApiProduct(raw)).type,getEquipmentIcon(source).type,source.id);
+ }
 });
 test('CSV treats formula-looking administrator strings as text',()=>{
  const csv=selectionCsv([{id:'a',quantity:1}],[{id:'a',source:'api',sku:'=1+1',name:'@SUM(1)'}]);

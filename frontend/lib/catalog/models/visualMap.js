@@ -1,3 +1,4 @@
+import { getProtectionExampleAsset, getRejectedProtectionExampleAsset } from './protectionExampleRuntime.js';
 import { getMeasurementColumn2026Completion } from './measurementColumn2026Completion.js';
 import { getSourceAssetCompletion } from './sourceAssetCompletion.js';
 import { getReviewedTransformerAsset, isTransformer2026Record } from './transformer2026Runtime.js';
@@ -691,6 +692,10 @@ const genericType = (product) => {
 
 /** Source-family visual evidence; do not substitute equipmentTypeFor() for this. */
 export function getEquipmentVisual(product = {}) {
+  const protectionExample = getProtectionExampleAsset(product, 'geometry');
+  if (protectionExample) return protectionExample;
+  const rejectedProtectionExample = getRejectedProtectionExampleAsset(product, 'geometry');
+  if (rejectedProtectionExample) return rejectedProtectionExample;
   const columnCompletion = getMeasurementColumn2026Completion(product, 'geometry');
   if (columnCompletion) return columnCompletion;
   const sourceCompletion = getSourceAssetCompletion(product, 'geometry');

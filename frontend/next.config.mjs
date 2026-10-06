@@ -8,4 +8,9 @@ const nextConfig = {
   reactStrictMode: true,
 };
 
-export default nextConfig;
+export default async function config(phase) {
+  if (phase === PHASE_PRODUCTION_BUILD || phase === PHASE_DEVELOPMENT_SERVER) await verifySourceContextBuild();
+  return nextConfig;
+}
+import { PHASE_DEVELOPMENT_SERVER, PHASE_PRODUCTION_BUILD } from 'next/constants.js';
+import { verifySourceContextBuild } from './scripts/verify-source-context-build.mjs';

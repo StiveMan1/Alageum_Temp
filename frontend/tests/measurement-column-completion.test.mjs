@@ -116,6 +116,8 @@ async function renderVisual(product) {
       .replace("import Link from 'next/link';", 'const Link = props => <a {...props}/>;')
       .replace("import ProductIcon from './ProductIcon';", 'const ProductIcon = () => <span/>;')
       .replace("export { default as ProductIcon } from './ProductIcon';", '')
+      .replace("import sourceContextAssetProof from '@/lib/catalog/source-context/sourceContextBuildProof';", 'const sourceContextAssetProof = null;')
+      .replace("import CatalogSourceContext from './source-context/CatalogSourceContext';", 'const CatalogSourceContext = () => null;')
       .replace("import EquipmentModel from './EquipmentModel';", 'const EquipmentModel = ({type, previewIconType}) => <div data-real-viewer-type={type} data-preview-type={previewIconType}/>;')
       .replace(/(['"])@\/([^'"]+)\1/g, (_, quote, relative) => JSON.stringify(new URL(`../${relative}.js`, import.meta.url).href));
     const { transform, loadBindings } = require('next/dist/build/swc'); await loadBindings();

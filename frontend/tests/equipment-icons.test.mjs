@@ -8,6 +8,11 @@ import { equipmentIconTypes, sourceIconShapes, resolveIconType } from '../lib/ca
 import { renderEquipmentIcon } from './helpers/render-equipment-icon.mjs';
 
 const get = id => getEquipmentIcon(importedProducts.find(product => product.id === id));
+const protectionSuccessors = {
+  'cat-ptm-tded': 'source69-paired-protection-examples-icon',
+  'cat-ptm-tded-v012': 'source69-ptm-u1-example',
+  'cat-ptm-tded-v013': 'source69-tde9-u3-example',
+};
 
 test('all 238 separate official records have a non-placeholder vector icon', async () => {
   assert.equal(officialProducts.length, 238);
@@ -16,7 +21,10 @@ test('all 238 separate official records have a non-placeholder vector icon', asy
   const used = new Set();
   for (const product of officialProducts) {
     const icon = getEquipmentIcon(product);
-    assert.ok(Object.hasOwn(equipmentIconTypes, icon.type), `${product.id}: ${icon.type}`);
+    if (Object.hasOwn(protectionSuccessors, product.id)) {
+      assert.equal(icon.type, protectionSuccessors[product.id], product.id);
+      assert.equal(resolveIconType(icon.type), icon.type, product.id);
+    } else assert.ok(Object.hasOwn(equipmentIconTypes, icon.type), `${product.id}: ${icon.type}`);
     assert.notEqual(icon.type, 'equipment', `${product.id}: no generic missing-image cube`);
     assert.match(icon.confidence, /^(source-based|typical)$/);
     assert.ok(icon.reason.length > 20);

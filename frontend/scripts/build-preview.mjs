@@ -37,7 +37,9 @@ const detailsSource = await readFile(detailsPath, 'utf8');
 if (!detailsSource.includes('const params = useSearchParams();')) throw new Error('Unexpected product-detail source: review static export adapter');
 await writeFile(detailsPath, detailsSource.replace("import { useSearchParams } from 'next/navigation';\n", '').replaceAll('const params = useSearchParams();', 'const params = new URLSearchParams();'));
 
-await writeFile(join(stage, 'next.config.mjs'), `export default { output: 'export', poweredByHeader: false, reactStrictMode: true, images: { unoptimized: true }, trailingSlash: true, turbopack: { root: ${JSON.stringify(root)} } };\n`);
+await mkdir(join(stage, 'scripts'), { recursive: true });
+await cp(join(root, 'scripts/verify-source-context-build.mjs'), join(stage, 'scripts/verify-source-context-build.mjs'));
+await writeFile(join(stage, 'next.config.mjs'), `import { PHASE_PRODUCTION_BUILD } from 'next/constants.js';\nimport { verifySourceContextBuild } from './scripts/verify-source-context-build.mjs';\nexport default async phase => { if (phase === PHASE_PRODUCTION_BUILD) await verifySourceContextBuild(); return { output: 'export', poweredByHeader: false, reactStrictMode: true, images: { unoptimized: true }, trailingSlash: true, turbopack: { root: ${JSON.stringify(root)} } }; };\n`);
 const result = spawnSync(process.execPath, [join(root, 'node_modules/next/dist/bin/next'), 'build', stage], { cwd: root, stdio: 'inherit', env: { ...process.env, NEXT_TELEMETRY_DISABLED: '1', NEXT_PUBLIC_CATALOG_SOURCE: 'static', PAGES_SOURCE: 'static', PAGES_STATIC_PREVIEW: '1', COMPANY_SOURCE: 'static' } });
 if (result.status !== 0) process.exit(result.status || 1);
 await rm(output, { recursive: true, force: true });

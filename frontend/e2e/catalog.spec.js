@@ -636,7 +636,7 @@ test("transformer source: shared construction survives family navigation without
 test("catalog source: independently approved icon-only records keep their source image and no 3D", async ({ page }) => {
   const id = "cat-ptm-tded";
   await page.goto(`/catalog/${id}`);
-  await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-type", "paired-protection-enclosures");
+  await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-type", "source69-paired-protection-examples-icon");
   await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-confidence", "source-based");
   await expect(page.locator("[data-equipment-model]")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Открыть 3D-модель", exact: true })).toHaveCount(0);
@@ -1519,3 +1519,643 @@ for (const familyId of ['tr2026-family-zom', 'tr2026-family-znom']) for (const m
     await expectShell(page);
   });
 }
+
+// Fixed review expectations: never infer acceptance or visible caveats from the
+// runtime manifests that these hosted browser cases are meant to exercise.
+const protectionExampleDisclosure = 'Упрощённая иллюстрация примера из каталога. Мелкие элементы бокового вида и их пространственное расположение воспроизведены не полностью; см. исходный чертёж на стр. 69. Размеры, материалы и комплектация исполнения не утверждаются. Не CAD.';
+const protectionFamilyDisclosure = 'Парный символ двух отдельно подписанных примеров со стр. 69; не общий корпус семейства и не внешний вид табличного исполнения. Мелкие элементы боковых видов опущены.';
+const protectionFamilyIcon = 'source69-paired-protection-examples-icon';
+const protectionExampleRecords = [
+  { id: 'cat-ptm-tded-v012', type: 'source69-ptm-u1-example', omission: 'Опущены: малый боковой прямоугольник, короткие элементы под козырьком, точная конструкция опор.' },
+  { id: 'cat-ptm-tded-v013', type: 'source69-tde9-u3-example', omission: 'Опущены: два верхних круглых элемента бокового вида, боковой прямоугольник, нижний боковой выступ.' },
+];
+
+async function sourceContextDto(id) {
+  const [{ productById }, { createHash }] = await Promise.all([import('../lib/catalog/data.js'), import('node:crypto')]);
+  const record = productById(id);
+  // The unchanged import namespace from backend-node/src/domain/catalog-identity.js.
+  const bytes = createHash('sha1').update(Buffer.from('541788eefbf04d859d33e593b82f303c', 'hex')).update(`product:${id}`).digest().subarray(0, 16);
+  bytes[6] = (bytes[6] & 15) | 80; bytes[8] = (bytes[8] & 63) | 128;
+  const hex = bytes.toString('hex');
+  const databaseId = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+  return { id: databaseId, public_key: id, slug: id, sku: record.sku,
+    category_public_key: record.category, translations: { ru: { name: record.name, description: record.description } },
+    specs: record, provenance: record, media: [{ path: record.image, kind: 'image', alt: record.imageCaption }],
+    comparable: true, price_mode: 'on_request', currency: 'KZT' };
+}
+
+async function routeSourceContextRecords(page, ids) {
+  const dtos = await Promise.all(ids.map(sourceContextDto));
+  await page.context().route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: dtos.length, items: dtos } }));
+}
+
+async function expectProtectionExampleDisclosure(panel, specimen) {
+  const provenance = panel.locator('.visual-provenance').filter({ hasText: protectionExampleDisclosure });
+  await expect(provenance).toBeVisible();
+  for (const wording of [protectionExampleDisclosure, specimen.omission]) {
+    await expect(provenance).toContainText(wording);
+    await expect(provenance.getByText(wording, { exact: false })).toBeVisible();
+  }
+  const fullSource = panel.locator(`[data-protection-example="${specimen.id}"]`);
+  await expect(fullSource.getByRole('link', { name: 'Полная страница 69', exact: true })).toHaveAttribute('href', '/catalog/source?page=69');
+  await expect(fullSource.getByRole('link', { name: 'Полный исходный чертёж · стр. 69', exact: true })).toHaveAttribute('href', '/catalog-source/page-069.webp');
+  await expect(fullSource).toBeVisible();
+  expect(await provenance.evaluate(element => Boolean(element.closest('details, select, [hidden]')))).toBe(false);
+}
+
+async function protectionExamplePanelEvidence(panel, specimen, testInfo, name) {
+  await expectProtectionExampleDisclosure(panel, specimen);
+  await testInfo.attach(`${name}-panel-and-caveats.png`, { body: await panel.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  await testInfo.attach(`${name}-caveat.png`, { body: await panel.locator('.visual-provenance').filter({ hasText: protectionExampleDisclosure }).screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+}
+
+async function expectPinnedSourceBytes(page, path, sha256) {
+  const response = await page.request.get(path);
+  expect(response.ok(), `The deployed source asset must be available: ${path}`).toBe(true);
+  const { createHash } = await import('node:crypto');
+  expect(createHash('sha256').update(await response.body()).digest('hex'), `The deployed bytes must be the reviewed source: ${path}`).toBe(sha256);
+}
+
+for (const specimen of protectionExampleRecords) for (const mode of ['static', 'api']) {
+  test(`protection source examples: ${mode} ${specimen.id} renders, rotates, reopens and disposes with its complete caveat`, async ({ page }, testInfo) => {
+    test.setTimeout(90_000);
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    await observeSourceAssetContexts(page);
+    if (mode === 'api') await routeSourceContextRecords(page, [specimen.id]);
+    const suffix = mode === 'api' ? '?source=api' : '';
+    await page.goto(`/catalog/${specimen.id}${suffix}`);
+    const panel = page.locator('.product-visual-stack');
+    const viewer = panel.locator(`[data-equipment-model="${specimen.type}"]`);
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await expect(viewer.locator(`svg[data-equipment-type="${specimen.type}"]`)).toBeVisible();
+    await expect(page.locator('canvas')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__sourceAssetContexts.created)).toBe(0);
+    await protectionExamplePanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-idle`);
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+    const canvas = viewer.locator('canvas');
+    await expect.poll(() => canvas.evaluate(element => {
+      const gl = element.getContext('webgl2') || element.getContext('webgl');
+      return Boolean(gl && !gl.isContextLost() && gl.drawingBufferWidth && gl.drawingBufferHeight);
+    })).toBe(true);
+    const opened = await canvasEvidence(canvas, testInfo, `${mode}-${specimen.id}-opened`);
+    await protectionExamplePanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-opened`);
+    await viewer.getByRole('button', { name: 'Повернуть модель влево', exact: true }).click();
+    await viewer.getByRole('button', { name: 'Повернуть модель влево', exact: true }).click();
+    const rotated = await canvasEvidence(canvas, testInfo, `${mode}-${specimen.id}-rotated`, opened);
+    expect(rotated.changedPixels).toBeGreaterThan(opened.width * opened.height * 0.001);
+    await protectionExamplePanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-rotated`);
+    await canvas.press('Home');
+    await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.__sourceAssetContexts.lost)).toBe(1);
+    await expect(viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true })).toBeFocused();
+    await expectProtectionExampleDisclosure(panel, specimen);
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'ready');
+    await canvasEvidence(canvas, testInfo, `${mode}-${specimen.id}-reopened`);
+    await panel.getByRole('link', { name: 'Полная страница 69', exact: true }).click();
+    await expect(page).toHaveURL(/\/catalog\/source\?page=69$/);
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.__sourceAssetContexts.lost)).toBe(2);
+    await expectDecodedImage(page.locator('.source-page-image img'));
+    await expectPinnedSourceBytes(page, '/catalog-source/page-069.webp', '4f0833448f3519f9519a2e09fa62b4c28016665b4cd8e95c7341b17042ff5885');
+    await testInfo.attach(`${mode}-${specimen.id}-full-page69.png`, { body: await page.locator('.source-page-image').screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+    await page.goBack();
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await expectProtectionExampleDisclosure(panel, specimen);
+    await page.goForward();
+    await expectDecodedImage(page.locator('.source-page-image img'));
+    await page.goBack();
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await expectProtectionExampleDisclosure(panel, specimen);
+    await expectShell(page);
+    expect(errors).toEqual([]);
+  });
+}
+
+for (const specimen of protectionExampleRecords) for (const mode of ['static', 'api']) {
+  test(`protection source examples: ${mode} ${specimen.id} lazy close cannot resurrect a canvas`, async ({ page }) => {
+    test.setTimeout(60_000);
+    await observeSourceAssetContexts(page);
+    if (mode === 'api') await routeSourceContextRecords(page, [specimen.id]);
+    await page.goto(`/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}`);
+    const viewer = page.locator(`[data-equipment-model="${specimen.type}"]`);
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    let releaseImports;
+    const importGate = new Promise(resolve => { releaseImports = resolve; });
+    const imports = [];
+    const holdImport = async route => { imports.push(route.request()); await importGate; await route.continue(); };
+    await page.route('**/_next/static/chunks/**', holdImport);
+    try {
+      await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+      await expect(viewer).toHaveAttribute('data-model-status', 'loading');
+      await expect.poll(() => imports.length).toBeGreaterThan(0);
+      await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
+      await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    } finally {
+      releaseImports();
+      // Preserve the released interceptor until the isolated fixture tears down;
+      // removing the last route can handle a held request before continue().
+    }
+    await Promise.all(imports.map(async request => {
+      const response = await request.response();
+      expect(response, `The held chunk must receive a response: ${request.url()}`).not.toBeNull();
+      expect(response.ok(), `The held chunk must load successfully: ${request.url()}`).toBe(true);
+      expect(await response.finished(), `The held chunk response must finish: ${request.url()}`).toBeNull();
+    }));
+    await expect(viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true })).toBeFocused();
+    await expect(page.locator('canvas')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__sourceAssetContexts.created)).toBe(0);
+    await expectProtectionExampleDisclosure(page.locator('.product-visual-stack'), specimen);
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+    await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
+    await expect.poll(() => page.evaluate(() => window.__sourceAssetContexts)).toEqual({ created: 1, lost: 1 });
+  });
+}
+
+for (const mode of ['static', 'api']) test(`protection source examples: ${mode} no-WebGL retries preserve icons, omissions and full-page links`, async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (kind, ...args) { return /webgl/i.test(kind) ? null : original.call(this, kind, ...args); };
+  });
+  if (mode === 'api') await routeSourceContextRecords(page, protectionExampleRecords.map(specimen => specimen.id));
+  for (const specimen of protectionExampleRecords) {
+    await page.goto(`/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}`);
+    const panel = page.locator('.product-visual-stack');
+    const viewer = panel.locator(`[data-equipment-model="${specimen.type}"]`);
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'error');
+    await expect(viewer.locator(`svg[data-equipment-type="${specimen.type}"]`)).toBeVisible();
+    await expect(viewer).toContainText('Выше показана отдельно проверенная иконка');
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await protectionExamplePanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-no-webgl`);
+    await viewer.getByRole('button', { name: 'Попробовать снова', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'error');
+    await expectProtectionExampleDisclosure(panel, specimen);
+    await expect(page.locator('canvas')).toHaveCount(0);
+  }
+  await expectShell(page);
+});
+
+for (const mode of ['static', 'api']) test(`protection source examples: ${mode} listing and selected family retain distinct icons without extending table-row authority`, async ({ page }, testInfo) => {
+  test.setTimeout(120_000);
+  const ids = ['cat-ptm-tded', ...Array.from({ length: 13 }, (_, index) => `cat-ptm-tded-v${String(index + 1).padStart(3, '0')}`)];
+  const { productById } = await import('../lib/catalog/data.js');
+  await observeSourceAssetContexts(page);
+  if (mode === 'api') await routeSourceContextRecords(page, ids);
+  for (const specimen of [...protectionExampleRecords, { id: 'cat-ptm-tded', type: protectionFamilyIcon }]) {
+    const familyFilter = specimen.id === 'cat-ptm-tded' ? '&recordKind=family' : '';
+    await page.goto(`/catalog?source=${mode}&q=${encodeURIComponent(productById(specimen.id).sku)}${familyFilter}`);
+    const icon = page.locator(`.catalog-table [data-product-icon="${specimen.id}"]`);
+    await expect(icon).toHaveAttribute('data-icon-type', specimen.type);
+    await expect(icon).toHaveAttribute('data-icon-confidence', 'source-based');
+    expect(await icon.getAttribute('title')).toContain(specimen.omission ? protectionExampleDisclosure : protectionFamilyDisclosure);
+    if (specimen.omission) expect(await icon.getAttribute('title')).toContain(specimen.omission);
+    await testInfo.attach(`${mode}-${specimen.id}-listing.png`, { body: await icon.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+    await expect(page.locator('canvas')).toHaveCount(0);
+  }
+  await page.goto(`/catalog/cat-ptm-tded${mode === 'api' ? '?source=api' : ''}`);
+  const selector = page.getByRole('combobox', { name: 'Запись для просмотра', exact: true });
+  await expect(selector).toHaveValue('');
+  await expect(page.locator('[data-protection-example="cat-ptm-tded"]')).toContainText(protectionFamilyDisclosure);
+  await expect(page.locator('[data-equipment-model], [data-source-context-for], canvas')).toHaveCount(0);
+  for (const specimen of protectionExampleRecords) {
+    await selector.selectOption(specimen.id);
+    const selected = page.locator(`[data-selected-member="${specimen.id}"]`);
+    await expect(selected.locator('.family-selected-heading [data-product-icon]')).toHaveAttribute('data-icon-type', specimen.type);
+    const panel = selected.locator('.product-visual-stack');
+    const viewer = panel.locator(`[data-equipment-model="${specimen.type}"]`);
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+    await canvasEvidence(viewer.locator('canvas'), testInfo, `${mode}-${specimen.id}-family`);
+    await protectionExamplePanelEvidence(panel, specimen, testInfo, `${mode}-${specimen.id}-family`);
+  }
+  await expect.poll(() => page.evaluate(() => window.__sourceAssetContexts)).toEqual({ created: 2, lost: 1 });
+  for (const id of ids.slice(1, 12)) {
+    await selector.selectOption(id);
+    const selected = page.locator(`[data-selected-member="${id}"]`);
+    await expect(selected.locator('.family-selected-heading [data-product-icon]')).toHaveAttribute('data-icon-confidence', 'typical');
+    await expect(selected.locator('[data-equipment-model], [data-protection-example], canvas')).toHaveCount(0);
+    await expect(selected.getByRole('link', { name: 'Открыть отдельную карточку →', exact: true })).toHaveAttribute('href', `/catalog/${id}${mode === 'api' ? '?source=api' : ''}`);
+  }
+  await expect.poll(() => page.evaluate(() => window.__sourceAssetContexts)).toEqual({ created: 2, lost: 2 });
+  await selector.selectOption('');
+  await expect(page.locator('[data-source-context-for], [data-selected-member], canvas')).toHaveCount(0);
+  await expect(page.locator('[data-protection-example="cat-ptm-tded"]')).toContainText(protectionFamilyDisclosure);
+  await expectShell(page);
+});
+
+for (const id of ['cat-ptm-tded-v012', 'cat-ptm-tded-v013', 'cat-ptm-tded']) test(`protection source examples: ${id} rejects API UUID, shape and raw-media mutations`, async ({ page }) => {
+  test.setTimeout(90_000);
+  const original = await sourceContextDto(id);
+  let current;
+  await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: 1, items: [current] } }));
+  for (const patch of [
+    { id: '10000000-0000-4000-8000-000000000001' },
+    { specs: { ...original.specs, execution: 'Изменённое исполнение владельца' } },
+    { specs: { ...original.specs, variantSpecs: [{ label: 'Климатическое исполнение', value: 'УХЛ4', unit: '', page: 69 }] } },
+    { provenance: { ...original.provenance, sourceTitle: 'Изменённый источник' } },
+    { media: [{ ...original.media[0], path: '/catalog-source/page-069.webp' }] },
+  ]) {
+    current = { ...original, ...patch };
+    await page.goto(`/catalog/${id}?source=api`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.locator('[data-protection-example], [data-equipment-model], svg[data-equipment-type^="source69-"], canvas')).toHaveCount(0);
+    await page.goto(`/catalog?source=api&q=${encodeURIComponent(original.sku)}`);
+    const icon = page.locator(`.catalog-table [data-product-icon="${id}"]`);
+    await expect(icon).not.toHaveAttribute('data-icon-type', /^source69-/);
+    await expect(icon).not.toHaveAttribute('data-icon-confidence', 'source-based');
+  }
+});
+
+const sourceContextStatus = 'Конструкция этого исполнения по источнику не установлена.';
+const sourceContextFigures = {
+  left: { key: 'shnn-page35-left-general-view', page: 35, path: '/catalog-source-context/page-035-left-example-native.png', width: 555, height: 670,
+    sha256: 'ea51ffaee32846265f721a227c96d4232df972c8087a00926e076520b2c2bdb0',
+    title: 'Пример общего вида ШНН с автоматическим выключателем',
+    caption: 'Левый пример со стр. 35. В легенде указаны автоматический выключатель, сборная и нулевая шины. Обозначение конкретного исполнения не приведено.',
+    legend: ['1-Автоматический выключатель,', '2-сборная шина,', '3-нулевая шина.'] },
+  right: { key: 'shnn-page35-right-general-view', page: 35, path: '/catalog-source-context/page-035-right-example-native.png', width: 575, height: 730,
+    sha256: '6cd424ebf7804951f216d9b0a4f6883b3bf756693db5bc9638c8783f755c0819',
+    title: 'Пример общего вида ШНН со счётчиками и предохранителями',
+    caption: 'Правый пример со стр. 35. В легенде указаны счётчики, выключатели-разъединители планочного типа с предохранителями, сборная, нулевая и отходящая шины. Обозначение и число отходящих линий конкретного исполнения не приведены.',
+    legend: ['1-Счётчики,', '2-выключатели-разъединители планочного типа с предохранителями,', '3-сборная шина,', '4-нулевая шина,', '5-отходящая шина.'] },
+  ptm: { key: 'ptm-page69-labelled-example', page: 69, path: '/catalog-source-context/source-ptm.png', width: 875, height: 430,
+    sha256: 'da13e87eb4899d6d32d38f5f2d60b624360ec09e3338b70b315240658769f874', exemplar: 'cat-ptm-tded-v012',
+    title: 'Пример из источника: ПТМ(Д)-У1',
+    caption: 'Пример из источника: ПТМ(Д)-У1, стр. 69. В табличной записи климатическое исполнение не уточнено; этот пример не устанавливает её исполнение, размеры или комплектацию.',
+    legend: ['ПТМ(Д)-У1'] },
+  tde: { key: 'tde-page69-labelled-example', page: 69, path: '/catalog-source-context/source-tde.png', width: 875, height: 415,
+    sha256: '7c59a4fb95ef6a8bd39f6ae6c7573c508c6f33a6c46b85b30fc15b850fe921a8', exemplar: 'cat-ptm-tded-v013',
+    title: 'Пример из источника: ТДЕ(Д)-9-У3',
+    caption: 'Пример из источника: ТДЕ(Д)-9-У3, стр. 69. В табличной записи климатическое исполнение не уточнено; этот пример не устанавливает её исполнение, размеры или комплектацию.',
+    legend: ['ТДЕ(Д)-9-У3'] },
+};
+const sourceContextRecords = [
+  ...Array.from({ length: 18 }, (_, index) => ({ id: `cat-shnn-v${String(index + 1).padStart(3, '0')}`, figures: ['left', 'right'] })),
+  ...['001', '004', '007', '010'].map(number => ({ id: `cat-ptm-tded-v${number}`, figures: ['ptm'] })),
+  ...['003', '011'].map(number => ({ id: `cat-ptm-tded-v${number}`, figures: ['tde'] })),
+];
+const sourceContextBatches = Array.from({ length: 4 }, (_, index) => sourceContextRecords.slice(index * 6, index * 6 + 6));
+const sourceContextExcluded = ['cat-shnn', 'cat-ptm-tded', 'cat-ptm-tded-v002', 'cat-ptm-tded-v005', 'cat-ptm-tded-v006', 'cat-ptm-tded-v008', 'cat-ptm-tded-v009', 'cat-ptm-tded-v012', 'cat-ptm-tded-v013'];
+
+async function expectSourceContext(page, specimen, mode, failedFigure = null) {
+  const context = page.locator(`[data-source-context-for="${specimen.id}"]`);
+  await expect(context).toBeVisible();
+  await expect(page.locator('[data-source-context-for]')).toHaveCount(1);
+  await expect(context.getByText(sourceContextStatus, { exact: true })).toBeVisible();
+  expect(await context.evaluate(element => Boolean(element.closest('details, select, [hidden]')))).toBe(false);
+  await expect(context.locator('select, button, canvas, [data-equipment-model]')).toHaveCount(0);
+  await expect(context.locator('[data-source-figure]')).toHaveCount(specimen.figures.length);
+  const sourcePage = sourceContextFigures[specimen.figures[0]].page;
+  if (sourcePage === 35) {
+    await expect(context.getByRole('heading', { level: 3 })).toHaveText('Примеры общего вида ШНН из каталога');
+    await expect(context.getByText('На стр. 35 приведены два примера общего вида. Они не подписаны обозначениями строк; соответствие выбранному исполнению не подтверждено.', { exact: true })).toBeVisible();
+  }
+  for (const key of specimen.figures) {
+    const expected = sourceContextFigures[key];
+    const figure = context.locator(`[data-source-figure="${expected.key}"]`);
+    await expect(figure.getByRole('heading', { level: 4 })).toHaveText(expected.title);
+    await expect(figure.getByText(expected.caption, { exact: true })).toBeVisible();
+    await expect(figure.locator('figcaption li')).toHaveText(expected.legend);
+    const sourceLink = figure.locator(':scope > a');
+    // Lazy loading must be triggered by reaching the source in the real page.
+    await sourceLink.scrollIntoViewIfNeeded();
+    await expect(sourceLink).toHaveAttribute('href', `/catalog/source?page=${expected.page}`);
+    await expect(sourceLink).toHaveAttribute('target', '_blank');
+    await expect(sourceLink).toHaveAttribute('rel', /noopener/);
+    if (key === failedFigure) {
+      await expect(figure.locator('img')).toHaveCount(0);
+      await expect(figure.getByRole('status')).toHaveText('Исходное изображение недоступно. Откройте полную страницу каталога.');
+    } else {
+      await expect(figure.locator('img')).toHaveAttribute('src', expected.path);
+      await expectDecodedImage(figure.locator('img'));
+      expect(await figure.locator('img').evaluate(image => ({ width: image.naturalWidth, height: image.naturalHeight }))).toEqual({ width: expected.width, height: expected.height });
+    }
+    if (expected.exemplar) {
+      await expect(figure.getByRole('link', { name: 'Отдельная запись примера из источника (новая вкладка)', exact: true }))
+        .toHaveAttribute('href', `/catalog/${expected.exemplar}${mode === 'api' ? '?source=api' : ''}`);
+    }
+  }
+  const footer = context.getByRole('link', { name: `Открыть страницу ${sourcePage} целиком (новая вкладка)`, exact: true });
+  await expect(footer).toHaveAttribute('href', `/catalog/source?page=${sourcePage}`);
+  await expect(footer).toHaveAttribute('target', '_blank');
+  await expect(context).toContainText('Шкафные конструкции · 02.09.2024');
+  return context;
+}
+
+async function sourceContextReachabilityEvidence(page, context, specimen, testInfo, name) {
+  const viewport = page.viewportSize();
+  for (const key of specimen.figures) {
+    const figure = context.locator(`[data-source-figure="${sourceContextFigures[key].key}"]`);
+    await figure.scrollIntoViewIfNeeded();
+    await expect(figure).toBeInViewport();
+    // Scroll each readable part of a tall figure in its real page position.
+    // Detached screenshots alone can hide sticky/grid clipping.
+    for (const part of await figure.locator(':scope > a, figcaption h4, figcaption p, figcaption li, figcaption a').all()) {
+      await part.evaluate(element => element.scrollIntoView({ block: 'center', inline: 'nearest' }));
+      await expect(part).toBeInViewport({ ratio: 0.99 });
+      const bounds = await part.boundingBox();
+      expect(bounds.x).toBeGreaterThanOrEqual(-1);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(viewport.width + 1);
+      expect(bounds.y).toBeGreaterThanOrEqual(-1);
+      expect(bounds.y + bounds.height).toBeLessThanOrEqual(viewport.height + 1);
+      expect(await part.evaluate(element => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+      if (await part.evaluate(element => element.tagName === 'A')) await expectReceivesPointer(part);
+    }
+    await testInfo.attach(`${name}-${key}-caption-viewport.png`, { body: await page.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+    await testInfo.attach(`${name}-${key}-whole-figure.png`, { body: await figure.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  }
+  const footer = context.locator(':scope > p').last();
+  await footer.evaluate(element => element.scrollIntoView({ block: 'center', inline: 'nearest' }));
+  await expect(footer).toBeInViewport({ ratio: 0.99 });
+  await expectReceivesPointer(footer.getByRole('link'));
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
+  await testInfo.attach(`${name}-footer-viewport.png`, { body: await page.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  await testInfo.attach(`${name}-complete-context.png`, { body: await context.screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+}
+
+for (const [batchIndex, specimens] of sourceContextBatches.entries()) for (const mode of ['static', 'api']) {
+  test(`source context: ${mode} exact admission batch ${batchIndex + 1} retains original rows and literal labelled sources`, async ({ page }, testInfo) => {
+    test.setTimeout(120_000);
+    const { productById } = await import('../lib/catalog/data.js');
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    if (mode === 'api') await routeSourceContextRecords(page, specimens.map(specimen => specimen.id));
+    for (const specimen of specimens) {
+      await page.goto(`/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}`);
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText(productById(specimen.id).name);
+      const context = await expectSourceContext(page, specimen, mode);
+      await expect(page.locator('[data-equipment-model], canvas, [data-construction-choice]')).toHaveCount(0);
+      await expect(page.getByRole('combobox', { name: 'Конструкция для просмотра', exact: true })).toHaveCount(0);
+      await expect(page.locator('.product-visual-stack')).toHaveAttribute('data-product-visual', productById(specimen.id).familyId);
+      if (specimen === specimens[0]) await sourceContextReachabilityEvidence(page, context, specimen, testInfo, `${mode}-${specimen.id}`);
+      await expectShell(page);
+    }
+    expect(errors).toEqual([]);
+  });
+}
+
+for (const [batchIndex, specimens] of sourceContextBatches.entries()) {
+  test(`source context: API mutation batch ${batchIndex + 1} rejects every admitted UUID, shape and raw-media change`, async ({ page }) => {
+    test.setTimeout(180_000);
+    let current;
+    await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: 1, items: [current] } }));
+    for (const specimen of specimens) {
+      const original = await sourceContextDto(specimen.id);
+      for (const patch of [
+        { id: '10000000-0000-4000-8000-000000000001' },
+        { specs: { ...original.specs, technicalSpecs: [...original.specs.technicalSpecs, { label: 'Правка владельца', value: 'Изменено', unit: '', page: 69 }] } },
+        { media: [{ ...original.media[0], path: `/catalog-source/page-${specimen.id.startsWith('cat-shnn') ? '035' : '069'}.webp` }] },
+      ]) {
+        current = { ...original, ...patch };
+        await page.goto(`/catalog/${specimen.id}?source=api`);
+        await expect(page.getByRole('heading', { level: 1 })).toHaveText(original.translations.ru.name);
+        await expect(page.locator('[data-source-context-for], [data-equipment-model^="source69-"], canvas')).toHaveCount(0);
+      }
+    }
+  });
+}
+
+for (const mode of ['static', 'api']) test(`source context: ${mode} families, ambiguous table designations and separate examples remain excluded`, async ({ page }) => {
+  test.setTimeout(90_000);
+  if (mode === 'api') await routeSourceContextRecords(page, sourceContextExcluded);
+  for (const id of sourceContextExcluded) {
+    await page.goto(`/catalog/${id}${mode === 'api' ? '?source=api' : ''}`);
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.locator('[data-source-context-for]')).toHaveCount(0);
+  }
+});
+
+for (const key of ['left', 'right', 'ptm', 'tde']) for (const mode of ['static', 'api']) {
+  test(`source context: ${mode} failed ${key} image retains its own caption and full-page links without substitution`, async ({ page }, testInfo) => {
+    test.setTimeout(60_000);
+    const specimen = sourceContextRecords.find(record => record.figures.includes(key));
+    if (mode === 'api') await routeSourceContextRecords(page, [specimen.id]);
+    await page.route(`**${sourceContextFigures[key].path}`, route => route.abort('failed'));
+    await page.goto(`/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}`);
+    const context = await expectSourceContext(page, specimen, mode, key);
+    await expect(page.locator('canvas, [data-equipment-model]')).toHaveCount(0);
+    await sourceContextReachabilityEvidence(page, context, specimen, testInfo, `${mode}-${key}-failed`);
+    await expect(context.locator('img')).toHaveCount(specimen.figures.length - 1);
+    await page.reload();
+    await expectSourceContext(page, specimen, mode, key);
+  });
+}
+
+for (const familyId of ['cat-shnn', 'cat-ptm-tded']) for (const mode of ['static', 'api']) {
+  test(`source context: ${mode} ${familyId} switching keeps selected rows and keyboard source links at 320px`, async ({ page }, testInfo) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 320, height: 760 });
+    const specimens = familyId === 'cat-shnn' ? [sourceContextRecords[0], sourceContextRecords[17]] : [sourceContextRecords[18], sourceContextRecords[22]];
+    const { productById } = await import('../lib/catalog/data.js');
+    if (mode === 'api') await routeSourceContextRecords(page, [familyId, ...specimens.map(specimen => specimen.id), ...specimens.flatMap(specimen => specimen.figures.map(key => sourceContextFigures[key].exemplar).filter(Boolean))]);
+    await page.goto(`/catalog/${familyId}${mode === 'api' ? '?source=api' : ''}`);
+    const selector = page.getByRole('combobox', { name: 'Запись для просмотра', exact: true });
+    await expect(selector).toHaveValue('');
+    await expect(page.locator('[data-source-context-for]')).toHaveCount(0);
+    for (const specimen of specimens) {
+      await selector.selectOption(specimen.id);
+      const selected = page.locator(`[data-selected-member="${specimen.id}"]`);
+      await expect(selected.locator('.family-selected-heading strong')).toHaveText(productById(specimen.id).name);
+      await expect(selected.locator('.family-selected-heading [data-product-icon]')).toHaveAttribute('data-icon-confidence', 'typical');
+      await expect(selected.getByRole('link', { name: 'Открыть отдельную карточку →', exact: true })).toHaveAttribute('href', `/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}`);
+      const context = await expectSourceContext(page, specimen, mode);
+      await sourceContextReachabilityEvidence(page, context, specimen, testInfo, `${mode}-${specimen.id}-320px-family`);
+      await expect(selected.locator('canvas, [data-equipment-model]')).toHaveCount(0);
+      const originalUrl = page.url();
+      const first = sourceContextFigures[specimen.figures[0]];
+      const links = [context.getByRole('link', { name: `Открыть страницу ${first.page} целиком (новая вкладка)`, exact: true })];
+      if (first.exemplar) links.push(context.getByRole('link', { name: 'Отдельная запись примера из источника (новая вкладка)', exact: true }));
+      for (const link of links) {
+        await link.focus();
+        await page.keyboard.press('Tab');
+        await page.keyboard.press('Shift+Tab');
+        await expect(link).toBeFocused();
+        await expect(link).toHaveCSS('outline-style', 'solid');
+        await expect(link).toHaveAttribute('target', '_blank');
+        const popupPromise = page.waitForEvent('popup');
+        await page.keyboard.press('Enter');
+        const popup = await popupPromise;
+        await expect(popup).toHaveURL(new URL(await link.getAttribute('href'), originalUrl).href);
+        if ((await link.getAttribute('href')).startsWith('/catalog/source')) {
+          await expectDecodedImage(popup.locator('.source-page-image img'));
+          await expect(popup.locator('.source-page-image img')).toHaveAttribute('src', new RegExp(`page-${String(first.page).padStart(3, '0')}\\.webp`));
+        } else {
+          await expect(popup.getByRole('heading', { level: 1 })).toHaveText(productById(first.exemplar).name);
+          await expect(popup.locator('[data-equipment-model]')).toHaveAttribute('data-model-status', 'idle');
+        }
+        await popup.close();
+        await expect(page).toHaveURL(originalUrl);
+        await expect(selector).toHaveValue(specimen.id);
+        await expectSourceContext(page, specimen, mode);
+      }
+    }
+    await selector.selectOption('');
+    await expect(page.locator('[data-selected-member], [data-source-context-for], canvas')).toHaveCount(0);
+    await expectShell(page);
+  });
+}
+
+// Verify deployed bytes in the same hosted job that decodes the PNGs and captures
+// their visible pixels. No runtime manifest is the oracle for this assertion.
+test('source context: all four deployed PNGs match reviewed literal source crops', async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  for (const key of ['left', 'right', 'ptm', 'tde']) {
+    const expected = sourceContextFigures[key];
+    const specimen = sourceContextRecords.find(record => record.figures.includes(key));
+    await page.goto(`/catalog/${specimen.id}`);
+    const context = await expectSourceContext(page, specimen, 'static');
+    await expectPinnedSourceBytes(page, expected.path, expected.sha256);
+    await testInfo.attach(`${key}-reviewed-png-pixels.png`, { body: await context.locator(`[data-source-figure="${expected.key}"] img`).screenshot({ animations: 'disabled' }), contentType: 'image/png' });
+  }
+});
+
+
+// Exact imported-baseline presentation corrections from the independent DTO audit.
+const correctedCurrentSummaries = [
+  {
+    "id": "cat-shnn-v001",
+    "value": "1000 А"
+  },
+  {
+    "id": "cat-shnn-v002",
+    "value": "1600 А"
+  },
+  {
+    "id": "cat-shnn-v003",
+    "value": "2000 А"
+  },
+  {
+    "id": "cat-shnn-v004",
+    "value": "2500 А"
+  },
+  {
+    "id": "cat-shnn-v005",
+    "value": "3200 А"
+  },
+  {
+    "id": "cat-shnn-v006",
+    "value": "4000 А"
+  },
+  {
+    "id": "cat-shnn-v007",
+    "value": "5000 А"
+  },
+  {
+    "id": "cat-shnn-v008",
+    "value": "1000 А"
+  },
+  {
+    "id": "cat-shnn-v009",
+    "value": "1600 А"
+  },
+  {
+    "id": "cat-shnn-v010",
+    "value": "2000 А"
+  },
+  {
+    "id": "cat-shnn-v011",
+    "value": "2500 А"
+  },
+  {
+    "id": "cat-shnn-v012",
+    "value": "3200 А"
+  },
+  {
+    "id": "cat-shnn-v013",
+    "value": "4000 А"
+  },
+  {
+    "id": "cat-shnn-v014",
+    "value": "5000 А"
+  },
+  {
+    "id": "cat-yatp-v001",
+    "value": "6 А · 10 А · 25 А"
+  },
+  {
+    "id": "cat-yatp-v002",
+    "value": "6 А · 10 А · 16 А"
+  },
+  {
+    "id": "cat-yatp-v003",
+    "value": "6 А · 10 А"
+  },
+  {
+    "id": "cat-yatp-v004",
+    "value": "6 А · 10 А · 40 А"
+  },
+  {
+    "id": "cat-yatp-v005",
+    "value": "6 А · 10 А · 25 А"
+  },
+  {
+    "id": "cat-yatp-v006",
+    "value": "6 А · 10 А · 16 А"
+  },
+  {
+    "id": "cat-yatp-v007",
+    "value": "6 А · 10 А · 63 А"
+  },
+  {
+    "id": "cat-yatp-v008",
+    "value": "6 А · 10 А · 31,5 А"
+  },
+  {
+    "id": "cat-yatp-v009",
+    "value": "6 А · 10 А · 25 А"
+  }
+];
+for (let offset = 0; offset < correctedCurrentSummaries.length; offset += 8) {
+  const specimens = correctedCurrentSummaries.slice(offset, offset + 8);
+  test(`source-specific API summaries: batch ${Math.floor(offset / 8) + 1} keeps each variant current`, async ({ page }, testInfo) => {
+    test.setTimeout(120_000);
+    await routeSourceContextRecords(page, specimens.map(item => item.id));
+    for (const specimen of specimens) {
+      await page.goto(`/catalog/${specimen.id}?source=api`);
+      const summary = page.locator('.product-summary .member-evidence-specs > div').filter({ has: page.getByText('Ток по каталогу', { exact: true }) });
+      await expect(summary.locator('dd')).toHaveText(specimen.value);
+      await summary.scrollIntoViewIfNeeded();
+      await testInfo.attach(`${specimen.id}-source-specific-current.png`, { body: await summary.screenshot(), contentType: 'image/png' });
+    }
+  });
+}
+
+for (const mode of ['static', 'api']) test(`source-specific family summaries: ${mode} SHNN and YATP keep their own currents`, async ({ page }) => {
+  if (mode === 'api') await routeSourceContextRecords(page, ['cat-shnn', 'cat-shnn-v004', 'cat-yatp', 'cat-yatp-v001']);
+  for (const [familyId, id, value] of [['cat-shnn', 'cat-shnn-v004', '2500 А'], ['cat-yatp', 'cat-yatp-v001', '6 А · 10 А · 25 А']]) {
+    await page.goto(`/catalog/${id}${mode === 'api' ? '?source=api' : ''}`);
+    const detail = page.locator('.product-summary dl > div').filter({ has: page.getByText('Ток по каталогу', { exact: true }) });
+    await expect(detail.locator('dd')).toHaveText(value);
+    await page.goto(`/catalog/${familyId}${mode === 'api' ? '?source=api' : ''}`);
+    await page.getByRole('combobox', { name: 'Запись для просмотра' }).selectOption(id);
+    const summary = page.locator(`[data-selected-member="${id}"] .member-evidence-specs > div`).filter({ has: page.getByText('Ток по каталогу', { exact: true }) });
+    await expect(summary.locator('dd')).toHaveText(value);
+  }
+});
+
+for (const mode of ['static', 'api']) test(`source comparison values: ${mode} preserves both winding facts for all three copper transformers`, async ({ page }, testInfo) => {
+  const ids = [25, 40, 63].map(power => `alageum-2026-tmg-20kv-copper-${power}`);
+  if (mode === 'api') await routeSourceContextRecords(page, ids);
+  await page.goto(`/catalog/compare?${mode === 'api' ? 'source=api&' : ''}ids=${ids.join(',')}`);
+  const row = page.locator('.comparison-table tbody tr').filter({ has: page.locator('th').filter({ hasText: /^Обмотки$/ }) });
+  await expect(row.locator('td')).toHaveCount(3);
+  for (const cell of await row.locator('td').all()) await expect(cell).toHaveText('медные · трехфазные, двухобмоточные');
+  await row.scrollIntoViewIfNeeded();
+  await testInfo.attach(`${mode}-complete-winding-facts.png`, { body: await row.screenshot(), contentType: 'image/png' });
+});
+
+
+test('source-specific API current filters exclude inherited family ranges', async ({ page }) => {
+  await routeSourceContextRecords(page, ['cat-shnn-v003', 'cat-shnn-v004', 'cat-yatp-v001', 'cat-yatp-v002']);
+  for (const [current, expected] of [['2500 А', 'cat-shnn-v004'], ['16 А', 'cat-yatp-v002'], ['до 5000 А', null]]) {
+    await page.goto(`/catalog?source=api&current=${encodeURIComponent(current)}`);
+    await expect(foundCount(page)).toHaveText(`Найдено: ${expected ? 1 : 0}`);
+    await expect(page.locator('.catalog-table tbody tr')).toHaveCount(expected ? 1 : 0);
+    if (expected) await expect(page.locator(`.catalog-table [data-product-icon="${expected}"]`)).toBeVisible();
+  }
+});

@@ -13,7 +13,7 @@ import { getEquipmentIcon } from '../frontend/lib/catalog/models/iconMap.js';
 import { getEquipmentConstructionChoices } from '../frontend/lib/catalog/models/transformerExecutionChoices.js';
 import { getNtmiSourcePreview } from '../frontend/lib/catalog/ntmiSourcePreview.js';
 import { getSourcePageAsset } from '../frontend/lib/catalog/sources.js';
-import { measurementColumnAssetSnapshot } from './catalog/measurement-column-asset-snapshot.mjs';
+import { verifyProtectionContextPreservation } from './check-protection-context-integration.mjs';
 import { importedProductId } from './catalog/catalog-asset-snapshot.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const reviewDir = 'docs/catalog-transformers-2026/review/measurement-column-completion';
@@ -63,7 +63,11 @@ export function verifyMeasurementColumnScope() {
 export async function verifyMeasurementColumnPreservation() {
   const baselineBytes = read(`${reviewDir}/baseline-outputs.json`);
   assert.equal(hash(baselineBytes), 'dda99f863f2a27a114e2b36ad597d338395868ef8b36655827f6a52540d69c2f', 'Changed exact PR32 baseline snapshot');
-  const baseline = JSON.parse(baselineBytes), current = await measurementColumnAssetSnapshot(root);
+  const checkpointBytes = read('docs/catalog-transformers-2026/review/protection-context-integration/baseline-outputs.json');
+  assert.equal(hash(checkpointBytes), 'edc00fd04790d5493d14c0965cc3fc3363af2d7ad2ca0c5b702887bd2e8a0b0b', 'Changed frozen PR33 checkpoint');
+  // Historical PR33 claims are evaluated at their immutable checkpoint. The
+  // separate successor preservation check accounts for only its exact deltas.
+  const baseline = JSON.parse(baselineBytes), current = JSON.parse(checkpointBytes);
   assert.equal(Object.keys(baseline.modelOutputs).length, 125); assert.equal(Object.keys(baseline.iconOutputs).length, 135);
   assert.equal(Object.keys(current.products).length, 843); assert.deepEqual(Object.keys(current.products), Object.keys(baseline.products));
   for (const key of ['legacyIds', 'executionManifest', 'identities', 'sourcePreviews']) assert.deepEqual(current[key], baseline[key], `Changed historical ${key}`);
@@ -93,6 +97,7 @@ export async function verifyMeasurementColumnPreservation() {
   assert.deepEqual(counts, { productBodies: 843, unaffectedRecords: 840, legacyRecords: 238, priorSourceAssetAdmissions: 13,
     choiceRecords: 36, choices: 74, sourceContextPreviews: 2, oldModelTypes: 125, oldIconTypes: 135,
     sourceGroundedDefault3D: 464, sourceBasedIcons: 465, explicitConstructionGaps: 243, constructionGapFamilies: 29 });
+  await verifyProtectionContextPreservation();
   return counts;
 }
 export async function verifyMeasurementColumnCompletion({ candidate = false } = {}) {

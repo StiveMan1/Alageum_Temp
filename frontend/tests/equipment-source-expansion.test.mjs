@@ -12,6 +12,11 @@ import { createEquipmentGeometry, disposeEquipmentGeometry } from '../lib/catalo
 import baseline from './fixtures/old-catalog-model-baseline.json' with { type: 'json' };
 const get = id => getEquipmentVisual(productById(id));
 const keys = object => Object.keys(object).sort();
+const protectionSuccessors = {
+  'cat-ptm-tded': { oldType: null, oldIcon: 'paired-protection-enclosures', type: null, icon: 'source69-paired-protection-examples-icon' },
+  'cat-ptm-tded-v012': { oldType: 'protection-cabinet', oldIcon: 'protection-cabinet', type: 'source69-ptm-u1-example', icon: 'source69-ptm-u1-example' },
+  'cat-ptm-tded-v013': { oldType: null, oldIcon: 'indoor-protection-enclosure', type: 'source69-tde9-u3-example', icon: 'source69-tde9-u3-example' },
+};
 
 test('33 reviewed constructions register 47 exact records, plus one guarded existing-geometry reuse', () => {
   assert.equal(sourceGeometryTypes.length, 33);
@@ -27,11 +32,15 @@ test('33 reviewed constructions register 47 exact records, plus one guarded exis
     for (const page of entry.sourcePages) assert.ok(existsSync(new URL(`../public/catalog-source/page-${String(page).padStart(3, '0')}.webp`, import.meta.url)));
     for (const id of entry.recordIds) {
       const product = productById(id), visual = getEquipmentVisual(product);
-      assert.ok(product, id); assert.equal(visual.type, type, id);
+      assert.ok(product, id);
+      if (id === 'cat-ptm-tded-v013') {
+        assert.equal(type, 'indoor-protection-enclosure');
+        assert.equal(visual.type, 'source69-tde9-u3-example');
+      } else assert.equal(visual.type, type, id);
       assert.equal(visual.confidence, 'source-matched', id);
       assert.equal(sourceRecordVisuals[id].inherit, false, id);
       assert.ok(visual.sourcePages.every(page => product.sourcePages.includes(page)), id);
-      assert.match(visual.reason, /не CAD/);
+      assert.match(visual.reason, /не CAD/i);
       assert.ok(existsSync(new URL(`../public${visual.fallbackImage}`, import.meta.url)));
     }
   }
@@ -44,9 +53,15 @@ test('coverage gain is48 original plus one independently corroborated SHR11, wit
   const frozen = JSON.stringify(officialProducts);
   for (const old of baseline.records) {
     const product = productById(old.id), visual = getEquipmentVisual(product), icon = getEquipmentIcon(product);
-    assert.equal(icon.type, old.iconType, old.id); assert.equal(icon.confidence, old.id === 'cat-pr-shr11-v002' ? 'source-based' : old.iconConfidence, old.id);
+    const successor = protectionSuccessors[old.id];
+    if (successor) {
+      assert.equal(old.type, successor.oldType, old.id);
+      assert.equal(old.iconType, successor.oldIcon, old.id);
+      assert.equal(visual.type, successor.type, old.id);
+    }
+    assert.equal(icon.type, successor ? successor.icon : old.iconType, old.id); assert.equal(icon.confidence, old.id === 'cat-pr-shr11-v002' ? 'source-based' : old.iconConfidence, old.id);
     if (old.type === null && visual.type) gained.push(old.id);
-    else { assert.equal(visual.type, old.type, old.id); assert.equal(visual.confidence, old.confidence, old.id); }
+    else { assert.equal(visual.type, successor ? successor.type : old.type, old.id); assert.equal(visual.confidence, old.confidence, old.id); }
     if (visual.type === null) unresolved.push(old.id);
   }
   assert.deepEqual(gained.sort(), [...keys(sourceRecordVisuals), 'cat-pr-shr11-v002'].sort());
@@ -65,17 +80,21 @@ test('other51 uncertain old rows plus the mixed PTM/TDE overview remain unmapped
     assert.equal(Object.hasOwn(sourceRecordVisuals, record.id), false);
   }
   assert.equal(get('cat-ptm-tded').type, null);
-  assert.equal(get('cat-ptm-tded-v012').type, 'protection-cabinet');
-  assert.equal(get('cat-ptm-tded-v013').type, 'indoor-protection-enclosure');
+  assert.equal(get('cat-ptm-tded-v012').type, 'source69-ptm-u1-example');
+  assert.equal(get('cat-ptm-tded-v013').type, 'source69-tde9-u3-example');
   for (const id of ['cat-ukzv-v002', 'cat-ukzv-v004', 'cat-ukzv-v006', 'cat-ukzv-v007']) assert.equal(get(id).type, null, id);
   assert.match(get('cat-ukzv').reason, /Представитель смешанного семейства/);
   assert.match(get('cat-ukzv').reason, /не наследуется/);
 });
 
-test('new source constructions never inherit to unreviewed variants or change with ratings/navigation', () => {
+test('historical source constructions ignore ratings/navigation except the exact protected successor, and never inherit to unreviewed variants', () => {
   for (const id of keys(sourceRecordVisuals)) {
     const product = productById(id);
-    assert.deepEqual(getEquipmentVisual({ ...product, category: 'transformers', rating: 999999, power: 42 }), getEquipmentVisual(product));
+    const changed = getEquipmentVisual({ ...product, category: 'transformers', rating: 999999, power: 42 });
+    if (id === 'cat-ptm-tded-v013') {
+      assert.equal(changed.type, null); assert.equal(changed.confidence, 'source-only');
+      assert.equal(changed.fallbackImage, null); assert.deepEqual(changed.sourcePages, []);
+    } else assert.deepEqual(changed, getEquipmentVisual(product));
     const unknown = { ...product, id: `${id}-unreviewed`, familyId: product.familyId || product.id, recordKind: 'variant' };
     assert.equal(getEquipmentVisual(unknown).type, null, id);
   }

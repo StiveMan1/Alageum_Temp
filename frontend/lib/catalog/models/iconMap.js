@@ -1,3 +1,4 @@
+import { getProtectionExampleAsset, getRejectedProtectionExampleAsset } from './protectionExampleRuntime.js';
 import { getMeasurementColumn2026Completion } from './measurementColumn2026Completion.js';
 import { getSourceAssetCompletion } from './sourceAssetCompletion.js';
 import { getReviewedTransformerAsset, isTransformer2026Record } from './transformer2026Runtime.js';
@@ -14,6 +15,10 @@ export const iconConfidenceLabel = icon => icon.confidence === 'source-based'
   : 'Условная схема типа; внешний вид исполнения не подтверждён';
 
 export function getEquipmentIcon(product = {}) {
+  const protectionExample = getProtectionExampleAsset(product, 'icons');
+  if (protectionExample) return protectionExample;
+  const rejectedProtectionExample = getRejectedProtectionExampleAsset(product, 'icons');
+  if (rejectedProtectionExample) return rejectedProtectionExample;
   const columnCompletion = getMeasurementColumn2026Completion(product, 'icons');
   if (columnCompletion) return columnCompletion;
   const sourceCompletion = getSourceAssetCompletion(product, 'icons');
