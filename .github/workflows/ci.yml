@@ -259,6 +259,7 @@ jobs:
           done
           npm run test:e2e:catalog -- --reporter=github,json
       - if: always()
+        id: catalog_full_artifact
         uses: actions/upload-artifact@v4
         with:
           name: transformer-source-browser-${{ github.run_id }}
@@ -266,4 +267,43 @@ jobs:
             frontend/test-results/
             frontend/playwright-report/
             frontend/catalog-browser.log
+          retention-days: 7
+      - name: Prepare bounded catalog diagnostics from existing evidence
+        if: always() && steps.catalog_full_artifact.outcome == 'success'
+        run: node scripts/prepare-catalog-diagnostics.mjs "${{ runner.temp }}/catalog-diagnostics"
+      - name: Retain compact catalog report diagnostics
+        if: always() && steps.catalog_full_artifact.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-diagnostics-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-diagnostics/report/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
+      - name: Retain compact catalog desktop diagnostics
+        if: always() && steps.catalog_full_artifact.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-diagnostics-desktop-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-diagnostics/desktop/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
+      - name: Retain compact catalog mobile diagnostics
+        if: always() && steps.catalog_full_artifact.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-diagnostics-mobile-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-diagnostics/mobile/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
+      - name: Retain compact catalog shared diagnostics
+        if: always() && steps.catalog_full_artifact.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-diagnostics-shared-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-diagnostics/shared/
+          if-no-files-found: error
+          include-hidden-files: true
           retention-days: 7
