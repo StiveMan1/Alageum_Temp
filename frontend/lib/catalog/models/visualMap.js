@@ -1,5 +1,6 @@
 import { getReviewedTransformerAsset, isTransformer2026Record } from './transformer2026Runtime.js';
 import { sourceRecordVisuals } from './sourceConstructions.js';
+import { getReviewedLegacyCompletion } from './legacyAssetCompletion.js';
 
 /**
  * Construction audit of all 65 imported families and their 59 unchanged images.
@@ -688,9 +689,11 @@ const genericType = (product) => {
 
 /** Source-family visual evidence; do not substitute equipmentTypeFor() for this. */
 export function getEquipmentVisual(product = {}) {
+  const completion = getReviewedLegacyCompletion(product, 'geometry');
+  if (completion) return completion;
   if (isTransformer2026Record(product)) {
     const asset = getReviewedTransformerAsset(product, 'geometry');
-    return { type: asset?.type || null, sourceFamilyId: product.familyId || product.id, sourcePages: asset?.sourcePages || product.sourcePages || [], confidence: asset ? 'source-matched' : 'source-only', fallbackImage: asset?.sourceImage || product.image || null, reason: asset ? 'Иллюстративная компоновка по проверенному чертежу; не CAD, не размеры и не точная модель исполнения.' : 'Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели.' };
+    return { type: asset?.type || null, sourceFamilyId: product.familyId || product.id, sourcePages: asset?.sourcePages || product.sourcePages || [], confidence: asset ? 'source-matched' : 'source-only', fallbackImage: asset?.sourceImage || product.image || null, reason: asset ? (asset.reason || 'Иллюстративная компоновка по проверенному чертежу; не CAD, не размеры и не точная модель исполнения.') : 'Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели.' };
   }
   const familyId = product.familyId || product.id;
   const audited = product.sourceKind === 'supplied-pdf' && Object.hasOwn(equipmentVisualAudit, familyId) ? equipmentVisualAudit[familyId] : null;

@@ -1429,6 +1429,159 @@
         }
       ]
     },
+    "alageum-tmg-copper-25": {
+      "database_id": "aca1d25f-b6f8-5843-8279-abf1dd2d89f4",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-040.webp",
+          "kind": "image",
+          "alt": "Страница 40 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-042.webp",
+          "kind": "image",
+          "alt": "Страница 42 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-40": {
+      "database_id": "d127e91b-88d7-55a4-b190-42f7122d2a2b",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-040.webp",
+          "kind": "image",
+          "alt": "Страница 40 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-042.webp",
+          "kind": "image",
+          "alt": "Страница 42 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-63": {
+      "database_id": "6f309d57-df53-5032-9bb6-a846ccb9a166",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-040.webp",
+          "kind": "image",
+          "alt": "Страница 40 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-042.webp",
+          "kind": "image",
+          "alt": "Страница 42 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-100": {
+      "database_id": "804b3ffb-cbed-5e6e-b201-1b83f1ef60ba",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-040.webp",
+          "kind": "image",
+          "alt": "Страница 40 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-042.webp",
+          "kind": "image",
+          "alt": "Страница 42 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-160": {
+      "database_id": "9387f64a-6779-5fb8-9555-f11f613095f6",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-040.webp",
+          "kind": "image",
+          "alt": "Страница 40 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-042.webp",
+          "kind": "image",
+          "alt": "Страница 42 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-250": {
+      "database_id": "28cd57fd-77c6-5057-9452-4a83d54db37e",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-040.webp",
+          "kind": "image",
+          "alt": "Страница 40 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-042.webp",
+          "kind": "image",
+          "alt": "Страница 42 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-1250": {
+      "database_id": "cca5ef07-ab4c-529b-86c6-23f047ac992d",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-040.webp",
+          "kind": "image",
+          "alt": "Страница 40 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-043.webp",
+          "kind": "image",
+          "alt": "Страница 43 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-1600": {
+      "database_id": "e857ab4e-9d49-5a56-9457-2baf4536f23c",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-041.webp",
+          "kind": "image",
+          "alt": "Страница 41 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-043.webp",
+          "kind": "image",
+          "alt": "Страница 43 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-2000": {
+      "database_id": "5ccb78e0-53b7-5505-a6dd-840a9eeb9360",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-041.webp",
+          "kind": "image",
+          "alt": "Страница 41 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-043.webp",
+          "kind": "image",
+          "alt": "Страница 43 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
     "alageum-tmg-switch-6-10-25": {
       "database_id": "17cf610d-5f1b-588a-a6a4-f7cdad468638",
       "imported": [
@@ -4148,6 +4301,278 @@
           "alt": "Страница 164 исходного каталога; не фотография изделия"
         }
       ]
+    },
+    "alageum-tmg-01-1000": {
+      "database_id": "6573bac6-3d06-59a0-8324-4a9937628124",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-008.webp",
+          "kind": "image",
+          "alt": "Страница 8 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-013.webp",
+          "kind": "image",
+          "alt": "Страница 13 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-01-2500": {
+      "database_id": "a15e8c08-321c-5f95-afe8-18bfe2337e3a",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-008.webp",
+          "kind": "image",
+          "alt": "Страница 8 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-013.webp",
+          "kind": "image",
+          "alt": "Страница 13 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-01-400": {
+      "database_id": "57d3956c-fe95-505c-a646-a56890ad8ba0",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-008.webp",
+          "kind": "image",
+          "alt": "Страница 8 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-012.webp",
+          "kind": "image",
+          "alt": "Страница 12 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-01-630": {
+      "database_id": "b413e0be-025c-5c98-a3e3-edb594d35f12",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-008.webp",
+          "kind": "image",
+          "alt": "Страница 8 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-012.webp",
+          "kind": "image",
+          "alt": "Страница 12 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-1000": {
+      "database_id": "bf6f6b5f-698f-5cda-b315-f31dec6b9b8e",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-040.webp",
+          "kind": "image",
+          "alt": "Страница 40 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-043.webp",
+          "kind": "image",
+          "alt": "Страница 43 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-2500": {
+      "database_id": "f8067eab-dfe6-5a94-ac90-22280388efca",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-041.webp",
+          "kind": "image",
+          "alt": "Страница 41 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-043.webp",
+          "kind": "image",
+          "alt": "Страница 43 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-400": {
+      "database_id": "9bc3c214-f14d-586c-8707-6e7e7ccfabbd",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-040.webp",
+          "kind": "image",
+          "alt": "Страница 40 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-042.webp",
+          "kind": "image",
+          "alt": "Страница 42 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-copper-630": {
+      "database_id": "9c631c18-0db4-58a4-9263-56be9706282b",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-040.webp",
+          "kind": "image",
+          "alt": "Страница 40 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-042.webp",
+          "kind": "image",
+          "alt": "Страница 42 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-switch-6-10-1000": {
+      "database_id": "093bab41-57dd-59f3-9c89-e23ca2f16e9e",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-044.webp",
+          "kind": "image",
+          "alt": "Страница 44 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-047.webp",
+          "kind": "image",
+          "alt": "Страница 47 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-switch-6-10-2500": {
+      "database_id": "382c4f80-4953-5df9-82aa-d434cd4ec503",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-045.webp",
+          "kind": "image",
+          "alt": "Страница 45 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-047.webp",
+          "kind": "image",
+          "alt": "Страница 47 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-switch-6-10-400": {
+      "database_id": "e1131f33-afef-50af-9959-5638e30024b7",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-044.webp",
+          "kind": "image",
+          "alt": "Страница 44 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-046.webp",
+          "kind": "image",
+          "alt": "Страница 46 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-switch-6-10-630": {
+      "database_id": "0e6d13db-94c7-5de9-995e-bce02ade76c0",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-044.webp",
+          "kind": "image",
+          "alt": "Страница 44 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-046.webp",
+          "kind": "image",
+          "alt": "Страница 46 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-x1k1-1000": {
+      "database_id": "cb0cd8b1-1e7b-5e60-bf0a-4e44d32b4378",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-010.webp",
+          "kind": "image",
+          "alt": "Страница 10 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-013.webp",
+          "kind": "image",
+          "alt": "Страница 13 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-x1k1-2500": {
+      "database_id": "4b38edeb-ace8-5e22-86b9-29a49568008b",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-010.webp",
+          "kind": "image",
+          "alt": "Страница 10 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-013.webp",
+          "kind": "image",
+          "alt": "Страница 13 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-x1k1-400": {
+      "database_id": "d455916a-9a59-57eb-8adc-313e8cf70bde",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-010.webp",
+          "kind": "image",
+          "alt": "Страница 10 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-012.webp",
+          "kind": "image",
+          "alt": "Страница 12 исходного каталога; не фотография изделия"
+        }
+      ]
+    },
+    "alageum-tmg-x1k1-630": {
+      "database_id": "4d9516a8-392e-5a7e-91d8-fd267a1848e3",
+      "imported": [
+        {
+          "path": "/catalog-source/transformers-2026/page-010.webp",
+          "kind": "image",
+          "alt": "Страница 10 исходного каталога; не фотография изделия"
+        }
+      ],
+      "reviewed": [
+        {
+          "path": "/catalog-source/transformers-2026/page-012.webp",
+          "kind": "image",
+          "alt": "Страница 12 исходного каталога; не фотография изделия"
+        }
+      ]
     }
   },
   "assets": {
@@ -4779,6 +5204,20 @@
       "representation": "source-scan",
       "source_pages": [
         40
+      ]
+    },
+    "/catalog-source/transformers-2026/page-042.webp": {
+      "source_id": "transformers-2026",
+      "representation": "source-scan",
+      "source_pages": [
+        42
+      ]
+    },
+    "/catalog-source/transformers-2026/page-043.webp": {
+      "source_id": "transformers-2026",
+      "representation": "source-scan",
+      "source_pages": [
+        43
       ]
     },
     "/catalog-source/transformers-2026/page-041.webp": {
@@ -5633,20 +6072,6 @@
       "representation": "source-scan",
       "source_pages": [
         29
-      ]
-    },
-    "/catalog-source/transformers-2026/page-042.webp": {
-      "source_id": "transformers-2026",
-      "representation": "source-scan",
-      "source_pages": [
-        42
-      ]
-    },
-    "/catalog-source/transformers-2026/page-043.webp": {
-      "source_id": "transformers-2026",
-      "representation": "source-scan",
-      "source_pages": [
-        43
       ]
     },
     "/catalog-source/transformers-2026/page-055.webp": {

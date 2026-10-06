@@ -74,8 +74,8 @@ test('real family component does not give a changed API parent a canonical docum
 });
 
 test('old multi-construction families route each exact member independently', async () => {
-  const family = productById('cat-bktp-modular');
-  for (const id of ['cat-bktp-modular-v001', 'cat-bktp-modular-v002']) {
+  for (const id of ['cat-bktp-modular-v001', 'cat-bktp-modular-v002', 'cat-ptm-tded-v012', 'cat-ptm-tded-v013']) {
+    const family = productById(productById(id).familyId);
     const result = await render(family, id);
     assert.strictEqual(result.passedProducts[0], productById(id));
     assert.match(result.html, new RegExp(`data-selected-member="${id}"`));

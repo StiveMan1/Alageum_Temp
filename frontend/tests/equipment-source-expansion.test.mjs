@@ -37,28 +37,28 @@ test('33 reviewed constructions register 47 exact records, plus one guarded exis
   }
 });
 
-test('coverage gain is exactly 48 with all prior geometry, independent IDs and 238 icons preserved', () => {
+test('coverage gain is48 original plus one independently corroborated SHR11, with238 stable IDs', () => {
   assert.equal(officialProducts.length, 238);
   assert.deepEqual(officialProducts.map(product => product.id), baseline.records.map(record => record.id));
   const gained = [], unresolved = [];
   const frozen = JSON.stringify(officialProducts);
   for (const old of baseline.records) {
     const product = productById(old.id), visual = getEquipmentVisual(product), icon = getEquipmentIcon(product);
-    assert.equal(icon.type, old.iconType, old.id); assert.equal(icon.confidence, old.iconConfidence, old.id);
+    assert.equal(icon.type, old.iconType, old.id); assert.equal(icon.confidence, old.id === 'cat-pr-shr11-v002' ? 'source-based' : old.iconConfidence, old.id);
     if (old.type === null && visual.type) gained.push(old.id);
     else { assert.equal(visual.type, old.type, old.id); assert.equal(visual.confidence, old.confidence, old.id); }
     if (visual.type === null) unresolved.push(old.id);
   }
-  assert.deepEqual(gained.sort(), keys(sourceRecordVisuals));
-  assert.equal(gained.length, 48); assert.equal(unresolved.length, 53);
-  assert.equal(unresolved.filter(id => get(id).confidence === 'source-only').length, 43);
+  assert.deepEqual(gained.sort(), [...keys(sourceRecordVisuals), 'cat-pr-shr11-v002'].sort());
+  assert.equal(gained.length, 49); assert.equal(unresolved.length, 52);
+  assert.equal(unresolved.filter(id => get(id).confidence === 'source-only').length, 42);
   assert.equal(unresolved.filter(id => get(id).confidence === 'unverified').length, 10);
   assert.equal(JSON.stringify(officialProducts), frozen);
 });
 
-test('all 52 uncertain old rows plus the mixed PTM/TDE overview remain unmapped', () => {
-  const uncertain = baseline.records.filter(record => record.type === null && record.iconConfidence === 'typical');
-  assert.equal(uncertain.length, 52);
+test('other51 uncertain old rows plus the mixed PTM/TDE overview remain unmapped', () => {
+  const uncertain = baseline.records.filter(record => record.type === null && record.iconConfidence === 'typical' && record.id !== 'cat-pr-shr11-v002');
+  assert.equal(uncertain.length, 51);
   for (const record of uncertain) {
     assert.equal(get(record.id).type, null, record.id);
     assert.equal(get(record.id).confidence, record.confidence, record.id);

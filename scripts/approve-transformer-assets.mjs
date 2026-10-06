@@ -6,8 +6,10 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {createRequire} from 'node:module';
 import {transformerProducts,transformerImport} from '../frontend/lib/catalog/transformers2026.js';
+import {identityCompletionProducts} from '../frontend/lib/catalog/identityCompletionData.js';
 import {getTransformer2026ReviewAsset} from '../frontend/lib/catalog/models/transformer2026Bindings.js';
 import {transformerRecordShape,recordShapeDigest} from '../frontend/lib/catalog/models/transformer2026Shape.js';
+import {assertReviewedTransformerDependency} from './catalog/transformer-reviewed-dependencies.mjs';
 const require=createRequire(import.meta.url),{importedProductId}=require('../backend-node/src/domain/catalog-identity.js');
 const file=process.argv[2];assert.ok(file,'Supply explicit independent asset clearance JSON');
 const approval=JSON.parse(fs.readFileSync(file));assert.equal(approval.format,'alageum-transformer-assets-clearance-v1');assert.equal(approval.status,'approved');
@@ -18,11 +20,11 @@ const hashFile=relative=>{assert.ok(!path.isAbsolute(relative)&&!relative.split(
 assert.equal(approval.evidenceRegistrySha256,hashFile('frontend/lib/catalog/models/transformer2026AssetEvidence.json'));
 assert.equal(approval.sourceRegistrySha256,hashFile('backend-node/data/catalog-sources.json'));
 for(const name of ['AssetEvidence.json','Bindings.js','Geometry.js','GroupMap.js','Icons.js','PowerLayouts.js','Types.js']) assert.ok(approval.reviewedLibraryHashes?.[`frontend/lib/catalog/models/transformer2026${name}`], `Missing reviewed library hash ${name}`);
-for(const [file,hash]of Object.entries(approval.reviewedLibraryHashes))assert.equal(hashFile(file),hash,`Changed reviewed library ${file}`);
+for(const [file,hash]of Object.entries(approval.reviewedLibraryHashes))assertReviewedTransformerDependency(file,hash,approval);
 assert.ok(Object.keys(approval.reviewedSourceImageHashes || {}).length);
 for(const [file,hash]of Object.entries(approval.reviewedSourceImageHashes)){assert.match(file,/^\/catalog-source\/transformers-2026\/page-\d{3}\.webp$/);assert.equal(hashFile(`frontend/public${file}`),hash,`Changed reviewed source scan ${file}`);}
 
-const result={format:'alageum-transformer-runtime-assets-v1',sourceId:'transformers-2026',sourceFileId:approval.sourceFileId,sourceSha256:approval.sourceSha256,inventorySha256:approval.inventorySha256,reviewReport:approval.reviewReport,reviewedAt:approval.reviewedAt,knownRecordIds:transformerProducts.map(r=>r.id),reviewedLibraryHashes:approval.reviewedLibraryHashes,evidenceRegistrySha256:approval.evidenceRegistrySha256,sourceRegistrySha256:approval.sourceRegistrySha256,geometry:{},icons:{}};
+const result={format:'alageum-transformer-runtime-assets-v1',sourceId:'transformers-2026',sourceFileId:approval.sourceFileId,sourceSha256:approval.sourceSha256,inventorySha256:approval.inventorySha256,reviewReport:approval.reviewReport,reviewedAt:approval.reviewedAt,knownRecordIds:[...transformerProducts,...identityCompletionProducts].map(r=>r.id),reviewedLibraryHashes:approval.reviewedLibraryHashes,evidenceRegistrySha256:approval.evidenceRegistrySha256,sourceRegistrySha256:approval.sourceRegistrySha256,geometry:{},icons:{}};
 for(const channel of ['geometry','icons'])for(const entry of approval[channel]){
  const record=transformerProducts.find(row=>row.id===entry.sourceRecordId);assert.ok(record,`Unadmitted source ID ${entry.sourceRecordId}`);
  assert.ok(!result[channel][record.id],`Duplicate approval ${record.id}`);

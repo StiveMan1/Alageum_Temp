@@ -32,7 +32,7 @@ test('all 65 imported families are audited against existing source pages', () =>
 
 test('all 238 official rows receive a grounded visual or an explicit uncertainty state', () => {
   assert.equal(officialProducts.length, 238);
-  assert.deepEqual(tally(officialProducts), { generic: 14, 'source-only': 43, 'source-matched': 171, unverified: 10 });
+  assert.deepEqual(tally(officialProducts), { generic: 14, 'source-only': 42, 'source-matched': 172, unverified: 10 });
   assert.deepEqual(tally(families), { 'source-matched': 56, 'source-only': 3, unverified: 6 });
   for (const product of officialProducts) {
     const visual = getEquipmentVisual(product);

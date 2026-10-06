@@ -47,7 +47,9 @@ chunks('configurations',result.configurations);
 put('identity-manifest.json',identity);put('manifest.json',metadata);
 put('review-binding.json',{format:'alageum-transformer-review-binding-v1',sourceSha256:source.sha256,inventorySha256,recordsSha256:metadata.recordsSha256,activationAllowed:activate,clearance});
 if(activate){
-  outputs.set(path.join(root,'backend-node/data/catalog-release.json'),bytes({format:'alageum-catalog-release-v1',recordCount:oldRecords.length+records.length,categoryCount:new Set([...oldRecords,...records].map(r=>r.category)).size,sources:{legacy:{recordCount:oldRecords.length},'transformers-2026':{recordCount:records.length,active:true,inventorySha256,recordsSha256:metadata.recordsSha256}}}));
+  // The separately reviewed append-only batch does not alter these original source shards.
+  const identityCompletion=JSON.parse(fs.readFileSync(path.join(root,'backend-node/data/catalog-release.json'))).sources?.identityCompletion;
+  outputs.set(path.join(root,'backend-node/data/catalog-release.json'),bytes({format:'alageum-catalog-release-v1',recordCount:oldRecords.length+records.length+(identityCompletion?.recordCount || 0),categoryCount:new Set([...oldRecords,...records].map(r=>r.category)).size,sources:{legacy:{recordCount:oldRecords.length},'transformers-2026':{recordCount:records.length,active:true,inventorySha256,recordsSha256:metadata.recordsSha256},...(identityCompletion?{identityCompletion}:{})}}));
   for(const [file,content] of [...outputs]) {
     const relative=path.relative(output,file);
     if(relative.startsWith('products/') || ['products.json','manifest.json','identity-manifest.json','review-binding.json'].includes(relative)) outputs.set(path.join(root,'backend-node/data/catalog-transformers-2026',relative),content);

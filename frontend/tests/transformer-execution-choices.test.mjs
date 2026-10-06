@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { createHash } from 'node:crypto';
 import { officialProducts, transformerProducts } from '../lib/catalog/data.js';
 import { normalizeApiProduct } from '../lib/catalog/apiData.js';
 import { getEquipmentVisual } from '../lib/catalog/models/visualMap.js';
@@ -13,10 +12,12 @@ import { createTransformer2026Geometry, disposeTransformer2026Geometry } from '.
 import { renderTransformer2026Icon } from '../lib/catalog/models/transformer2026Icons.js';
 import { getEquipmentConstructionChoices as choices, getEquipmentConstructionChoice as select, transformerExecutionChoicesManifest as manifest } from '../lib/catalog/models/transformerExecutionChoices.js';
 import { buildTransformerExecutionChoices } from '../../scripts/approve-transformer-execution-choices.mjs';
+import { assertReviewedTransformerDependency } from '../../scripts/catalog/transformer-reviewed-dependencies.mjs';
 
 const root = new URL('../../', import.meta.url);
 const read = relative => JSON.parse(fs.readFileSync(new URL(relative, root), 'utf8'));
 const clearance = read('docs/catalog-transformers-2026/review/execution-choice-clearance.json');
+const historicalManifest = read('frontend/lib/catalog/models/transformerExecutionChoicesManifest.json');
 const held = read('docs/catalog-transformers-2026/staging/identity-manifest.json').held;
 const mixed = transformerProducts.filter(record => Object.hasOwn(manifest.records, record.id));
 const api = record => normalizeApiProduct({
@@ -27,7 +28,8 @@ const api = record => normalizeApiProduct({
 });
 
 test('separate clearance reproduces exactly 32 admitted mixed records and 66 explicit choices', () => {
-  assert.deepEqual(buildTransformerExecutionChoices(clearance), manifest);
+  assert.deepEqual(buildTransformerExecutionChoices(clearance), historicalManifest);
+  for (const [id, record] of Object.entries(historicalManifest.records)) assert.deepEqual(manifest.records[id], record);
   assert.equal(manifest.selectionMode, 'explicit-only');
   assert.equal(mixed.length, 32);
   assert.equal(Object.keys(manifest.choices).length, 7);
@@ -133,9 +135,9 @@ test('construction choices cannot cross product groups or broaden source caption
   assert.notEqual(cutaway.geometryType, manifest.choices['dry-tsnz-mesh'].geometryType);
 });
 
-test('the seven choices reuse actual existing reviewed meshes and vector icons without changing default counts', () => {
+test('the seven choices reuse existing meshes and icons alongside the separately reviewed default supplement', () => {
   for (const [file, hash] of Object.entries(manifest.reviewedLibraryHashes)) {
-    assert.equal(createHash('sha256').update(fs.readFileSync(new URL(file, root))).digest('hex'), hash, file);
+    assertReviewedTransformerDependency(file, hash, clearance);
   }
   for (const choice of Object.values(manifest.choices)) {
     const model = createTransformer2026Geometry(choice.geometryType);
@@ -148,8 +150,8 @@ test('the seven choices reuse actual existing reviewed meshes and vector icons w
     disposeTransformer2026Geometry(model);
     assert.equal(model.children.length, 0);
   }
-  assert.equal(transformerProducts.filter(record => getEquipmentVisual(record).type).length, 251);
-  assert.equal(transformerProducts.filter(record => getEquipmentIcon(record).type).length, 257);
+  assert.equal(transformerProducts.filter(record => getEquipmentVisual(record).type).length, 260);
+  assert.equal(transformerProducts.filter(record => getEquipmentIcon(record).type).length, 266);
 });
 
 test('returned choices and authority manifest cannot be mutated or extended by callers', () => {

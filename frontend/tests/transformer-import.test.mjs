@@ -6,7 +6,7 @@ import { createRequire } from 'node:module';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { normalizeSpec, digest, familyKey } from '../../scripts/catalog/transformer-adapter.mjs';
-import { officialProducts, baselineOfficialProducts, transformerProducts } from '../lib/catalog/data.js';
+import { officialProducts, baselineOfficialProducts, transformerProducts, identityCompletionProducts } from '../lib/catalog/data.js';
 import { normalizeApiProduct } from '../lib/catalog/apiData.js';
 import { groupProducts, equipmentTypeFor, facetValues } from '../lib/catalog/grouping.js';
 import { getEquipmentVisual } from '../lib/catalog/models/visualMap.js';
@@ -25,7 +25,7 @@ test('review-only staging accounts for exact identities without importing unrevi
  assert.equal(manifest.sourceModelVariationCount,540);assert.equal(manifest.sourceConfigurationCount,407);assert.equal(manifest.admittedModelCount,508);assert.equal(manifest.heldModelCount,32);assert.equal(manifest.familyCount,77);assert.equal(manifest.recordCount,585);
  assert.equal(rows.length,manifest.recordCount);assert.equal(allConfigs.length,407);assert.equal(new Set(rows.map(r=>r.id)).size,rows.length);
  assert.deepEqual(readCatalog(),officialProducts);assert.equal(baselineOfficialProducts.length,238);
- assert.equal(officialProducts.length,238+transformerProducts.length);
+ assert.equal(officialProducts.length,238+transformerProducts.length+identityCompletionProducts.length);
  if(!manifest.active) assert.equal(transformerProducts.length,0);
 });
 test('candidate old identities never become duplicate cards, merges, or an all-held family',()=>{

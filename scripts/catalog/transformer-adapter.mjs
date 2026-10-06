@@ -50,7 +50,7 @@ function classification(row,family) {
   if (row.recordType === 'accessory' || family.id === 'dry-accessories') return {category:'accessories',productKind:'accessory'};
   return {category:'transformers',productKind:row.productKind || family.productKind || 'transformer'};
 }
-function common(row,family,source) {
+export function common(row,family,source) {
   const sourcePages = pages(row.sourcePages || []);
   assert.ok(sourcePages.length && sourcePages.every(p => Number.isInteger(p) && p >= 1 && p <= source.page_count), `Invalid source pages ${row.id}`);
   const technicalSpecs = (row.technicalSpecs || []).map(normalizeSpec);
@@ -71,7 +71,7 @@ function common(row,family,source) {
     rawSourceSpecs:row.rawSourceSpecs || row.rawSpecs || row.technicalSpecs || [],
   };
 }
-function scalarSpecs(record) {
+export function scalarSpecs(record) {
   const power = record.technicalSpecs.find(s => /^Номинальная мощность$/.test(s.label) && s.unit === 'кВА');
   if (power && /^\d+(?:[.,]\d+)?$/.test(power.value)) record.power=Number(power.value.replace(',','.'));
   const voltage = record.technicalSpecs.find(s => /^Номинальное напряжение$/.test(s.label) && ['В','кВ'].includes(s.unit));

@@ -10,6 +10,9 @@ import { filterProducts, parseComparison, selectionCsv, sortProducts } from '@/l
 import { categories } from '@/lib/catalog/data';
 import ProductIcon from './ProductIcon';
 import FamilyProductVisual from './FamilyProductVisual';
+import CatalogConfigurations from './CatalogConfigurations';
+import CatalogSourceEvidence from './CatalogSourceEvidence';
+import { getApiCatalogReadProduct } from '@/lib/catalog/identityCompletion';
 import { catalogFamilyMembers, catalogMemberLabel, displayDescription, displayExecution, displayFamilyName, displayProductName, displaySpecLabel, catalogSourceWarnings } from '@/lib/catalog/presentation';
 import { getCatalogSpecSummary } from '@/lib/catalog/grouping';
 import { useApiSelection } from './ApiSelectionProvider';
@@ -44,16 +47,16 @@ export function LiveCatalog() {
 }
 export function LiveProductDetails({id}) {
  const data=useLiveProducts();const [notice,setNotice]=useState('');
- const product=data.items.find(item=>item.id===id||item.slug===id||item.databaseId===id);
+ const product=getApiCatalogReadProduct(id,data.items);
  const related=product?catalogFamilyMembers(product,data.items):[];
  const warnings=product?catalogSourceWarnings(product,data.items):[];
  return <div className="catalog-page product-page"><nav className="breadcrumbs"><Link href="/catalog?source=api">Каталог</Link><span>/</span><span>Товар</span></nav><LiveStatus data={data}/>
  {data.status==='ready'&&(!product?<div className="catalog-empty"><h1>Товар недоступен</h1><p>Он скрыт, снят с публикации или ссылка устарела.</p><Link href="/catalog?source=api">Вернуться в актуальный каталог</Link></div>:<><LiveNotice/><div className="product-overview"><FamilyProductVisual key={product.id} product={product} records={data.items}/><div className="product-summary"><p className="catalog-kicker">АКТУАЛЬНАЯ ВЕРСИЯ {product.version}</p><h1>{displayProductName(product)}</h1><p className="product-code">{product.designation || product.sku || product.name}</p>{displayExecution(product) && <p className="catalog-meta">Исполнение строки: {displayExecution(product)}</p>}<h2>{catalogPrice(product)}</h2><p>{displayDescription(product,data.items)}</p><dl className="member-evidence-specs">{getCatalogSpecSummary(product,data.items).filter(row=>row.value!=='—').map(row=><div key={row.key}><dt>{displaySpecLabel(row.label)}</dt><dd>{row.value}</dd></div>)}</dl><div className="product-actions"><AddButton product={product} onAdded={setNotice}/>{product.comparable&&<Link className="catalog-button" href={`/catalog?source=api&compare=${product.id}`}>К сравнению →</Link>}</div><p role="status">{notice}</p></div></div>
  <section className="product-panel"><h2>Технические характеристики</h2><dl className="technical-specs">{product.technicalSpecs.map((row,index)=><div key={index}><dt className="catalog-spec-text">{displaySpecLabel(row.label)}</dt><dd className="catalog-spec-text">{row.value}</dd><span className="catalog-spec-text">{row.unit||'—'}</span></div>)}{!product.technicalSpecs.length&&product.attributes.map((row,index)=><div key={index}><dt>{row.code}</dt><dd>{typeof row.value==='object'?JSON.stringify(row.value):String(row.value??'—')}</dd><span>{row.unit||'—'}</span></div>)}</dl>{!product.technicalSpecs.length&&!product.attributes.length&&<p>Характеристики ещё не добавлены.</p>}
  {warnings.length>0&&<details className="catalog-data-warning"><summary>Примечания источника ({warnings.length})</summary><ul>{warnings.map((warning,index)=><li key={index}>{warning.note}{warning.productId!==product.id&&<> <Link href={liveHref(warning.productId)}>Запись: {warning.designation} →</Link></>}</li>)}</ul></details>}
- {product.configurations.length>0&&<><h3>Табличные варианты и параметры</h3>{product.configurations.map((configuration,index)=><details key={index}><summary className="catalog-spec-text">{String(configuration.designation||'Вариант')}</summary><dl className="technical-specs">{(configuration.specifications||[]).map((row,i)=><div key={i}><dt className="catalog-spec-text">{String(row.label||'')}</dt><dd className="catalog-spec-text">{String(row.value??'—')}</dd><span className="catalog-spec-text">{String(row.unit||'—')}</span></div>)}</dl></details>)}</>}
+ <CatalogConfigurations product={product}/>
  {product.familyId&&data.items.some(item=>item.id===product.familyId)&&<p><Link href={liveHref(product.familyId)}>Семейство: {displayFamilyName(product)||product.familyId} →</Link></p>}{related.length>0&&<><h3>Опубликованные исполнения серии</h3><div className="variant-grid">{related.map(item=><Link key={item.id} href={liveHref(item.id)}><ProductIcon product={item} size={40}/><span>{catalogMemberLabel(item)}</span></Link>)}</div></>}
- <h3>Источник</h3><p>{product.sourceTitle||'Данные владельца каталога'}</p>{product.sourceUrl&&<a href={product.sourceUrl} target="_blank" rel="noopener noreferrer">Открыть источник ↗</a>}<div className="catalog-source-pages">{product.sourcePages.map(page=><Link key={page} href={sourcePageUrl(product, page)}>Страница {page}</Link>)}</div></section></>)}
+ <h3>Источник</h3><p>{product.sourceTitle||'Данные владельца каталога'}</p>{product.sourceUrl&&<a href={product.sourceUrl} target="_blank" rel="noopener noreferrer">Открыть источник ↗</a>}<div className="catalog-source-pages">{product.sourcePages.map(page=><Link key={page} href={sourcePageUrl(product, page)}>Страница {page}</Link>)}</div></section><CatalogSourceEvidence product={product} records={data.items}/></>)}
  </div>;
 }
 export function LiveComparison(){

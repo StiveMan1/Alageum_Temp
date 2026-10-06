@@ -4,6 +4,8 @@ import { officialProducts, transformerProducts } from '../lib/catalog/data.js';
 import { getCatalogSpecSummary, compactCatalogSpecValue, facetValues, equipmentTypeFor, categorySpecRows, categoryDisplayRows } from '../lib/catalog/grouping.js';
 import { catalogFamilyMembers, catalogMemberLabel, displayDescription, displayExecution, displayFamilyName, displayProductName, catalogEvidenceSpecs, formatEvidenceSpec, catalogSourceWarnings } from '../lib/catalog/presentation.js';
 import { familyPresentationBindings, getFamilyPresentationEvidence, getFamilyTechnicalDocument } from '../lib/catalog/familyPresentation.js';
+import { getAdditionalCatalogVariantIds } from '../lib/catalog/identityCompletion.js';
+import { transformerRuntimeManifest } from '../lib/catalog/models/transformer2026Runtime.js';
 import { selectionCsv } from '../lib/catalog/query.js';
 import { getEquipmentVisual } from '../lib/catalog/models/visualMap.js';
 import { getEquipmentIcon } from '../lib/catalog/models/iconMap.js';
@@ -11,8 +13,8 @@ import { getEquipmentIcon } from '../lib/catalog/models/iconMap.js';
 const product = id => officialProducts.find(row => row.id === id);
 const summary = (id, key) => getCatalogSpecSummary(product(id), officialProducts).find(row => row.key === key);
 
-test('all 823 immutable records and independently approved assets survive presentation completion', () => {
-  assert.equal(officialProducts.length, 823);
+test('all 843 records retain their source bodies and independently approved assets through presentation', () => {
+  assert.equal(officialProducts.length, 843);
   const before = JSON.stringify(officialProducts);
   const bindings = officialProducts.map(row => [row.id, getEquipmentVisual(row), getEquipmentIcon(row)]);
   for (const row of officialProducts) {
@@ -21,8 +23,8 @@ test('all 823 immutable records and independently approved assets survive presen
   }
   assert.equal(JSON.stringify(officialProducts), before);
   assert.deepEqual(officialProducts.map(row => [row.id, getEquipmentVisual(row), getEquipmentIcon(row)]), bindings);
-  assert.equal(transformerProducts.filter(row => getEquipmentVisual(row).type).length, 251);
-  assert.equal(transformerProducts.filter(row => getEquipmentIcon(row).type).length, 257);
+  assert.equal(transformerProducts.filter(row => getEquipmentVisual(row).type).length, transformerProducts.filter(row => Object.hasOwn(transformerRuntimeManifest.geometry, row.id)).length);
+  assert.equal(transformerProducts.filter(row => getEquipmentIcon(row).type).length, transformerProducts.filter(row => Object.hasOwn(transformerRuntimeManifest.icons, row.id)).length);
 });
 
 test('450 empty descriptions and every new family gain display evidence without adding raw fields', () => {
@@ -33,7 +35,7 @@ test('450 empty descriptions and every new family gain display evidence without 
   assert.equal(families.length, 77);
   for (const family of families) {
     assert.ok(getCatalogSpecSummary(family, officialProducts).some(row => row.value !== '—'), family.id);
-    assert.deepEqual(catalogFamilyMembers(family, officialProducts).map(row => row.id).sort(), [...family.variantIds].sort());
+    assert.deepEqual(catalogFamilyMembers(family, officialProducts).map(row => row.id).sort(), [...family.variantIds, ...getAdditionalCatalogVariantIds(family.id)].sort());
     assert.equal(getEquipmentVisual(family).type, null, family.id);
   }
 });

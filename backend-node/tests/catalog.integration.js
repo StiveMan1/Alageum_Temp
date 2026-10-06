@@ -157,6 +157,43 @@ test("real Strapi/PostgreSQL catalog and HTTP contract", async (t) => {
       }
     },
   );
+  await t.test("identity completion migrates823to843 atomically and never overwrites edited references", async () => {
+    const records = readCatalog(), additions = records.slice(823), rollback = new Error('rollback isolated migration probe');
+    assert.equal(additions.length, 20);
+    const before = JSON.stringify(await db(PRODUCT).orderBy('id'));
+    await assert.rejects(db.transaction(async tx => {
+      await tx(PRODUCT).whereIn('public_key', additions.map(row => row.id)).delete();
+      await tx(PRODUCT).where({ public_key: 'ntmi-6' }).update({ status: 'hidden', translations: { ru: { name: 'Edited reference retained' } }, version: 7 });
+      const kept = JSON.stringify(await tx(PRODUCT).orderBy('id'));
+      const { createCatalog } = require('../src/domain/catalog');
+      const scoped = createCatalog({ db: tx });
+      assert.deepEqual(await scoped.importRecords(records), { categories_created: 0, created: 20, skipped: 823 });
+      assert.equal(JSON.stringify(await tx(PRODUCT).whereNotIn('public_key', additions.map(row => row.id)).orderBy('id')), kept);
+      const firstImport = JSON.stringify(await tx(PRODUCT).orderBy('id'));
+      assert.deepEqual(await scoped.importRecords(records), { categories_created: 0, created: 0, skipped: 843 });
+      assert.equal(JSON.stringify(await tx(PRODUCT).orderBy('id')), firstImport);
+      for (const row of await tx(PRODUCT).whereIn('public_key', additions.map(row => row.id))) assert.equal(row.transport_id, uuid5(`product:${row.public_key}`, NAMESPACE));
+      for (const alias of Object.keys(require('../data/catalog-identity-completion/manifest.json').aliases)) assert.equal(await tx(PRODUCT).where({ public_key: alias }).first(), undefined);
+      throw rollback;
+    }), error => error === rollback);
+    assert.equal(JSON.stringify(await db(PRODUCT).orderBy('id')), before);
+  });
+  await t.test("canonicalNTMI reads and persisted RFQ snapshots keep their legacy UUIDs across aliases and reimport", async () => {
+    const aliases = require('../data/catalog-identity-completion/manifest.json').aliases;
+    const c = ctx({ token: buyer }), context = await auth.permission(c, 'quote.create');
+    const body = { items: Object.values(aliases).map(id => ({ product_id: uuid5(`product:${id}`, NAMESPACE), quantity: '1' })) };
+    const key = randomUUID(), first = await quotes.submit({ context, body, key, ctx: c });
+    const snapshot = JSON.stringify(first.quote);
+    for (const [alias, canonical] of Object.entries(aliases)) {
+      const a = ctx({ params: { id: alias } }), b = ctx({ params: { id: canonical } });
+      await catalog.get(a); await catalog.get(b); assert.deepEqual(a.body, b.body);
+      assert.equal(a.body.id, uuid5(`product:${canonical}`, NAMESPACE));
+      assert.equal(a.body.specs.power, null);
+    }
+    assert.deepEqual(await catalog.importRecords(readCatalog()), { categories_created: 0, created: 0, skipped: 843 });
+    const replay = await quotes.submit({ context, body, key, ctx: c });
+    assert.equal(replay.created, false); assert.equal(JSON.stringify(replay.quote), snapshot);
+  });
   await t.test(
     "anonymous and tenant administrators cannot manage global catalog",
     async () => {
@@ -451,6 +488,17 @@ test("real Strapi/PostgreSQL catalog and HTTP contract", async (t) => {
       let response = await fetch(`${base}/catalog/products/tmg-400`);
       assert.equal(response.status, 200);
       assert.equal((await response.json()).public_key, "tmg-400");
+      for (const [alias, canonical] of Object.entries(require('../data/catalog-identity-completion/manifest.json').aliases)) {
+        const aliasResponse = await fetch(`${base}/catalog/products/${alias}`);
+        const canonicalResponse = await fetch(`${base}/catalog/products/${canonical}`);
+        assert.equal(aliasResponse.status, 200); assert.equal(canonicalResponse.status, 200);
+        const value = await aliasResponse.json(); assert.deepEqual(value, await canonicalResponse.json());
+        assert.equal(value.public_key, canonical); assert.equal(value.id, uuid5(`product:${canonical}`, NAMESPACE));
+        assert.equal(value.specs.power, null);
+      }
+      for (const id of ['__proto__', 'constructor', 'alageum-2026-ntmi-6-x', 'alageum-tmg-standard-400']) {
+        assert.equal((await fetch(`${base}/catalog/products/${id}`)).status, 404);
+      }
       response = await fetch(`${base}/admin/catalog/products`);
       assert.equal(response.status, 401);
       assert.equal(

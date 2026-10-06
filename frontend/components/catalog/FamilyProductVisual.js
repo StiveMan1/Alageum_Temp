@@ -21,7 +21,7 @@ export default function FamilyProductVisual({ product, records }) {
     <div className="family-evidence-controls">
       <h2>Обзор семейства</h2>
       <p>Выберите конкретную запись каталога. Её параметры и иллюстрация относятся только к этой записи.</p>
-      <label className="catalog-field"><span>Запись для просмотра</span><select value={selected?.id || ''} onChange={event => setSelectedId(event.target.value)}>
+      <label className="catalog-field"><span>Запись для просмотра</span><select aria-label="Запись для просмотра" value={selected?.id || ''} onChange={event => setSelectedId(event.target.value)}>
         <option value="">Обзор семейства · запись не выбрана</option>
         {members.map(member => <option key={member.id} value={member.id}>{catalogMemberLabel(member)}</option>)}
       </select></label>

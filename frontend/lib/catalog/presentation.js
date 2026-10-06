@@ -1,3 +1,4 @@
+import { getAdditionalCatalogVariantIds } from './identityCompletion.js';
 import { familyPresentationBindings, getFamilyPresentationEvidence } from './familyPresentation.js';
 // Display helpers only. Never pass their strings back into source records or asset guards.
 const hasValue = value => value != null && String(value).trim() !== '' && !/^[\s\-\u2010-\u2015\u2212]+$/.test(String(value));
@@ -25,13 +26,13 @@ export const displayExecution = product => {
 };
 export const displayExecutionValue = value => executions.get(value) || value || '';
 export const displaySubtype = product => displayExecutionValue(product?.subtype);
-export const displaySpecLabel = label => label === 'Drawing grouped designation' ? 'Общее обозначение на чертеже' : label;
+export const displaySpecLabel = label => label === 'Drawing grouped designation' ? 'Общее обозначение на чертеже' : label === 'nominalVoltageScope' ? 'Указанные напряжения' : label;
 
 /** Only explicit, reciprocal relationships from the supplied catalog. Never hydrate an API row from static data. */
 export function catalogFamilyMembers(product, records = []) {
   if (!isCatalogFamily(product)) return [];
   if ((product.sourceId === 'transformers-2026' || Object.hasOwn(familyPresentationBindings, product.id)) && !getFamilyPresentationEvidence(product)) return [];
-  const ids = new Set(product.variantIds || []);
+  const ids = new Set([...(product.variantIds || []), ...getAdditionalCatalogVariantIds(product.id)]);
   return records.filter(member => ids.has(member.id) && member.familyId === product.id && !isCatalogFamily(member)
     && member.source === product.source && member.sourceId === product.sourceId
     && member.sourceFileId === product.sourceFileId && member.sourceSha256 === product.sourceSha256);
@@ -71,7 +72,7 @@ export function displayDescription(product, records = []) {
   const name = displayProductName(product);
   if (isCatalogFamily(product)) {
     const members = catalogFamilyMembers(product, records);
-    return `Семейство «${name}» в печатном каталоге.${members.length ? ` Связанных записей с отдельными характеристиками: ${members.length}. Выберите запись, чтобы увидеть её параметры и доступные материалы источника.` : ' Параметры и исполнения приведены на страницах источника.'} Сводные значения относятся к разным записям; готовое сочетание параметров и артикул заказа не заданы.`;
+    return `Семейство «${name}» в печатном каталоге.${members.length ? ` Связанных записей с отдельными характеристиками: ${members.length}. Выберите запись, чтобы увидеть её параметры и доступные материалы источника.` : product.configurations?.length ? ` Табличных строк: ${product.configurations.length}. Они приведены ниже отдельно; это параметры источника, а не отдельные модели.` : ' Параметры и исполнения приведены на страницах источника.'} Сводные значения относятся к разным записям; готовое сочетание параметров и артикул заказа не заданы.`;
   }
   const purpose = catalogEvidenceSpecs(product, 'function').map(spec => formatEvidenceSpec(spec));
   const electrical = ['power', 'voltage', 'cooling'].flatMap(key => catalogEvidenceSpecs(product, key).map(spec => formatEvidenceSpec(spec, { requireUnit: key !== 'cooling' })));
@@ -88,4 +89,20 @@ export function catalogSourceWarnings(product, records = []) {
     seen.add(note);
     return [{ note, productId: member.id, designation: member.designation || member.sku || displayProductName(member) }];
   }));
+}
+
+/** A printed configuration stays a table row; it never becomes a product or a source of combined SKUs. */
+export function catalogConfigurationLabel(configuration, index = 0) {
+  const designation = configuration.designation || '';
+  const printed = configuration.sourceRow?.variant || configuration.rawSource?.configurationLabel;
+  const facts = ['voltage', 'power'].flatMap(key => catalogEvidenceSpecs({ technicalSpecs: configuration.specifications || [] }, key).map(spec => formatEvidenceSpec(spec, { requireUnit: true })));
+  const qualifier = printed || facts.join(' · ');
+  return [...new Set([designation, qualifier].filter(hasValue))].join(' · ') || `Строка таблицы ${index + 1}`;
+}
+
+export function catalogConfigurationEvidence(product, key) {
+  if (!isCatalogFamily(product)) return [];
+  if ((product.sourceId === 'transformers-2026' || Object.hasOwn(familyPresentationBindings, product.id)) && !getFamilyPresentationEvidence(product)) return [];
+  return (product.configurations || []).flatMap((configuration, index) => catalogEvidenceSpecs({ technicalSpecs: configuration.specifications || [] }, key)
+    .map(spec => ({ ...spec, configurationId: configuration.id || `row-${index + 1}`, configurationLabel: catalogConfigurationLabel(configuration, index) })));
 }

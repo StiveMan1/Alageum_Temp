@@ -8,6 +8,7 @@ import { transformerProducts, transformerImport } from '../frontend/lib/catalog/
 import { transformer2026AssetEvidence as evidence } from '../frontend/lib/catalog/models/transformer2026Bindings.js';
 import { transformer2026Types, TRANSFORMER_2026_DISCLOSURE } from '../frontend/lib/catalog/models/transformer2026Types.js';
 import { transformerRecordShape, recordShapeDigest } from '../frontend/lib/catalog/models/transformer2026Shape.js';
+import { assertReviewedTransformerDependency } from './catalog/transformer-reviewed-dependencies.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const sha256 = value => createHash('sha256').update(value).digest('hex');
@@ -48,7 +49,7 @@ export function buildTransformerExecutionChoices(approval) {
     assert.ok(approval.reviewedLibraryHashes?.[`frontend/lib/catalog/models/transformer2026${name}`], `Missing reviewed library hash ${name}`);
   }
   for (const [file, hash] of Object.entries(approval.reviewedLibraryHashes)) {
-    assert.equal(hashFile(file), hash, `Changed reviewed choice dependency ${file}`);
+    assertReviewedTransformerDependency(file, hash, approval);
   }
   assert.equal(approval.sourceRegistrySha256, hashFile('backend-node/data/catalog-sources.json'));
   const result = {

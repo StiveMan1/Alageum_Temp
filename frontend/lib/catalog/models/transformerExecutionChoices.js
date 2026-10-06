@@ -1,4 +1,5 @@
 import manifest from './transformerExecutionChoicesManifest.json' with { type: 'json' };
+import supplement from './transformer2026AssetCompletionManifest.json' with { type: 'json' };
 import { verifiedTransformerAsset } from './transformer2026Runtime.js';
 
 const deepFreeze = value => {
@@ -8,7 +9,12 @@ const deepFreeze = value => {
   }
   return value;
 };
-const registry = deepFreeze(manifest);
+const registry = deepFreeze({
+  ...manifest,
+  supplementaryReview: { reviewReport: supplement.reviewReport, reviewReportSha256: supplement.reviewReportSha256 },
+  records: { ...manifest.records, ...supplement.executionChoices.records },
+  choices: { ...manifest.choices, ...supplement.executionChoices.choices },
+});
 const noChoices = Object.freeze([]);
 export const transformerExecutionChoicesManifest = registry;
 

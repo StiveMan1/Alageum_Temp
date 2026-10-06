@@ -1,4 +1,4 @@
-import { catalogEvidenceSpecs, catalogFamilyMembers, formatEvidenceSpec, displaySubtype, displayProductName, displayFamilyName } from './presentation.js';
+import { catalogEvidenceSpecs, catalogConfigurationEvidence, catalogFamilyMembers, formatEvidenceSpec, displaySubtype, displayProductName, displayFamilyName } from './presentation.js';
 // A presentation layer only: source records, their identities and evidence stay intact.
 // This module deliberately does not import data.js, so both static and API callers can use it.
 const present = (value) => value !== null && value !== undefined && value !== '';
@@ -76,7 +76,8 @@ export function equipmentTypeFor(product = {}) {
   if (family.category === 'accessories') return 'transformer-accessory';
   if (family.category === 'transformers') {
     if (/нтми|измерительн/.test(text)) return 'instrument-transformer';
-    return family.cooling === 'Сухое' || /сухой|сухие|тсл/.test(text) ? 'dry-transformer' : 'oil-transformer';
+    const documentedDryFamily = family.sourceId === 'transformers-2026' && ['ts-low-voltage', 'tsi-tools', 'tsn-nomex'].includes(family.sourceFamilyId);
+    return documentedDryFamily || family.cooling === 'Сухое' || /сухой|сухие|тсл/.test(text) ? 'dry-transformer' : 'oil-transformer';
   }
   if (family.category === 'substations') {
     if (/^cat-mtp|^cat-ktp-25-250$|^cat-ktpo-/.test(id) || /мачтов|столбов/.test(text)) return 'pole-substation';
@@ -206,10 +207,10 @@ export function getCatalogSpecSummary(productOrGroup, records = [], category = p
   const members = productOrGroup.members || [productOrGroup, ...catalogFamilyMembers(productOrGroup, records)];
   return categoryDisplayRows(category).map((row) => {
     const values = unique(members.flatMap((member) => {
-      const source = catalogEvidenceSpecs(member, row.key);
+      const source = [...catalogEvidenceSpecs(member, row.key), ...catalogConfigurationEvidence(member, row.key)];
       // Preserve winding, accuracy-class, reactive-power and unit labels. No unit conversion or cross-product combination.
       if (source.length && (member.sourceId === 'transformers-2026' || !hasEvidence(member[row.key]))) {
-        return source.map(spec => formatEvidenceSpec(spec, { requireUnit: ['power', 'voltage'].includes(row.key) }));
+        return source.map(spec => `${spec.configurationId ? 'По строкам таблицы: ' : ''}${formatEvidenceSpec(spec, { requireUnit: ['power', 'voltage'].includes(row.key) })}`);
       }
       if (row.key === 'subtype') return hasEvidence(displaySubtype(member)) ? [displaySubtype(member)] : [];
       return evidenceValues(member, row.key).map(value => withUnit(value, row.unit));
@@ -220,7 +221,7 @@ export function getCatalogSpecSummary(productOrGroup, records = [], category = p
       value: values.length ? values.join(' · ') : '—',
       unit: '',
       values,
-      sourceRows: members.flatMap((member) => (catalogEvidenceSpecs(member, row.key).length ? catalogEvidenceSpecs(member, row.key) : sourceRows(member, row.key)).map((spec) => ({ ...spec, productId: member.id }))),
+      sourceRows: members.flatMap((member) => ([...catalogEvidenceSpecs(member, row.key), ...catalogConfigurationEvidence(member, row.key)].length ? [...catalogEvidenceSpecs(member, row.key), ...catalogConfigurationEvidence(member, row.key)] : sourceRows(member, row.key)).map((spec) => ({ ...spec, productId: member.id }))),
     };
   });
 }

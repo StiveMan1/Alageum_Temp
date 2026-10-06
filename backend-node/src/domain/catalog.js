@@ -5,7 +5,7 @@ const { AppError } = require("./errors");
 const { assertActiveContext } = require("./auth");
 const v = require("./catalog-validation");
 const nativeMedia = require("./catalog-media");
-const { NAMESPACE, importedProductId } = require("./catalog-identity");
+const { NAMESPACE, importedProductId, resolveCatalogReadId } = require("./catalog-identity");
 const { requestPagination } = require("./legacy-query");
 const CATEGORIES = {
   transformers: "Трансформаторы",
@@ -284,10 +284,13 @@ function createCatalog({ db, auth, audit, authorizer, compatibilityReads = false
       id = v.parse(v.uuid, id);
       row = await table().where({ transport_id: id }).first();
     } else {
+      id = resolveCatalogReadId(id);
       row = await table().where({ public_key: id }).first();
-      if (!row && isUUID(id))
+      const isAlias = id !== ctx.params.id;
+      if (isAlias && row?.transport_id !== importedProductId(id)) row = null;
+      if (!row && !isAlias && isUUID(id))
         row = await table().where({ transport_id: id.toLowerCase() }).first();
-      if (!row) row = await table().where({ slug: id }).first();
+      if (!row && !isAlias) row = await table().where({ slug: id }).first();
     }
     const category =
       row &&

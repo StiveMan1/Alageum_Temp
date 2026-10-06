@@ -11,15 +11,16 @@ import { getProductMedia, sameOrderedMedia, selectApiProductImage } from '../lib
 import { getEquipmentVisual } from '../lib/catalog/models/visualMap.js';
 import { getEquipmentIcon } from '../lib/catalog/models/iconMap.js';
 import manifest from '../lib/catalog/media-manifest.json' with { type: 'json' };
-import transformerRuntime from '../lib/catalog/models/transformer2026RuntimeManifest.json' with { type: 'json' };
+import { transformerRuntimeManifest as transformerRuntime } from '../lib/catalog/models/transformer2026Runtime.js';
+import { legacyAssetCompletion } from '../lib/catalog/models/legacyAssetCompletion.js';
 import { catalogSources, getCatalogSource, getSourcePageAsset, isSourcePage, sourcePageImage, sourcePageUrl } from '../lib/catalog/sources.js';
 
 const require = createRequire(import.meta.url);
 const variant = productById('cat-bktp-modular-v001');
 const baselineMedia = product => product.image ? [{ path: product.image, kind: 'image', ...(Object.hasOwn(product, 'imageCaption') ? { alt: product.imageCaption } : {}) }] : [];
 const live = (source, media = baselineMedia(source)) => normalizeApiProduct({
-  id: transformerRuntime.geometry[source.id]?.database_id || transformerRuntime.icons[source.id]?.database_id || manifest.overrides[source.id]?.database_id || '2e39f767-a489-4e09-adee-8d4f7d782f93', public_key: source.id, slug: source.id,
-  category_public_key: source.category, specs: source, provenance: source, media,
+  id: transformerRuntime.geometry[source.id]?.database_id || transformerRuntime.icons[source.id]?.database_id || (source.id === legacyAssetCompletion.id ? legacyAssetCompletion.databaseId : null) || manifest.overrides[source.id]?.database_id || '2e39f767-a489-4e09-adee-8d4f7d782f93', public_key: source.id, slug: source.id,
+  category_public_key: source.category, sku: source.sku, specs: source, provenance: source, media,
   translations: { ru: { name: source.name } },
 });
 const describe = product => getProductMedia(product, getEquipmentVisual(product));

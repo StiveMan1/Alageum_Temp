@@ -453,10 +453,10 @@ test("catalog rows use only shared vectors and variants carry their own icon", a
 });
 
 
-test("transformer source: 823 records retain exact admitted identities and exclude held duplicates", async ({ page }) => {
-  expect(catalogRelease.recordCount).toBe(823);
+test("transformer source: 843 records retain exact admitted identities and keep source-only comparisons separate", async ({ page }) => {
+  expect(catalogRelease.recordCount).toBe(843);
   await page.goto("/catalog");
-  await expect(foundCount(page)).toHaveText("Найдено: 823");
+  await expect(foundCount(page)).toHaveText("Найдено: 843");
   await page.getByLabel("Поиск по каталогу").fill("alageum-tmg-standard-16");
   await page.getByLabel("Поиск по каталогу").press("Enter");
   await expect(page.locator('tr[data-product-id="alageum-tmg-standard-16"]')).toBeVisible();
@@ -665,7 +665,7 @@ test("transformer source: unavailable WebGL retains the separately approved icon
 
 test('catalog completion: family preview requires an explicit child and releases it on reset', async ({ page }, testInfo) => {
   await page.goto('/catalog/tr2026-family-tmg-standard');
-  const selector = page.getByLabel('Запись для просмотра', { exact: true });
+  const selector = page.getByRole('combobox', { name: 'Запись для просмотра', exact: true });
   await expect(selector).toHaveValue('');
   await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
   await selector.selectOption('alageum-tmg-standard-16');
@@ -684,7 +684,7 @@ test('catalog completion: family preview requires an explicit child and releases
 
 test('catalog completion: duplicate designations show separate source voltage evidence', async ({ page }) => {
   await page.goto('/catalog/tr2026-family-tmpn-top');
-  const selector = page.getByLabel('Запись для просмотра', { exact: true });
+  const selector = page.getByRole('combobox', { name: 'Запись для просмотра', exact: true });
   for (const voltage of ['1250', '1900', '1902']) {
     await expect(selector.locator('option').filter({ hasText: new RegExp(`ТМПН-160/3.*${voltage} В`) })).toHaveCount(1);
   }
@@ -714,7 +714,7 @@ test('catalog completion: source contradictions and power classes stay explicit'
 
 test('catalog completion: source construction alternatives never silently default and reset their viewer', async ({ page }, testInfo) => {
   await page.goto('/catalog/alageum-2026-ts-10');
-  const selector = page.getByLabel('Конструкция для просмотра', { exact: true });
+  const selector = page.getByRole('combobox', { name: 'Конструкция для просмотра', exact: true });
   await expect(selector).toHaveValue('');
   await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
   const options = await selector.locator('option').evaluateAll(items => items.map(item => item.value).filter(Boolean));
@@ -746,5 +746,102 @@ test('catalog completion: AsiaTrafo family overview shows technical source data 
   await expect(page).toHaveURL(/source=transformers-2026&page=167/);
   await page.goBack();
   await expect(page.locator('[data-family-document-page]')).toHaveAttribute('data-family-document-page', '167');
+  await expectShell(page);
+});
+
+test('identity completion: source comparison keeps dimensions and series context separated from the canonical card', async ({ page }) => {
+  await page.goto('/catalog/tmg-400');
+  const panel = page.locator('[data-catalog-source-panel="alageum-tmg-standard-400"]');
+  await expect(panel).toBeVisible();
+  const length = panel.locator('[data-source-field="Lmm"]');
+  await expect(length).toContainText('1294');
+  await expect(length).toContainText('1309');
+  await expect(length).toContainText('Единица в источнике не указана');
+  await panel.locator('.catalog-source-facts summary').filter({ hasText: 'Общие сведения серии' }).click();
+  await expect(panel).toContainText('Климатические диапазоны и опции не приписываются одному конкретному исполнению');
+  await expect(panel.getByRole('button', { name: /В подборку/ })).toHaveCount(0);
+  await page.locator('.catalog-related-references a[href="/catalog/alageum-tmg-copper-400"]').click();
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('медными обмотками');
+  await expect(page.locator('[data-catalog-source-panel]')).toHaveCount(0);
+  await expectShell(page);
+});
+
+test('identity completion: new executions are explicit family members and mixed TSL never gets a default construction', async ({ page }) => {
+  await page.goto('/catalog/tr2026-family-tsl-loss-a');
+  const member = page.getByRole('combobox', { name: 'Запись для просмотра', exact: true });
+  await expect(member).toHaveValue('');
+  await expect(member.locator('option[value="alageum-2026-tsl-a-630"]')).toContainText('потерь А');
+  await member.selectOption('alageum-2026-tsl-a-630');
+  await expect(page.locator('[data-selected-member]')).toHaveAttribute('data-selected-member', 'alageum-2026-tsl-a-630');
+  await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+  const construction = page.getByRole('combobox', { name: 'Конструкция для просмотра', exact: true });
+  await expect(construction).toHaveValue('');
+  await expect(construction.locator('option')).toHaveCount(3);
+  await page.getByRole('link', { name: 'Открыть отдельную карточку →', exact: true }).click();
+  await expect(page).toHaveURL(/alageum-2026-tsl-a-630$/);
+  await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+  await expect(page.locator('.family-back-link a')).toHaveAttribute('href', '/catalog/tr2026-family-tsl-loss-a');
+  await page.goBack();
+  await expect(member).toHaveValue('');
+  await expectShell(page);
+});
+
+test('identity completion: dry TS classification and fifteen reactor table rows remain explicit', async ({ page }) => {
+  await page.goto('/catalog/alageum-2026-ts-10');
+  await expect(page.locator('.model-type-label a')).toHaveAttribute('href', '/catalog?category=transformers&equipmentType=dry-transformer');
+  await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+  await page.goto('/catalog/tr2026-family-asia-shunt-reactor-configurations');
+  await expect(page.locator('.summary-specs')).toContainText('По строкам таблицы');
+  await expect(page.locator('.summary-specs')).toContainText('25000 кВАр');
+  await expect(page.locator('.summary-specs')).toContainText('500 кВ');
+  const labels = page.locator('.catalog-configuration summary');
+  await expect(labels).toHaveCount(15);
+  expect(new Set(await labels.allTextContents()).size).toBe(15);
+  await expect(labels.first()).toContainText('110 кВ; 25000 кВАр');
+  await expect(labels.last()).toContainText('500 кВ; 180000 кВАр');
+  await expect(page.getByRole('combobox', { name: 'Запись для просмотра', exact: true })).toHaveCount(0);
+  await expect(page.locator('a[href^="/catalog/alageum-suntiruusij-"]')).toHaveCount(0);
+  await expectShell(page);
+});
+
+test('identity completion: NTMI read alias preserves source unit disagreements and canonical comparison ID', async ({ page }) => {
+  await page.goto('/catalog/alageum-2026-ntmi-6');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText('НТМИ-6');
+  const panel = page.locator('[data-catalog-source-panel="alageum-2026-ntmi-6"]');
+  await expect(panel.locator('[data-source-field="maximumPowerValue"]')).toContainText('630 ВА');
+  await expect(panel.locator('[data-source-field="maximumPowerValue"]')).toContainText('630 кВА');
+  await expect(panel).toContainText('кА (заголовок сайта)');
+  await expect(page.locator('.product-actions a')).toHaveAttribute('href', '/catalog?compare=ntmi-6');
+  await expectShell(page);
+});
+
+test('identity completion: API alias rejects a reused canonical key instead of opening an unrelated UUID', async ({ page }) => {
+  await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: 1, items: [{ id: '10000000-0000-4000-8000-000000000001', public_key: 'ntmi-6', slug: 'ntmi-6', category_public_key: 'transformers', translations: { ru: { name: 'Запись с другим UUID' } }, specs: {}, provenance: {}, media: [], comparable: false, price_mode: 'on_request', currency: 'KZT' }] } }));
+  await page.goto('/catalog/alageum-2026-ntmi-6?source=api');
+  await expect(page.getByRole('heading', { name: 'Товар недоступен', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Запись с другим UUID', exact: true })).toHaveCount(0);
+  await expect(page.locator('[data-catalog-source-panel]')).toHaveCount(0);
+  await page.goto('/catalog/ntmi-6?source=api');
+  await expect(page.getByRole('heading', { name: 'Запись с другим UUID', exact: true })).toBeVisible();
+  await expect(page.locator('[data-catalog-source-panel]')).toHaveCount(0);
+});
+
+test('identity completion: reviewed SHR11 panel renders with its scoped caption and does not bind PR variants', async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  await page.goto('/catalog/cat-pr-shr11-v002');
+  const viewer = page.locator('[data-equipment-model="open-distribution-panel"]');
+  await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+  await expect(page.locator('.visual-provenance')).toContainText('На ПР и ПР-11 не распространяется');
+  await expect(page.getByRole('link', { name: 'Источник сопоставления ШР11 ↗', exact: true })).toHaveAttribute('href', 'https://alageum.com/ru/katalog/shkafy-upravleniya/shr11');
+  await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+  await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+  await canvasEvidence(viewer.locator('canvas'), testInfo, 'reviewed-shr11-panel');
+  await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
+  await page.locator('.product-original-illustration summary').click();
+  await expectDecodedImage(page.locator('.product-original-illustration img'));
+  for (const id of ['cat-pr-shr11-v001', 'cat-pr-shr11-v003']) {
+    await page.goto(`/catalog/${id}`);
+    await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+  }
   await expectShell(page);
 });
