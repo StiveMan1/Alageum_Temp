@@ -13,6 +13,21 @@ function node(rect, extra = {}) {
     offsetWidth: rect.width, offsetHeight: rect.height, clientLeft: 0, clientTop: 0, scrollTop: 0,
     style: { display: 'block', visibility: 'visible', contentVisibility: 'visible', opacity: '1', overflowX: 'visible', overflowY: 'visible', clip: 'auto', clipPath: 'none', contain: 'none' }, ...extra };
 }
+// A text-node-aware Range double: existing clipping/visibility controls keep
+// their geometry and assertions, now exercising the same word-range DOM API.
+function textRanges(rectangles) {
+  return {
+    createTreeWalker: target => {
+      let visited = false;
+      return { nextNode: () => { if (visited) return null; visited = true; return { data: 'glyphs', parentElement: target }; } };
+    },
+    createRange: () => {
+      let selected;
+      return { selectNodeContents(target) { selected = target; }, setStart(text) { selected = text.parentElement; }, setEnd() {},
+        getClientRects: () => rectangles(selected) };
+    },
+  };
+}
 function measure({ cellRect = box(16, 350, 100, 200), fragments = [box(20, 340, 110, 130)], scrollHeight,
   scrollY = 0, ancestor, rootStyle = {}, intermediate = false, requireTargetInViewport = false } = {}) {
   const root = node(box(0, 390, -scrollY, 1600 - scrollY), { clientHeight: 844, scrollHeight: 1600, scrollTop: scrollY });
@@ -27,7 +42,7 @@ function measure({ cellRect = box(16, 350, 100, 200), fragments = [box(20, 340, 
   const context = { element, options: { requireTargetInViewport }, window: { innerWidth: 390, innerHeight: 844, scrollY },
     getComputedStyle: current => current.style,
     document: { scrollingElement: root, documentElement: root,
-      createRange: () => ({ selectNodeContents() {}, getClientRects: () => fragments }) } };
+      ...textRanges(() => fragments) } };
   // This is the exact exported function passed to locator.evaluate in the spec.
   return JSON.parse(JSON.stringify(vm.runInNewContext(`(${measurePtmmReadability.toString()})(element, options)`, context)));
 }
@@ -170,7 +185,7 @@ test('serialized readability checks reject hidden/clipped frozen children and ev
     const checked = [];
     const result = vm.runInNewContext(`(${measurePtmmReadability.toString()})(element)`, {
       element: target, window: { innerWidth: 390, innerHeight: 844, scrollY: 0 },
-      document: { scrollingElement: root, documentElement: root, createRange: () => ({ selectNodeContents() {}, getClientRects: () => [box(22, 368, 135, 225)] }) },
+      document: { scrollingElement: root, documentElement: root, ...textRanges(() => [box(22, 368, 135, 225)]) },
       getComputedStyle: current => { checked.push(current); return current.style; },
     });
     assert.equal(result.readable, state === 'visible', `${role}/${state}`);
@@ -255,9 +270,7 @@ test('exact spec readability flow measures each frozen value, warning and extern
       : selector === '.technical-specs > div' && target === externalUnit && mode === 'detail' ? row : null;
     const globals = { window: { innerWidth: 390, innerHeight: 844, scrollY: 0 },
       getComputedStyle: target => target.style,
-      document: { scrollingElement: root, documentElement: root, createRange: () => {
-        let selected; return { selectNodeContents(target) { selected = target; }, getClientRects: () => [selected.getBoundingClientRect()] };
-      } },
+      document: { scrollingElement: root, documentElement: root, ...textRanges(target => [target.getBoundingClientRect()]) },
     };
     const makeLocator = key => ({
       key, count: async () => key === 'detail' ? mode === 'detail' ? 1 : 0 : 1,
@@ -302,4 +315,92 @@ test('native atomic filesystem write preserves parseable evidence after a partia
     assert.equal(retained.events[0].message, 'native retained event');
     assert.deepEqual(await native.readdir(directory), ['browser-events.json']);
   } finally { await native.rm(directory, { recursive: true, force: true }); }
+});
+
+function measureWordLayout({ text = 'Размеры не подтверждены. ', fullRight = 352.5, visibleRight = 350, ancestorClip = false, hidden = false, missingWord = null, middleFragmentOutside = false } = {}) {
+  const root = node(box(0, 390, 0, 1600), { clientHeight: 844, scrollHeight: 1600 });
+  const cell = node(box(16, 350, 100, 200)); cell.parentElement = root;
+  const target = node(box(20, 350, 110, 130)); target.parentElement = cell; target.closest = () => cell;
+  target.style.whiteSpace = 'pre-wrap';
+  if (hidden) target.style.visibility = 'hidden';
+  if (ancestorClip) { const ancestor = node(box(16, 340, 100, 200)); ancestor.style.overflowX = 'hidden'; ancestor.parentElement = root; cell.parentElement = ancestor; }
+  const textNode = { data: text, parentElement: target }, selected = [];
+  const document = {
+    scrollingElement: root, documentElement: root,
+    createTreeWalker: () => { let seen = false; return { nextNode: () => { if (seen) return null; seen = true; return textNode; } }; },
+    createRange: () => {
+      let start = 0, end = text.length, full = true;
+      return {
+        selectNodeContents() { full = true; }, setStart(node, offset) { assert.equal(node, textNode); start = offset; full = false; },
+        setEnd(node, offset) { assert.equal(node, textNode); end = offset; },
+        getClientRects() {
+          if (full) return [box(20, fullRight, 110, 130)];
+          const word = text.slice(start, end); selected.push(word);
+          if (word === missingWord) return [];
+          return middleFragmentOutside ? [box(20, 100, 110, 130), box(20, visibleRight, 130, 150), box(20, 100, 150, 170)] : [box(20, visibleRight, 110, 130)];
+        },
+      };
+    },
+  };
+  const measured = JSON.parse(JSON.stringify(vm.runInNewContext(`(${measurePtmmReadability.toString()})(element)`, {
+    element: target, document, window: { innerWidth: 390, innerHeight: 844, scrollY: 0 }, getComputedStyle: current => current.style,
+  })));
+  return { measured, selected };
+}
+
+test('hanging pre-wrap spaces do not masquerade as visible glyph overflow, with exact bounded diagnostic coordinates', () => {
+  const { measured, selected } = measureWordLayout();
+  assert.deepEqual(selected, ['Размеры', 'не', 'подтверждены.']);
+  assert.equal(measured.readable, true);
+  assert.equal(measured.diagnostics.tolerance, 1);
+  assert.equal(measured.diagnostics.whiteSpace, 'pre-wrap');
+  assert.equal(measured.diagnostics.rawCellWidthOverflow, 1);
+  assert.equal(measured.diagnostics.rawOutsideCell[0].right, 352.5);
+  assert.equal(measured.diagnostics.cell.right, 350);
+  // This precise full-text Range exceeds the previous unchanged 1px test.
+  assert.ok(measured.diagnostics.rawOutsideCell[0].right > measured.diagnostics.cell.right + 1);
+  assert.equal(measured.diagnostics.offending.length, 0);
+  assert.equal(measured.diagnostics.wordBounds.right, 350);
+  assert.equal(measureWordLayout({ fullRight: 350 }).measured.readable, true);
+});
+
+test('actual visible word overflow, clipping and hidden targets still fail with the same bounds', () => {
+  const overflow = measureWordLayout({ visibleRight: 352.5 }).measured;
+  assert.equal(overflow.readable, false);
+  assert.ok(overflow.violations.includes('text-outside-cell-width'));
+  const offending = overflow.diagnostics.offending.find(item => item.code === 'text-outside-cell-width');
+  assert.equal(offending.rect.right, 352.5); assert.equal(offending.boundary.right, 350);
+  assert.equal(offending.word, 'Размеры');
+  assert.equal(offending.start, 0); assert.equal(offending.end, 7);
+  assert.ok(measureWordLayout({ missingWord: 'не' }).measured.violations.includes('missing-word-geometry'));
+  assert.ok(measureWordLayout({ visibleRight: 352.5, middleFragmentOutside: true }).measured.violations.includes('text-outside-cell-width'));
+  const clipped = measureWordLayout({ ancestorClip: true }).measured;
+  assert.equal(clipped.readable, false); assert.ok(clipped.violations.includes('ancestor-horizontal-clipping'));
+  const hidden = measureWordLayout({ hidden: true }).measured;
+  assert.equal(hidden.readable, false); assert.ok(hidden.violations.includes('hidden-content'));
+  assert.ok(measureWordLayout({ text: ' \t\r\n' }).measured.violations.includes('missing-text'));
+});
+
+test('word traversal and failure geometry remain bounded and reject over-budget text', () => {
+  const tooMany = measureWordLayout({ text: 'слово '.repeat(300), visibleRight: 352.5 }).measured;
+  assert.equal(tooMany.readable, false); assert.ok(tooMany.violations.includes('word-limit') || tooMany.violations.includes('fragment-limit'));
+  assert.ok(tooMany.fragments <= 256); assert.ok(tooMany.diagnostics.offending.length <= 8); assert.ok(tooMany.diagnostics.omittedDiagnostics > 0);
+  assert.ok(JSON.stringify(tooMany.diagnostics).length < 4096);
+  const tooLong = measureWordLayout({ text: 'а'.repeat(8193) }).measured;
+  assert.equal(tooLong.readable, false); assert.ok(tooLong.violations.includes('text-character-limit'));
+});
+
+test('exact spec retains six successful Range-difference witnesses and exposes failure geometry without broadening case limits', async () => {
+  const source = (await readFile(new URL('../e2e/ptmm-qualification.spec.js', import.meta.url), 'utf8')).replace(/^import .*;\n/gm, '');
+  const annotations = [], test = () => {}; test.beforeEach = () => {}; test.afterEach = () => {}; test.info = () => ({ annotations });
+  const runtime = { test, ptmmIds: [] };
+  vm.runInNewContext(`${source}\nglobalThis.retain = retainReadabilityGeometry;`, runtime);
+  const pass = measureWordLayout().measured;
+  for (let i = 0; i < 20; i++) runtime.retain(pass, 'Applicability and unit caveat');
+  assert.equal(annotations.filter(item => item.type === 'readability-range-geometry').length, 6);
+  assert.equal(annotations.filter(item => item.type === 'readability-range-geometry-truncated').length, 1);
+  assert.ok(annotations.every(item => item.description.length < 4096));
+  runtime.retain(measureWordLayout({ visibleRight: 352.5 }).measured, 'Overflow'); assert.equal(annotations.length, 7);
+  assert.match(source, /geometry=\$\{JSON\.stringify\(measured\.diagnostics\)\}/);
+  assert.match(source, /geometry=\$\{JSON\.stringify\(linkMeasured\.diagnostics\)\}/);
 });

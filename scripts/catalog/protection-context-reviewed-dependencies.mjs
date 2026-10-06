@@ -1,3 +1,4 @@
+import { assertCorrectionDependencies } from './ptmm-browser-correction-reviewed-dependencies.mjs';
 import { ptmmPredecessors, assertPtmmQualificationDependencies } from './ptmm-qualification-reviewed-dependencies.mjs';
 import { visualPredecessors, assertVisualPresentationDependencies } from './visual-presentation-reviewed-dependencies.mjs';
 // A narrow raw-byte successor to PR33. No historical approval is rewritten and
@@ -113,11 +114,13 @@ export const readProtectionContextBytes = file => {
 
 // Preserve every predecessor branch while admitting only the exact new pins.
 function assertCurrentProtectionDependencies(expectedFiles, read) {
-  const ptmmFiles = {}, otherFiles = {};
+  const correctionFiles = {}, ptmmFiles = {}, otherFiles = {};
   for (const [file, expected] of Object.entries(expectedFiles)) {
-    if (Object.hasOwn(ptmmPredecessors, file) && expected === ptmmPredecessors[file]) ptmmFiles[file] = expected;
+    if (file === 'frontend/components/catalog/ProductVisual.js' && expected === '99e847f8ce2476e6417866c76c377120cbb0cc3cc7787217eb22f467113be7dc') correctionFiles[file] = expected;
+    else if (Object.hasOwn(ptmmPredecessors, file) && expected === ptmmPredecessors[file]) ptmmFiles[file] = expected;
     else otherFiles[file] = expected;
   }
+  assertCorrectionDependencies(correctionFiles, read);
   assertPtmmQualificationDependencies(ptmmFiles, read);
   assertBrowserAssertionDependencies(otherFiles, read);
 }
