@@ -32,6 +32,8 @@ async function renderVisual(product) {
   if (!visualComponent) {
     const file = new URL('../components/catalog/ProductVisual.js', import.meta.url);
     const source = (await readFile(file, 'utf8'))
+      .replace("'react'", JSON.stringify(pathToFileURL(require.resolve('react')).href))
+      .replace("'@/lib/catalog/models/transformerExecutionChoices'", JSON.stringify(new URL('../lib/catalog/models/transformerExecutionChoices.js', import.meta.url).href))
       .replace("import Image from 'next/image';", "const Image = props => <img {...props}/>;")
       .replace("import Link from 'next/link';", "const Link = props => <a {...props}/>;")
       .replace("import ProductIcon from './ProductIcon';", 'const ProductIcon = ({ product }) => <span data-product-icon={product.id}/>;')

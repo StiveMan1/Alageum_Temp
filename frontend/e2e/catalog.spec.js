@@ -662,3 +662,89 @@ test("transformer source: unavailable WebGL retains the separately approved icon
   await expectDecodedImage(page.locator(".product-original-illustration img"));
   await expectShell(page);
 });
+
+test('catalog completion: family preview requires an explicit child and releases it on reset', async ({ page }, testInfo) => {
+  await page.goto('/catalog/tr2026-family-tmg-standard');
+  const selector = page.getByLabel('Запись для просмотра', { exact: true });
+  await expect(selector).toHaveValue('');
+  await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+  await selector.selectOption('alageum-tmg-standard-16');
+  await expect(page.locator('[data-selected-member]')).toHaveAttribute('data-selected-member', 'alageum-tmg-standard-16');
+  await expect(page.locator('[data-equipment-model]')).toHaveAttribute('data-equipment-model', 'tr26-corrugated-small');
+  await page.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+  await expect(page.locator('[data-equipment-model]')).toHaveAttribute('data-model-status', 'ready');
+  await canvasEvidence(page.locator('canvas'), testInfo, 'family-selected-member');
+  await selector.selectOption('');
+  await expect(page.locator('canvas')).toHaveCount(0);
+  await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+  await selector.selectOption('alageum-tmg-standard-25');
+  await expect(page.locator('[data-equipment-model]')).toHaveAttribute('data-model-status', 'idle');
+  await expectShell(page);
+});
+
+test('catalog completion: duplicate designations show separate source voltage evidence', async ({ page }) => {
+  await page.goto('/catalog/tr2026-family-tmpn-top');
+  const selector = page.getByLabel('Запись для просмотра', { exact: true });
+  for (const voltage of ['1250', '1900', '1902']) {
+    await expect(selector.locator('option').filter({ hasText: new RegExp(`ТМПН-160/3.*${voltage} В`) })).toHaveCount(1);
+  }
+  await selector.selectOption('alageum-2026-tmpn-p62-r4');
+  await expect(page.locator('.family-selected-record')).toContainText('Номинальное напряжение ВН: 1900 В');
+  await page.getByRole('link', { name: 'Открыть отдельную карточку →', exact: true }).click();
+  await expect(page).toHaveURL(/alageum-2026-tmpn-p62-r4$/);
+  await expect(page.locator('.product-summary-text')).toContainText('1900 В');
+  await page.goBack();
+  await expect(selector).toHaveValue('');
+  await expectShell(page);
+});
+
+test('catalog completion: source contradictions and power classes stay explicit', async ({ page }) => {
+  await page.goto('/catalog/alageum-2026-ts-10');
+  await expect(page.locator('.summary-specs')).toContainText('ВН: 380 кВ');
+  await expect(page.locator('.summary-specs')).toContainText('Класс напряжения: 0,66 кВ');
+  await expect(page.locator('.product-summary .catalog-data-warning')).toBeVisible();
+  await page.locator('.imported-specifications .catalog-data-warning summary').click();
+  await expect(page.locator('.imported-specifications .catalog-data-warning')).toContainText('inconsistent');
+  await page.goto('/catalog/alageum-2026-znom35-config1');
+  await expect(page.locator('.summary-specs')).toContainText('Предельная мощность: 1,0 кВА');
+  await expect(page.locator('.summary-specs')).toContainText('Мощность в классе0,5: 0,15 кВА');
+  await expect(page.locator('.product-summary')).not.toContainText('nominal-winding-voltage');
+  await expectShell(page);
+});
+
+test('catalog completion: source construction alternatives never silently default and reset their viewer', async ({ page }, testInfo) => {
+  await page.goto('/catalog/alageum-2026-ts-10');
+  const selector = page.getByLabel('Конструкция для просмотра', { exact: true });
+  await expect(selector).toHaveValue('');
+  await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+  const options = await selector.locator('option').evaluateAll(items => items.map(item => item.value).filter(Boolean));
+  expect(options).toHaveLength(2);
+  await selector.selectOption(options[0]);
+  await expect(page.locator('[data-construction-choice]')).toHaveAttribute('data-construction-choice', options[0]);
+  const firstType = await page.locator('[data-equipment-model]').getAttribute('data-equipment-model');
+  await page.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+  await expect(page.locator('[data-equipment-model]')).toHaveAttribute('data-model-status', 'ready');
+  await canvasEvidence(page.locator('canvas'), testInfo, 'selected-construction-alternative');
+  await selector.selectOption(options[1]);
+  await expect(page.locator('canvas')).toHaveCount(0);
+  await expect(page.locator('[data-equipment-model]')).toHaveAttribute('data-model-status', 'idle');
+  await expect(page.locator('[data-equipment-model]')).not.toHaveAttribute('data-equipment-model', firstType);
+  await selector.selectOption('');
+  await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+  await page.reload();
+  await expect(selector).toHaveValue('');
+  await expectShell(page);
+});
+
+test('catalog completion: AsiaTrafo family overview shows technical source data and keeps factory context reachable', async ({ page }) => {
+  await page.goto('/catalog/tr2026-family-asia-two-winding-110-pbv');
+  await expect(page.locator('[data-family-document-page]')).toHaveAttribute('data-family-document-page', '167');
+  await expectDecodedImage(page.locator('.family-source-document img'));
+  await expect(page.locator('.family-source-document')).toContainText('не фотография изделия');
+  await expect(page.getByRole('link', { name: 'Обзор завода · стр. 166', exact: true })).toHaveAttribute('href', '/catalog/source?source=transformers-2026&page=166');
+  await page.getByRole('link', { name: 'Открыть техническую страницу 167 →', exact: true }).click();
+  await expect(page).toHaveURL(/source=transformers-2026&page=167/);
+  await page.goBack();
+  await expect(page.locator('[data-family-document-page]')).toHaveAttribute('data-family-document-page', '167');
+  await expectShell(page);
+});
