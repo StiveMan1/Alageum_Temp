@@ -6,6 +6,54 @@ candidate adds the scoped input adapter described below; it does not rewrite
 Strapi vendor code, change dependency versions, or grant roles in an existing
 database.
 
+## Form commitment follow-up, 2026-10-06
+
+The unchanged adapter later failed the strict clear-and-keyboard-publish case at
+PR31 head `a8f4f88845823105b242499bbe7b804368fcd0c8`
+([retained evidence](https://github.com/StiveMan1/Alageum_Temp/actions/runs/37455508135/artifacts/11408853636)).
+The shortcut followed native `beforeinput` by 7.8ms. Both the outgoing request and
+the successful published response contained the previous nonempty body, instead
+of null. The first three lifecycle scenarios passed; the fifth through seventh
+were not reached. The existing seven Page cases and twelve rapid-save attempts
+also passed, so those prior passes do not close this newly demonstrated gap.
+
+Removing the editor's debounce delivers AST changes immediately, but native
+`Form.onChange` still dispatches a batched React state update. Native `getValues`
+and validation read a ref updated during the next Form render. Publish's single
+microtask yield does not guarantee that lower-priority render has committed.
+Slate-handled deletion prevents default `beforeinput`, so the absence of a DOM
+`input` event does not establish that its AST callback was skipped.
+
+The follow-up candidate wraps only Page/body's native change callback in
+ReactDOM `flushSync`, using the public `useField` hook. This commits the received
+AST change before returning to Slate. The native input, normalization, refs,
+validation, permissions and Save/Publish endpoints remain in place; other
+models and field names keep their existing callback behavior. No vendor bytes,
+dependency versions, authentication controls or database schemas are changed.
+This guarantees commitment after the AST callback runs; it does not manufacture
+missing editor events or claim to finish an in-progress composition.
+
+The deterministic regression uses installed React 18 `createRoot`, native
+Form/context/reducer and editor callbacks with an inert DOM root and visual
+substitutes. It distinguishes an immediately delivered callback from a committed
+form value, including native submitting, validation and serialization ordering.
+That is a scheduling test, not a real contenteditable/browser proof. The strict
+hosted lifecycle scenario additionally repeats four explicit nonempty/clear
+publication pairs, verifies native reload and public content each time, and
+still stops on the first mismatch. It requires fourteen explicit writes, with
+no automatic retry or delay before the shortcut. Existing timing and child
+process deadlines remain unchanged.
+
+`flushSync` can run pending effects and increases rendering work; it is scoped
+to this field and exercised with reset/unmount checks. See the
+[React API caveats](https://react.dev/reference/react-dom/flushSync).
+Hosted verification of this follow-up is still required. The prior socket
+restriction was reproduced locally on 2026-10-06 before Chromium created a page.
+Local verification passed 582 backend checks (including the five new scheduling
+regressions), 443 frontend checks, lint, the actual CMS build, unchanged native
+file integrity checks and lifecycle test discovery. The build used a task-owned
+SWC cache because the environment's default cache directory is read-only.
+
 ## Observed failure and scoped input adapter
 
 PR29 head `6594535257fd044a865f8f218419cac77d1b9805` reproduced a mismatch in
@@ -53,7 +101,7 @@ and Publish, repeated revisions, clearing, cancel/leave and native discard. Any
 post-cancel observation across the old debounce window is labeled separately;
 there is no sleep before a save/publish action to make it pass.
 
-The current local candidate passes 573 backend checks, 377 frontend checks,
+The original scoped adapter checkpoint passed 573 backend checks, 377 frontend checks,
 frontend lint and the CMS build. The official npm registry still reports 5.56.0
 as latest on 2026-10-05. Local Chromium still
 fails before page creation with a socket-permission error, so the candidate's

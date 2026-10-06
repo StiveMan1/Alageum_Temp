@@ -6,8 +6,18 @@ const { SCENARIOS, extractPageSyncEvidence, assertPageSyncAcceptance } = require
 
 function passed() {
   const evidence = { schemaVersion: 1, totals: { planned: 7, attempted: 7, passed: 7, failed: 0 },
-    scenarios: SCENARIOS.map((id, index) => ({ id, outcome: "passed", mismatches: [], writeCount: [1, 1, 1, 1, 0, 0, 2][index] })),
-    writes: [["POST", "save", 201], ["POST", "publish", 200], ["PUT", "save", 200], ["POST", "publish", 200], ["PUT", "save", 200], ["POST", "discard", 200]].map(([method, action, status]) => ({ method, action, status })) };
+    scenarios: SCENARIOS.map((id, index) => ({ id, outcome: "passed", mismatches: [], writeCount: [1, 1, 1, 9, 0, 0, 2][index] })),
+    writes: [["POST", "save", 201], ["POST", "publish", 200], ["PUT", "save", 200], ["POST", "publish", 200],
+      ...Array.from({ length: 8 }, () => ["POST", "publish", 200]),
+      ["PUT", "save", 200], ["POST", "discard", 200]].map(([method, action, status]) => ({ method, action, status })) };
+  evidence.scenarios[3].operations = ["measured",
+    ...Array.from({ length: 4 }, (_, index) => [`repeat-${index + 1}-restore`, `repeat-${index + 1}-clear`]).flat()].map(purpose => {
+    const expected = { slug: "synthetic-test", title: "Synthetic test", locale_code: "ru",
+      body: purpose.endsWith("-restore") ? [{ type: "paragraph", children: [{ type: "text", text: purpose }] }] : null };
+    return { purpose, method: "POST", kind: "publish", status: 200, expected,
+      submitted: structuredClone(expected), response: structuredClone(expected),
+      timing: { withinDebounceWindow: true, inputToActionMs: 8 } };
+  });
   const result = { status: "passed", retry: 0, stdout: [{ text: `PAGE_SYNC_REGRESSION_EVIDENCE=${JSON.stringify(evidence)}\n` }] };
   const report = { stats: { expected: 1, unexpected: 0, skipped: 0, flaky: 0 }, suites: [{ suites: [{ specs: [{ tests: [{ expectedStatus: "passed", results: [result] }] }] }] }] };
   return { evidence, report, result };
@@ -35,6 +45,15 @@ test("Page lifecycle acceptance refuses retries, missing scenarios, hidden misma
     ({ evidence }) => { evidence.scenarios[0].outcome = "failed"; },
     ({ evidence }) => { evidence.scenarios[0].mismatches.push("lost body"); },
     ({ evidence }) => { evidence.writes.push({}); },
+    ({ evidence }) => { evidence.scenarios[3].operations.pop(); },
+    ({ evidence }) => { evidence.scenarios[3].operations[2].purpose = "repeat-1-restore"; },
+    ({ evidence }) => { evidence.scenarios[3].operations[2].submitted.body = [{ type: "paragraph", children: [{ type: "text", text: "stale" }] }]; },
+    ({ evidence }) => { evidence.scenarios[3].operations[2].response.body = []; },
+    ({ evidence }) => { evidence.scenarios[3].operations[2].timing.inputToActionMs = 300; },
+    ({ evidence }) => { evidence.scenarios[3].operations[2].timing.withinDebounceWindow = false; },
+    ({ evidence }) => { evidence.scenarios[3].operations[2].status = 201; },
+    ({ evidence }) => { const operation = evidence.scenarios[3].operations[1];
+      operation.expected.body = operation.submitted.body = operation.response.body = null; },
   ];
   for (const mutate of mutations) {
     const fixture = passed(); mutate(fixture);
