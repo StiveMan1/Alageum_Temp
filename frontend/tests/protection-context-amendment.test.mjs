@@ -1,3 +1,4 @@
+import { readVisualPresentationHistoricalBytes } from './helpers/visual-presentation-historical-bytes.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -6,9 +7,11 @@ import path from 'node:path';
 import { verifySourceAssetDependencyAmendment } from '../../scripts/catalog/source-asset-reviewed-dependencies.mjs';
 import { protectionContextAmendmentFiles, protectionContextRequiredFiles, protectionContextClearancePath,
   protectionContextBaselineCommit, protectionContextBaselineTree, protectionContextReviewDir as dir,
-  readProtectionContextBytes, protectionContextDigest as digest, verifyProtectionContextDependencyFiles,
+  readProtectionContextBytes as readCurrentProtectionContextBytes, protectionContextDigest as digest, verifyProtectionContextDependencyFiles,
   verifyProtectionContextDependencyAmendment, assertProtectionContextForwardDependency, assertProtectionContextForwardDependencies, protectionContextHistoricalHash, assertProtectionContextSourceInput,
 } from '../../scripts/catalog/protection-context-reviewed-dependencies.mjs';
+
+const readProtectionContextBytes = file => readVisualPresentationHistoricalBytes(file, readCurrentProtectionContextBytes);
 
 // Synthetic approval exists only in this in-memory reader. The checkout's
 // pending candidate stays unapproved until a separate reviewer attests it.

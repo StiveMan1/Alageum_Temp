@@ -1,3 +1,4 @@
+import { visualPredecessors, assertVisualPresentationDependencies } from './visual-presentation-reviewed-dependencies.mjs';
 // Exact test-only successor to PR34. Raw bytes only; no historical verifier call.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -44,9 +45,12 @@ export function verifyBrowserAssertionAmendment(read = readBrowserBytes) {
   assert.deepEqual(predecessors, browserPredecessors, 'Changed browser predecessor scope or hashes');
   assert.deepEqual(Object.keys(reviewedFiles).sort(), [...browserRequiredFiles].sort(), 'Incomplete or overbroad browser dependency scope');
   assert.equal(reviewedFiles[browserTestPath], browserTestSha256, 'Unapproved browser assertion bytes');
+  const forwarded = {};
   for (const [file, expected] of Object.entries({ ...historicalApprovals, ...reviewedFiles })) {
-    assert.equal(browserDigest(read(file)), expected, `Changed browser amendment dependency ${file}`);
+    if (Object.hasOwn(visualPredecessors, file)) forwarded[file] = expected;
+    else assert.equal(browserDigest(read(file)), expected, `Changed browser amendment dependency ${file}`);
   }
+  assertVisualPresentationDependencies(forwarded, read);
   assert.equal(clearance.reviewReport, browserReportPath);
   const reportBytes = read(browserReportPath);
   assert.equal(browserDigest(reportBytes), clearance.reviewReportSha256, 'Changed independent browser review');
@@ -64,10 +68,26 @@ export function verifyBrowserAssertionAmendment(read = readBrowserBytes) {
 export function assertBrowserAssertionDependencies(expectedFiles, read = readBrowserBytes) {
   const changed = Object.entries(expectedFiles).map(([file, expected]) => ({ file, expected, actual: browserDigest(read(file)) })).filter(item => item.actual !== item.expected);
   if (!changed.length) return;
-  for (const { file, expected } of changed) {
-    assert.ok(Object.hasOwn(browserPredecessors, file), `Changed unreviewed browser dependency ${file}`);
-    assert.equal(expected, browserPredecessors[file], `Wrong browser predecessor hash ${file}`);
+  const browserChanges = [], visualChanges = {};
+  for (const item of changed) {
+    const { file, expected } = item;
+    if (Object.hasOwn(browserPredecessors, file)) {
+      assert.equal(expected, browserPredecessors[file], `Wrong browser predecessor hash ${file}`);
+      browserChanges.push(item);
+    } else {
+      assert.ok(Object.hasOwn(visualPredecessors, file), `Changed unreviewed browser dependency ${file}`);
+      visualChanges[file] = expected;
+    }
   }
-  const clearance = verifyBrowserAssertionAmendment(read);
-  for (const { file, actual } of changed) assert.equal(actual, clearance.dependencies.reviewedFiles[file], `Changed approved browser bytes ${file}`);
+  if (browserChanges.length) {
+    const clearance = verifyBrowserAssertionAmendment(read);
+    const current = {};
+    for (const { file, actual } of browserChanges) {
+      const expected = clearance.dependencies.reviewedFiles[file];
+      if (Object.hasOwn(visualPredecessors, file)) current[file] = expected;
+      else assert.equal(actual, expected, `Changed approved browser bytes ${file}`);
+    }
+    assertVisualPresentationDependencies(current, read);
+  }
+  assertVisualPresentationDependencies(visualChanges, read);
 }
