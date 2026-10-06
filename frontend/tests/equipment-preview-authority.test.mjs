@@ -32,5 +32,6 @@ test('geometry eligibility never grants idle/error/closed preview icon eligibili
  html=renderToStaticMarkup(ModelViewer(props));assert.match(html,/data-model-preview="source-document"/);assert.doesNotMatch(html,/data-preview-icon=/);
  harnessState.status='error';html=renderToStaticMarkup(ModelViewer(props));assert.match(html,/data-model-preview="source-document"/);assert.doesNotMatch(html,/data-preview-icon=/);
  harnessState.status='idle';html=renderToStaticMarkup(ModelViewer({...props,previewIconType:'separate-reviewed-icon'}));assert.match(html,/data-preview-icon="separate-reviewed-icon"/);assert.doesNotMatch(html,/data-preview-icon="tr26-corrugated-small"/);
- const wrapper=(await readFile(new URL('../components/catalog/ProductVisual.js',import.meta.url),'utf8'));assert.match(wrapper,/previewIconType=\{icon\.type\}/);assert.match(wrapper,/const icon = getEquipmentIcon\(product\)/);
+ const wrapper=(await readFile(new URL('../components/catalog/ProductVisual.js',import.meta.url),'utf8'));assert.match(wrapper,/previewIconType=\{previewIcon\.type\}/);
+ assert.match(wrapper,/const previewIcon = choice \? \{ type: choice\.iconType, reason: choice\.reason \} : icon/);assert.match(wrapper,/const icon = getEquipmentIcon\(product\)/);
 });

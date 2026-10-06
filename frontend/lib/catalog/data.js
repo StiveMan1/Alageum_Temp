@@ -1,11 +1,14 @@
 import { officialProducts as webOfficialProducts } from './official.js';
 import { importedProducts, catalogImport } from './imported.js';
 import { transformerProducts, transformerImport } from './transformers2026.js';
+import { identityCompletionProducts } from './identityCompletionData.js';
+import { resolveCatalogReadId } from './identityCompletion.js';
 export { transformerProducts, transformerImport };
+export { identityCompletionProducts };
 export { webOfficialProducts, importedProducts, catalogImport };
 const importedById = new Map(importedProducts.map(p => [p.id, p]));
 export const baselineOfficialProducts = [...webOfficialProducts.map(p => importedById.has(p.id) ? { ...p, ...importedById.get(p.id), manufacturer: importedById.get(p.id).manufacturer ?? p.manufacturer, manufacturers: importedById.get(p.id).manufacturers?.length ? importedById.get(p.id).manufacturers : p.manufacturers, additionalSources: [{ url: p.sourceUrl, label: 'Публичная страница производителя' }] } : p), ...importedProducts.filter(p => !webOfficialProducts.some(w => w.id === p.id))];
-export const officialProducts = [...baselineOfficialProducts, ...transformerProducts];
+export const officialProducts = [...baselineOfficialProducts, ...transformerProducts, ...identityCompletionProducts];
 // Synthetic UI fixtures only. These are not ALAGEUM products or technical recommendations.
 // DEMO-001 preserves the identifier/name from backend/scripts/seed.py; its specs remain unknown.
 export const categories = [
@@ -38,7 +41,7 @@ export const demoProducts = [
 ];
 
 export const products = [...officialProducts, ...demoProducts];
-export const productById = (id) => products.find((product) => product.id === id);
+export const productById = (id) => products.find((product) => product.id === resolveCatalogReadId(id));
 export const categoryName = (id) => categories.find((category) => category.id === id)?.name || 'Без категории';
 export const valueOrDash = (value, unit = '') => value === null || value === undefined || value === '' ? '—' : `${value}${unit ? ` ${unit}` : ''}`;
 export const specRows = [

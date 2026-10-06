@@ -1,7 +1,9 @@
 import { sourcePageUrl, getCatalogSource } from '@/lib/catalog/sources';
 import Link from 'next/link';
-import { productById } from '@/lib/catalog/data';
+import { officialProducts } from '@/lib/catalog/data';
 import ProductIcon from './ProductIcon';
+import CatalogConfigurations from './CatalogConfigurations';
+import { catalogFamilyMembers, catalogMemberLabel, displayFamilyName, displaySpecLabel, catalogSourceWarnings } from '@/lib/catalog/presentation';
 
 export function SourcePageLink({ page, product }) {
  const href = sourcePageUrl(product, page);
@@ -10,16 +12,17 @@ export function SourcePageLink({ page, product }) {
 }
 export function ImportedSpecifications({ product }) {
  if (product.sourceKind !== 'supplied-pdf') return null;
- const variants = (product.variantIds || []).map(productById).filter(Boolean);
+ const variants = catalogFamilyMembers(product, officialProducts);
+ const warnings = catalogSourceWarnings(product, officialProducts);
  return <div className="imported-specifications">
   <div className="catalog-source-line"><span>{product.sourceTitle}</span><span>{product.sourcePages.map(page => <SourcePageLink product={product} page={page} key={page}/>)}</span></div>
-  {product.familyId && <p className="family-back-link"><Link href={`/catalog/${product.familyId}`}>← Все исполнения серии {product.familyName}</Link></p>}
-  {!!product.notes?.length && <details className="catalog-data-warning"><summary>Примечания и ограничения источника ({product.notes.length})</summary><ul>{product.notes.map((note,i)=><li key={i}>{note}</li>)}</ul></details>}
+  {product.familyId && <p className="family-back-link"><Link href={`/catalog/${product.familyId}`}>← Все исполнения серии {displayFamilyName(product)}</Link></p>}
+  {!!warnings.length && <details className="catalog-data-warning"><summary>Примечания и ограничения источника ({warnings.length})</summary><ul>{warnings.map((warning,i)=><li key={i}>{warning.note}{warning.productId !== product.id && <> <Link href={`/catalog/${warning.productId}`}>Запись: {warning.designation} →</Link></>}</li>)}</ul></details>}
   <h3>Параметры из печатного каталога</h3>
   <p className="filter-help">Значения сохранены с единицами источника. Табличные варианты и диапазоны не означают подтверждённую комплектацию или готовый артикул заказа. Несогласованности исходного издания указаны в примечаниях.</p>
-  <dl className="technical-specs imported-specs">{product.technicalSpecs.map((spec,i)=><div key={`${spec.label}-${i}`}><dt className="catalog-spec-text">{spec.label}</dt><dd className="catalog-spec-text">{spec.value}</dd><span className="catalog-spec-text">{spec.unit || '—'}<SourcePageLink product={product} page={spec.page}/></span></div>)}</dl>
-  {variants.length>0 && <section className="catalog-variants"><h3>Модели и обозначения в каталоге <span>({variants.length})</span></h3><p className="filter-help">Обозначения приведены из таблиц, подписей или составлены по напечатанному шаблону; особенности указаны в примечаниях. Наличие, актуальность и код заказа уточняются.</p><div className="variant-grid">{variants.map(variant=><Link key={variant.id} href={`/catalog/${variant.id}`}><ProductIcon product={variant} size={40}/><strong>{variant.designation || variant.sku || variant.name}</strong>{variant.sourceRow?.variant && <span>{variant.sourceRow.variant}</span>}<span>Открыть характеристики →</span></Link>)}</div></section>}
-  {!!product.configurations?.length && <section className="catalog-variants"><h3>Размеры, параметры и варианты серии <span>({product.configurations.length})</span></h3><p className="filter-help">Это строки размеров, мощностей, назначений и индексы обозначений. Они сохранены отдельно от моделей; сочетания параметров не сгенерированы.</p>{product.configurations.map((configuration,i)=><details className="catalog-configuration" key={i}><summary className="catalog-spec-text">{configuration.designation}<span>{configuration.kind === 'code-option' ? 'Индекс обозначения' : 'Табличный вариант'} · стр. {configuration.page}</span></summary><dl>{configuration.specifications.map((spec,j)=><div key={j}><dt className="catalog-spec-text">{spec.label}</dt><dd className="catalog-spec-text">{spec.value}{spec.unit ? ` ${spec.unit}` : ''} <SourcePageLink product={product} page={spec.page}/></dd></div>)}</dl><SourcePageLink product={product} page={configuration.page}/></details>)}</section>}
+  <dl className="technical-specs imported-specs">{product.technicalSpecs.map((spec,i)=><div key={`${displaySpecLabel(spec.label)}-${i}`}><dt className="catalog-spec-text">{displaySpecLabel(spec.label)}</dt><dd className="catalog-spec-text">{spec.value}</dd><span className="catalog-spec-text">{spec.unit || '—'}<SourcePageLink product={product} page={spec.page}/></span></div>)}</dl>
+  {variants.length>0 && <section className="catalog-variants"><h3>Модели и обозначения в каталоге <span>({variants.length})</span></h3><p className="filter-help">Обозначения приведены из таблиц, подписей или составлены по напечатанному шаблону; особенности указаны в примечаниях. Наличие, актуальность и код заказа уточняются.</p><div className="variant-grid">{variants.map(variant=><Link key={variant.id} href={`/catalog/${variant.id}`}><ProductIcon product={variant} size={40}/><strong>{variant.designation || variant.sku || variant.name}</strong><span>{catalogMemberLabel(variant)}</span><span>Открыть характеристики →</span></Link>)}</div></section>}
+  <CatalogConfigurations product={product}/>
  </div>;
 }
 export function ImportedDocuments({ product }) {

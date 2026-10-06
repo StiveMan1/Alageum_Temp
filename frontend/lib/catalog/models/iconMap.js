@@ -2,6 +2,7 @@ import { getReviewedTransformerAsset, isTransformer2026Record } from './transfor
 import { equipmentVisualAudit, getEquipmentVisual } from './visualMap.js';
 import { sourceIconMapA, sourceIconVariantMapA } from './sourceIconMapA.js';
 import { sourceIconMapB, sourceIconVariantMapB } from './sourceIconMapB.js';
+import { getReviewedLegacyCompletion } from './legacyAssetCompletion.js';
 
 /** Separate evidence for readable listing icons; the model audit stays unchanged. */
 export const equipmentIconAudit = Object.freeze({ ...sourceIconMapA, ...sourceIconMapB });
@@ -11,9 +12,11 @@ export const iconConfidenceLabel = icon => icon.confidence === 'source-based'
   : 'Условная схема типа; внешний вид исполнения не подтверждён';
 
 export function getEquipmentIcon(product = {}) {
+  const completion = getReviewedLegacyCompletion(product, 'icons');
+  if (completion) return completion;
   if (isTransformer2026Record(product)) {
     const asset = getReviewedTransformerAsset(product, 'icons');
-    return { type: asset?.type || null, confidence: asset ? 'source-based' : 'source-only', sourceFamilyId: product.familyId || product.id, sourcePages: asset?.sourcePages || product.sourcePages || [], sourceImage: asset?.sourceImage || product.image || null, reason: asset ? 'Иконка по проверенной видимой конструкции; не точный чертёж исполнения' : 'Документ источника; изображение конструкции не подтверждено' };
+    return { type: asset?.type || null, confidence: asset ? 'source-based' : 'source-only', sourceFamilyId: product.familyId || product.id, sourcePages: asset?.sourcePages || product.sourcePages || [], sourceImage: asset?.sourceImage || product.image || null, reason: asset ? (asset.reason || 'Иконка по проверенной видимой конструкции; не точный чертёж исполнения') : 'Документ источника; изображение конструкции не подтверждено' };
   }
   const visual = getEquipmentVisual(product);
   const familyId = product.familyId || product.id;

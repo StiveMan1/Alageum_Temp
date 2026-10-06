@@ -2,6 +2,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { sourceDigest } = require("./catalog-media-evidence");
+const { readIdentityCompletion } = require("./catalog-completion-source");
 const { createHash } = require("node:crypto");
 function readAdditionalCatalog(root, baseline) {
   const additional = JSON.parse(fs.readFileSync(path.join(root, "additional-sources.json")));
@@ -70,8 +71,9 @@ function readCatalog() {
     overlay.order.some((id) => !byId.has(id))
   )
     throw new Error("Incomplete catalog overlay");
-  const result = readAdditionalCatalog(root, overlay.order.map((id) => byId.get(id)));
+  const baseline = readAdditionalCatalog(root, overlay.order.map((id) => byId.get(id)));
   const release = JSON.parse(fs.readFileSync(path.resolve(root, "../catalog-release.json")));
+  const result = readIdentityCompletion(path.resolve(root, "../catalog-identity-completion"), baseline, release);
   if (release.format !== "alageum-catalog-release-v1" || result.length !== release.recordCount || new Set(result.map(r => r.category)).size !== release.categoryCount) throw new Error("Catalog release count mismatch");
   return result;
 }

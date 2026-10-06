@@ -111,11 +111,15 @@ test('all 67 source-based vector icons rasterize visibly within the viewBox with
   assert.ok(renderTransformer2026Icon('tr26-corrugated-small', 64, '<script>').includes('&lt;script&gt;'));
 });
 
-test('new library leaves all 238 old records and their visual/icon mappings byte-for-byte stable', () => {
+test('new library preserves all 238 old identities and237 mappings, with one reviewed SHR11 completion', () => {
   assert.equal(officialProducts.length, 238);
-  assert.deepEqual(officialProducts.map(product => ({ id: product.id, visual: getEquipmentVisual(product), icon: getEquipmentIcon(product) })), oldBaseline);
+  const unchanged = row => row.id !== 'cat-pr-shr11-v002';
+  assert.deepEqual(officialProducts.filter(unchanged).map(product => ({ id: product.id, visual: getEquipmentVisual(product), icon: getEquipmentIcon(product) })), oldBaseline.filter(unchanged));
+  const completed = officialProducts.find(product => product.id === 'cat-pr-shr11-v002');
+  assert.equal(getEquipmentVisual(completed).type, 'open-distribution-panel');
+  assert.equal(getEquipmentIcon(completed).confidence, 'source-based');
   for (const relative of ['models/visualMap.js', 'models/iconMap.js']) assert.doesNotMatch(readFileSync(new URL(`../lib/catalog/${relative}`, import.meta.url), 'utf8'), /getTransformer2026ReviewAsset/); // Runtime uses only independently hash-bound allowlists
-  assert.equal(officialProducts.filter(product => getEquipmentVisual(product).confidence === 'source-matched').length, 171);
+  assert.equal(officialProducts.filter(product => getEquipmentVisual(product).confidence === 'source-matched').length, 172);
 });
 
 

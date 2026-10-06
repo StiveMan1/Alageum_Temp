@@ -1,3 +1,4 @@
+import { catalogEvidenceSpecs, catalogConfigurationEvidence, catalogFamilyMembers, formatEvidenceSpec, displaySubtype, displayProductName, displayFamilyName } from './presentation.js';
 // A presentation layer only: source records, their identities and evidence stay intact.
 // This module deliberately does not import data.js, so both static and API callers can use it.
 const present = (value) => value !== null && value !== undefined && value !== '';
@@ -59,16 +60,24 @@ export function categorySpecRows(category) {
   return (categoryKeys[category] || ['voltage', 'installation', 'subtype']).map((key) => ({ ...rows[key] }));
 }
 
+/** Display fields can include reactive power without introducing a nominal-power facet. */
+export function categoryDisplayRows(category) {
+  const displayRows = categorySpecRows(category);
+  if (category === 'reactors') displayRows.unshift({ ...rows.power, label: 'Мощность по источнику', unit: '' });
+  return displayRows;
+}
+
 /** Navigation subtype only. Product silhouettes must use getEquipmentVisual(), not this heuristic. */
 export function equipmentTypeFor(product = {}) {
   const family = product.familyProduct || product;
   const id = family.familyId || family.id || '';
-  const text = [family.name, family.series, family.subtype, family.installation].join(' ').toLocaleLowerCase('ru');
+  const text = [displayProductName(family), displayFamilyName(family), family.series, family.subtype, family.installation].join(' ').toLocaleLowerCase('ru');
   if (family.productKind === 'reactor' || family.category === 'reactors') return 'reactor';
   if (family.category === 'accessories') return 'transformer-accessory';
   if (family.category === 'transformers') {
     if (/нтми|измерительн/.test(text)) return 'instrument-transformer';
-    return family.cooling === 'Сухое' || /сухой|сухие|тсл/.test(text) ? 'dry-transformer' : 'oil-transformer';
+    const documentedDryFamily = family.sourceId === 'transformers-2026' && ['ts-low-voltage', 'tsi-tools', 'tsn-nomex'].includes(family.sourceFamilyId);
+    return documentedDryFamily || family.cooling === 'Сухое' || /сухой|сухие|тсл/.test(text) ? 'dry-transformer' : 'oil-transformer';
   }
   if (family.category === 'substations') {
     if (/^cat-mtp|^cat-ktp-25-250$|^cat-ktpo-/.test(id) || /мачтов|столбов/.test(text)) return 'pole-substation';
@@ -148,7 +157,7 @@ export function getFamilyForProduct(id, records = []) {
 }
 
 const powerSpec = (spec) => /мощност/i.test(spec.label) && spec.unit === 'кВА'
-  && !/потребля|управляем|станции катодной/i.test(spec.label);
+  && !/потребля|управляем|станции катодной|предельн|классе|класс точности/i.test(spec.label);
 const currentSpec = (spec) => /^(?:Номинальн(?:ый|ые) (?:выпрямленный |нормальный )?ток|Ток силовой цепи|Ток устройств ввода)/i.test(spec.label)
   && !/отключен|термич|электродинамич|пиков|кратковременн|трансформатор.*тока/i.test(spec.label);
 
@@ -193,17 +202,31 @@ export function facetValues(productOrGroup, key) {
 }
 
 /** Compact category-aware display rows. Units are included in value, never guessed or converted. */
-export function getCatalogSpecSummary(productOrGroup) {
+export function getCatalogSpecSummary(productOrGroup, records = [], category = productOrGroup?.category) {
   if (!productOrGroup) return [];
-  const members = productOrGroup.members || [productOrGroup];
-  return categorySpecRows(productOrGroup.category).map((row) => {
-    const values = unique(members.flatMap((member) => evidenceValues(member, row.key))).sort(compare);
+  const members = productOrGroup.members || [productOrGroup, ...catalogFamilyMembers(productOrGroup, records)];
+  return categoryDisplayRows(category).map((row) => {
+    const values = unique(members.flatMap((member) => {
+      const source = [...catalogEvidenceSpecs(member, row.key), ...catalogConfigurationEvidence(member, row.key)];
+      // Preserve winding, accuracy-class, reactive-power and unit labels. No unit conversion or cross-product combination.
+      if (source.length && (member.sourceId === 'transformers-2026' || !hasEvidence(member[row.key]))) {
+        return source.map(spec => `${spec.configurationId ? 'По строкам таблицы: ' : ''}${formatEvidenceSpec(spec, { requireUnit: ['power', 'voltage'].includes(row.key) })}`);
+      }
+      if (row.key === 'subtype') return hasEvidence(displaySubtype(member)) ? [displaySubtype(member)] : [];
+      return evidenceValues(member, row.key).map(value => withUnit(value, row.unit));
+    })).sort(compare);
     return {
       key: row.key,
       label: row.label,
-      value: values.length ? values.map((value) => withUnit(value, row.unit)).join(' · ') : '—',
+      value: values.length ? values.join(' · ') : '—',
       unit: '',
-      sourceRows: members.flatMap((member) => sourceRows(member, row.key).map((spec) => ({ ...spec, productId: member.id }))),
+      values,
+      sourceRows: members.flatMap((member) => ([...catalogEvidenceSpecs(member, row.key), ...catalogConfigurationEvidence(member, row.key)].length ? [...catalogEvidenceSpecs(member, row.key), ...catalogConfigurationEvidence(member, row.key)] : sourceRows(member, row.key)).map((spec) => ({ ...spec, productId: member.id }))),
     };
   });
+}
+
+/** Keep list and hero summaries readable; full values remain in the detailed table. */
+export function compactCatalogSpecValue(row, limit = 4) {
+  return row?.values?.length > limit ? `${row.values.slice(0, limit).join(' · ')} · ещё ${row.values.length - limit} значений в записях` : row?.value || '—';
 }

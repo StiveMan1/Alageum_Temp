@@ -1,5 +1,7 @@
 # Transformer source ingestion
 
+The original source batch below remains unchanged. The separately reviewed [6 October identity completion](IDENTITY-COMPLETION.md) appends 20 explicit execution rows, adds two read-only NTMI aliases, and represents ten conflicting source rows on existing references. Current runtime total: **843 = 823 unchanged records + 20 admissions**, with no new family cards. Its own reproducible generator is `node scripts/complete-catalog-identities.mjs --check`; the original 585-record source clearance and its historical holds remain intact.
+
 The default command prepares **review staging only**:
 
     node scripts/import-transformers-2026.mjs
@@ -59,7 +61,7 @@ New 3D/icon proposals require separate approval. Source-data activation alone ke
 
 Old238 visual regression tests remain scoped to `baselineOfficialProducts`; transformer tests separately cover all admitted and held identities. Runtime roundtrip checks compare frontend and backend totals to exact generated release manifests.
 
-### Current integration validation
+### Original source integration validation
 
 Source data was explicitly activated with `review/data-clearance.json` at input digest `c3948d7152a6130aa4672b9f6d3d5a8f08144b5965df7bebabca067ba5bc8438`. Runtime totals are 823 records: 238 unchanged legacy + 585 new. Package totals are 248 raster assets / 21,968,700 bytes, including all 187 transformer scans / 20,429,458 bytes. The original 844,084,378-byte PDF is not shipped.
 
