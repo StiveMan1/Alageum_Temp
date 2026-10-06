@@ -35,7 +35,7 @@ async function attachSourceEvidence(table, testInfo, name) {
   }
 }
 
-async function canvasEvidence(canvas, testInfo, name, previous = null) {
+async function canvasEvidence(canvas, testInfo, name, previous = null, minimumInkRatio = 0.01) {
   const png = await canvas.screenshot({ animations: "disabled" });
   // Decode actual Playwright screenshots with built-in browser APIs. Detached
   // 2D canvases neither modify the page nor depend on optional native packages.
@@ -72,7 +72,7 @@ async function canvasEvidence(canvas, testInfo, name, previous = null) {
   }, { current: png.toString("base64"), previous: previous?.png.toString("base64") || null });
   await testInfo.attach(`${name}.png`, { body: png, contentType: "image/png" });
   await testInfo.attach(`${name}-pixels.json`, { body: Buffer.from(JSON.stringify(metrics)), contentType: "application/json" });
-  expect(metrics.darkPixels, "A real rendered model must occupy the interior of the canvas").toBeGreaterThan(metrics.width * metrics.height * 0.01);
+  expect(metrics.darkPixels, "A real rendered model must occupy the interior of the canvas").toBeGreaterThan(metrics.width * metrics.height * minimumInkRatio);
   expect(metrics.colors, "A rendered model must have more than the empty background's colors").toBeGreaterThan(12);
   return { png, ...metrics };
 }
@@ -633,17 +633,17 @@ test("transformer source: shared construction survives family navigation without
 });
 
 test("transformer source: independently approved icon-only records keep their source image and no 3D", async ({ page }) => {
-  const id = "alageum-2026-relay-tr100";
+  const id = "alageum-2026-zom-1p25-35";
   await page.goto(`/catalog/${id}`);
-  await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-type", "tr26-icon-temperature-relay");
+  await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-type", "tr26-instrument-column");
   await expect(page.locator(`.model-type-label [data-product-icon="${id}"]`)).toHaveAttribute("data-icon-confidence", "source-based");
   await expect(page.locator("[data-equipment-model]")).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Открыть 3D-модель", exact: true })).toHaveCount(0);
   await expect(page.locator("canvas")).toHaveCount(0);
   await expectDecodedImage(page.locator(".product-visual img"));
   await page.getByRole("tab", { name: /^Документы/ }).click();
-  await page.getByRole("tabpanel").getByRole("link", { name: "стр. 85", exact: true }).click();
-  await expect(page).toHaveURL(/source=transformers-2026&page=85/);
+  await page.getByRole("tabpanel").getByRole("link", { name: "стр. 99", exact: true }).click();
+  await expect(page).toHaveURL(/source=transformers-2026&page=99/);
   await expectDecodedImage(page.locator(".source-page-image img"));
   await page.goBack();
   await expect(page.locator("[data-equipment-model]")).toHaveCount(0);
@@ -1021,5 +1021,177 @@ test('NTMI source preview: unavailable WebGL retains only the separately reviewe
   await expect(preview.getByRole('link')).toHaveAttribute('href', '/catalog/source?source=transformers-2026&page=96');
   await viewer.getByRole('button', { name: 'Попробовать снова', exact: true }).click();
   await expect(viewer).toHaveAttribute('data-model-status', 'error');
+  await expectShell(page);
+});
+
+const sourceAssetAccessories = [
+  { id: 'alageum-2026-relay-tr100', type: 'tr26-accessory-relay-tr100', query: 'ТР-100' },
+  { id: 'alageum-2026-sensor-pt100', type: 'tr26-accessory-probe-pt100', query: 'pt-100' },
+  { id: 'alageum-2026-damper-ek290', type: 'tr26-accessory-damper-ek290', query: 'ЕК-290' },
+];
+async function sourceAssetDto(id) {
+  const [{ productById }, { sourceAssetCompletionManifest }] = await Promise.all([
+    import('../lib/catalog/data.js'), import('../lib/catalog/models/sourceAssetCompletion.js'),
+  ]);
+  const record = productById(id), entry = sourceAssetCompletionManifest.records[id];
+  return { id: entry.database_id, public_key: id, slug: id, sku: record.sku,
+    category_public_key: record.category, translations: { ru: { name: record.name, description: record.description } },
+    specs: record, provenance: record, media: [{ path: record.image, kind: 'image', alt: record.imageCaption }],
+    comparable: true, price_mode: 'on_request', currency: 'KZT' };
+}
+async function observeSourceAssetContexts(page) {
+  await page.addInitScript(() => {
+    window.__sourceAssetContexts = { created: 0, lost: 0 };
+    const seen = new WeakSet(), original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (kind, ...args) {
+      const context = original.call(this, kind, ...args);
+      if (/webgl/i.test(kind) && context && !seen.has(context)) {
+        seen.add(context); window.__sourceAssetContexts.created++;
+        this.addEventListener('webglcontextlost', () => { window.__sourceAssetContexts.lost++; });
+      }
+      return context;
+    };
+  });
+}
+for (const specimen of sourceAssetAccessories) for (const mode of ['static', 'api']) {
+  test(`bounded source assets: ${mode} ${specimen.id} renders real geometry and releases it across close and navigation`, async ({ page }, testInfo) => {
+    test.setTimeout(90_000);
+    const errors = []; page.on('pageerror', error => errors.push(error.message));
+    await observeSourceAssetContexts(page);
+    if (mode === 'api') {
+      const dto = await sourceAssetDto(specimen.id);
+      await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: 1, items: [dto] } }));
+    }
+    await page.goto(`/catalog?source=${mode}&q=${encodeURIComponent(specimen.query)}`);
+    const listing = page.locator(`[data-product-icon="${specimen.id}"]`);
+    await expect(listing).toHaveAttribute('data-icon-type', specimen.type);
+    await expect(listing).toHaveAttribute('title', /Иллюстративная внешняя форма по фото на стр. 85/);
+    await expect(listing.locator('svg')).toBeVisible();
+    expect(await page.evaluate(() => window.__sourceAssetContexts.created)).toBe(0);
+    await page.goto(`/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}`);
+    const viewer = page.locator(`[data-equipment-model="${specimen.type}"]`);
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await expect(viewer.locator(`svg[data-equipment-type="${specimen.type}"]`)).toBeVisible();
+    await expect(page.locator('.visual-provenance')).toContainText('Скрытые поверхности условные');
+    await expect(page.locator('canvas')).toHaveCount(0);
+    expect(await page.evaluate(() => window.__sourceAssetContexts.created)).toBe(0);
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+    // The photographed PT100 is a thin cable/probe silhouette, so its required
+    // foreground area is lower than a solid tank, while real pixels remain required.
+    const inkRatio = specimen.type === 'tr26-accessory-probe-pt100' ? 0.002 : 0.01;
+    const canvas = viewer.locator('canvas');
+    const opened = await canvasEvidence(canvas, testInfo, `${mode}-${specimen.id}-opened`, null, inkRatio);
+    await viewer.getByRole('button', { name: 'Повернуть модель влево', exact: true }).click();
+    await viewer.getByRole('button', { name: 'Повернуть модель влево', exact: true }).click();
+    const rotated = await canvasEvidence(canvas, testInfo, `${mode}-${specimen.id}-rotated`, opened, inkRatio);
+    expect(rotated.changedPixels).toBeGreaterThan(opened.width * opened.height * 0.001);
+    await canvas.press('Home');
+    await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.__sourceAssetContexts.lost)).toBe(1);
+    await expect(viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true })).toBeFocused();
+    await page.locator('.product-original-illustration summary').click();
+    await expectDecodedImage(page.locator('.product-original-illustration img'));
+    await expect(page.locator('.product-original-illustration img')).toHaveAttribute('src', /page-085\.webp/);
+    await page.locator('.product-original-illustration summary').click();
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'ready');
+    const source = page.locator('.visual-provenance').getByRole('link', { name: 'стр. 85', exact: true });
+    await expect(source).toHaveAttribute('href', '/catalog/source?source=transformers-2026&page=85');
+    await source.click();
+    await expect(page).toHaveURL(/source=transformers-2026&page=85$/);
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await expectDecodedImage(page.locator('.source-page-image img'));
+    await page.goBack();
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await expectShell(page); expect(errors).toEqual([]);
+  });
+}
+
+test('bounded source assets: API wrong UUID, edited identity and changed raw media suppress every accessory model and icon', async ({ page }) => {
+  test.setTimeout(90_000);
+  let current;
+  await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: 1, items: [current] } }));
+  for (const specimen of sourceAssetAccessories) {
+    const original = await sourceAssetDto(specimen.id);
+    for (const patch of [
+      { id: '10000000-0000-4000-8000-000000000001' },
+      { translations: { ru: { ...original.translations.ru, name: 'Отредактированная запись владельца' } } },
+      { media: [{ ...original.media[0], path: '/catalog-source/transformers-2026/page-086.webp' }] },
+    ]) {
+      current = { ...original, ...patch };
+      await page.goto(`/catalog/${specimen.id}?source=api`);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
+      await expect(page.locator(`svg[data-equipment-type="${specimen.type}"]`)).toHaveCount(0);
+      await expect(page.locator('canvas')).toHaveCount(0);
+      await page.goto('/catalog?source=api');
+      const icon = page.locator(`[data-product-icon="${specimen.id}"]`);
+      await expect(icon).toHaveAttribute('data-icon-confidence', 'source-only');
+      await expect(icon).not.toHaveAttribute('data-icon-type', specimen.type);
+    }
+  }
+});
+
+test('bounded source assets: all three no-WebGL fallbacks retain honest icons, source page85 and retry controls', async ({ page }) => {
+  test.setTimeout(90_000);
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (kind, ...args) { return /webgl/i.test(kind) ? null : original.call(this, kind, ...args); };
+  });
+  for (const specimen of sourceAssetAccessories) {
+    await page.goto(`/catalog/${specimen.id}`);
+    const viewer = page.locator(`[data-equipment-model="${specimen.type}"]`);
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'error');
+    await expect(viewer.locator(`svg[data-equipment-type="${specimen.type}"]`)).toBeVisible();
+    await expect(viewer).toContainText('Выше показана отдельно проверенная иконка');
+    await expect(page.locator('canvas')).toHaveCount(0);
+    await viewer.getByRole('button', { name: 'Попробовать снова', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'error');
+    await expect(page.locator('.visual-provenance')).toContainText('Скрытые поверхности условные');
+    await page.locator('.product-original-illustration summary').click();
+    await expectDecodedImage(page.locator('.product-original-illustration img'));
+    await expect(page.locator('.visual-provenance a')).toHaveAttribute('href', '/catalog/source?source=transformers-2026&page=85');
+  }
+  await expectShell(page);
+});
+
+for (const specimen of [
+  { id: 'alageum-tmgi-x4k3-63', type: 'tr26-corrugated-small', drawingPage: 30 },
+  { id: 'alageum-tmgi-x4k3-1000', type: 'tr26-corrugated-large', drawingPage: 31 },
+]) test(`bounded source assets: X4K3 ${specimen.drawingPage} discloses the naming mismatch for static, API and selected-family previews`, async ({ page }, testInfo) => {
+  test.setTimeout(90_000);
+  const dto = await sourceAssetDto(specimen.id);
+  await page.route('**/api/v1/catalog/products?*', route => route.fulfill({ json: { total: 1, items: [dto] } }));
+  for (const mode of ['static', 'api']) {
+    await page.goto(`/catalog/${specimen.id}${mode === 'api' ? '?source=api' : ''}`);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('ТМГ и-');
+    const provenance = page.locator('.visual-provenance');
+    await expect(provenance).toContainText(`Представительная внешняя компоновка Х4К3 по чертежу на стр. ${specimen.drawingPage}`);
+    await expect(provenance).toContainText('В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ');
+    await expect(provenance).toContainText('Точное соответствие серии и комплектации не подтверждено');
+    await expect(provenance.getByRole('link')).toHaveAttribute('href', `/catalog/source?source=transformers-2026&page=${specimen.drawingPage}`);
+    const viewer = page.locator(`[data-equipment-model="${specimen.type}"]`);
+    await expect(viewer).toHaveAttribute('data-model-status', 'idle');
+    await viewer.getByRole('button', { name: 'Открыть 3D-модель', exact: true }).click();
+    await expect(viewer).toHaveAttribute('data-model-status', 'ready', { timeout: 30_000 });
+    await canvasEvidence(viewer.locator('canvas'), testInfo, `${mode}-${specimen.id}`);
+    await expect(provenance).toBeVisible();
+    await viewer.getByRole('button', { name: 'Закрыть 3D-модель', exact: true }).click();
+    await page.locator('.product-original-illustration summary').click();
+    await expectDecodedImage(page.locator('.product-original-illustration img'));
+    await expect(page.locator('.product-original-illustration img')).toHaveAttribute('src', /page-028\.webp/);
+  }
+  await page.goto('/catalog/tr2026-family-tmgi-x4k3');
+  await page.getByRole('combobox', { name: 'Запись для просмотра', exact: true }).selectOption(specimen.id);
+  const selected = page.locator(`[data-selected-member="${specimen.id}"]`);
+  await expect(selected.locator('.visual-provenance')).toContainText('В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ');
+  await expect(selected.locator('.visual-provenance a')).toHaveAttribute('href', `/catalog/source?source=transformers-2026&page=${specimen.drawingPage}`);
+  await page.getByRole('combobox', { name: 'Запись для просмотра', exact: true }).selectOption('');
+  await expect(page.locator('[data-equipment-model]')).toHaveCount(0);
   await expectShell(page);
 });

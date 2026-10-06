@@ -1,3 +1,4 @@
+import { accessory2026IconDefinitions } from '@/lib/catalog/models/accessory2026Icons';
 import { transformer2026IconDefinitions } from '@/lib/catalog/models/transformer2026Icons';
 import { sourceIconShapes, resolveIconType, equipmentIconName } from '@/lib/catalog/models/iconTypes';
 
@@ -22,7 +23,8 @@ const Transformer = ({ instrument = false }) => <>
 export default function EquipmentIcon({ type, size = 48, title, className = '', ...props }) {
   const resolved = resolveIconType(type);
   let drawing;
-  if (Object.hasOwn(transformer2026IconDefinitions, resolved)) drawing = <>{transformer2026IconDefinitions[resolved].paths.map((d, index) => <path key={index} d={d}/>)}</>;
+  if (Object.hasOwn(accessory2026IconDefinitions, resolved)) drawing = <>{accessory2026IconDefinitions[resolved].paths.map((d, index) => <path key={index} d={d}/>)}</>;
+  else if (Object.hasOwn(transformer2026IconDefinitions, resolved)) drawing = <>{transformer2026IconDefinitions[resolved].paths.map((d, index) => <path key={index} d={d}/>)}</>;
   else if (Object.hasOwn(sourceIconShapes, resolved)) drawing = <>{sourceIconShapes[resolved].paths.map((d, index) => <path key={index} d={d}/>)}</>;
   else if (resolved === 'oil-transformer' || resolved === 'instrument-transformer') drawing = <Transformer instrument={resolved === 'instrument-transformer'}/>;
   else if (resolved === 'dry-transformer') drawing = <><path d="M12 13h40v6H12zM12 47h40v6H12zM19 11v44m26-44v44"/>{[20,32,44].map(x => <g key={x}><rect x={x-5} y="21" width="10" height="23" rx="4" fill="currentColor" fillOpacity=".12"/><path d={`M${x-4} 27h8m-8 5h8m-8 5h8`}/></g>)}<path d="M16 54v4m32-4v4"/></>;

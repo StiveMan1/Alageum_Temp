@@ -1,3 +1,4 @@
+import { historicalDependencyHash } from './source-asset-reviewed-dependencies.mjs';
 // A source/geometry approval is immutable. Only independently reviewed integration
 // changes may replace its exact old dependency hash with one exact new hash.
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const read = file => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 const fileHash = file => {
   assert.ok(typeof file === 'string' && !path.isAbsolute(file) && !file.split('/').includes('..'));
-  return digest(fs.readFileSync(path.join(root, file)));
+  return historicalDependencyHash(file);
 };
 export const transformerIntegrationAmendmentFiles = Object.freeze([
   'frontend/lib/catalog/models/transformer2026Runtime.js',

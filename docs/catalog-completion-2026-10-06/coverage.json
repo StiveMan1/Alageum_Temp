@@ -9,17 +9,17 @@
       "family-overview": 142,
       "legacy-reference": 14
     },
-    "sourceGroundedDefault3D": 448,
+    "sourceGroundedDefault3D": 461,
     "genericDefault3D": 14,
-    "noDefault3D": 381,
+    "noDefault3D": 368,
     "explicitChoiceRecords": 36,
     "explicitChoices": 74,
     "sourceContextPreviewRecords": 2,
     "sourceContextPreviews": 2,
-    "noDefaultOrChoice3D": 345,
+    "noDefaultOrChoice3D": 332,
     "icons": {
-      "source-based": 455,
-      "source-only": 323,
+      "source-based": 465,
+      "source-only": 313,
       "typical": 65
     },
     "familySelectors": 102,
@@ -58,17 +58,17 @@
         "explicit-source-entry": 528,
         "family-overview": 77
       },
-      "sourceGroundedDefault3D": 276,
+      "sourceGroundedDefault3D": 289,
       "genericDefault3D": 0,
-      "noDefault3D": 329,
+      "noDefault3D": 316,
       "explicitChoiceRecords": 36,
       "explicitChoices": 74,
       "sourceContextPreviewRecords": 0,
       "sourceContextPreviews": 0,
-      "noDefaultOrChoice3D": 293,
+      "noDefaultOrChoice3D": 280,
       "icons": {
-        "source-based": 282,
-        "source-only": 323
+        "source-based": 292,
+        "source-only": 313
       },
       "familySelectors": 76,
       "familiesWithSourceReferences": 5,
@@ -81,17 +81,17 @@
     "roles": {
       "explicit-source-entry": 687
     },
-    "sourceGroundedDefault3D": 392,
+    "sourceGroundedDefault3D": 405,
     "genericDefault3D": 0,
-    "noDefault3D": 295,
+    "noDefault3D": 282,
     "explicitChoiceRecords": 36,
     "explicitChoices": 74,
     "sourceContextPreviewRecords": 0,
     "sourceContextPreviews": 0,
-    "noDefaultOrChoice3D": 259,
+    "noDefaultOrChoice3D": 246,
     "icons": {
-      "source-based": 398,
-      "source-only": 246,
+      "source-based": 408,
+      "source-only": 236,
       "typical": 43
     },
     "familySelectors": 0,
@@ -13869,21 +13869,17 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-matched",
         "pages": [
-          28,
-          29,
           30
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Представительная внешняя компоновка Х4К3 по чертежу на стр. 30. В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ; подпись прямо включает Х4К3. Применение иллюстрации основано на разделе каталога и диапазоне мощности. Точное соответствие серии и комплектации не подтверждено. Не CAD; размеры условные."
       },
       "icon": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-based",
         "pages": [
-          28,
-          29,
           30
         ]
       },
@@ -13915,21 +13911,17 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-matched",
         "pages": [
-          28,
-          29,
           30
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Представительная внешняя компоновка Х4К3 по чертежу на стр. 30. В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ; подпись прямо включает Х4К3. Применение иллюстрации основано на разделе каталога и диапазоне мощности. Точное соответствие серии и комплектации не подтверждено. Не CAD; размеры условные."
       },
       "icon": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-based",
         "pages": [
-          28,
-          29,
           30
         ]
       },
@@ -13961,21 +13953,17 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-matched",
         "pages": [
-          28,
-          29,
           30
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Представительная внешняя компоновка Х4К3 по чертежу на стр. 30. В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ; подпись прямо включает Х4К3. Применение иллюстрации основано на разделе каталога и диапазоне мощности. Точное соответствие серии и комплектации не подтверждено. Не CAD; размеры условные."
       },
       "icon": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-based",
         "pages": [
-          28,
-          29,
           30
         ]
       },
@@ -14007,21 +13995,17 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-matched",
         "pages": [
-          28,
-          29,
           30
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Представительная внешняя компоновка Х4К3 по чертежу на стр. 30. В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ; подпись прямо включает Х4К3. Применение иллюстрации основано на разделе каталога и диапазоне мощности. Точное соответствие серии и комплектации не подтверждено. Не CAD; размеры условные."
       },
       "icon": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-based",
         "pages": [
-          28,
-          29,
           30
         ]
       },
@@ -14053,21 +14037,17 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-matched",
         "pages": [
-          28,
-          29,
           30
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Представительная внешняя компоновка Х4К3 по чертежу на стр. 30. В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ; подпись прямо включает Х4К3. Применение иллюстрации основано на разделе каталога и диапазоне мощности. Точное соответствие серии и комплектации не подтверждено. Не CAD; размеры условные."
       },
       "icon": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-based",
         "pages": [
-          28,
-          29,
           30
         ]
       },
@@ -14099,21 +14079,17 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-matched",
         "pages": [
-          28,
-          29,
           30
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Представительная внешняя компоновка Х4К3 по чертежу на стр. 30. В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ; подпись прямо включает Х4К3. Применение иллюстрации основано на разделе каталога и диапазоне мощности. Точное соответствие серии и комплектации не подтверждено. Не CAD; размеры условные."
       },
       "icon": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-small",
+        "confidence": "source-based",
         "pages": [
-          28,
-          29,
           30
         ]
       },
@@ -14145,21 +14121,17 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-large",
+        "confidence": "source-matched",
         "pages": [
-          28,
-          29,
           31
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Представительная внешняя компоновка Х4К3 по чертежу на стр. 31. В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ; подпись прямо включает Х4К3. Применение иллюстрации основано на разделе каталога и диапазоне мощности. Точное соответствие серии и комплектации не подтверждено. Не CAD; размеры условные."
       },
       "icon": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-large",
+        "confidence": "source-based",
         "pages": [
-          28,
-          29,
           31
         ]
       },
@@ -14191,21 +14163,17 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-large",
+        "confidence": "source-matched",
         "pages": [
-          28,
-          29,
           31
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Представительная внешняя компоновка Х4К3 по чертежу на стр. 31. В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ; подпись прямо включает Х4К3. Применение иллюстрации основано на разделе каталога и диапазоне мощности. Точное соответствие серии и комплектации не подтверждено. Не CAD; размеры условные."
       },
       "icon": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-large",
+        "confidence": "source-based",
         "pages": [
-          28,
-          29,
           31
         ]
       },
@@ -14237,21 +14205,17 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-large",
+        "confidence": "source-matched",
         "pages": [
-          28,
-          29,
           31
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Представительная внешняя компоновка Х4К3 по чертежу на стр. 31. В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ; подпись прямо включает Х4К3. Применение иллюстрации основано на разделе каталога и диапазоне мощности. Точное соответствие серии и комплектации не подтверждено. Не CAD; размеры условные."
       },
       "icon": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-large",
+        "confidence": "source-based",
         "pages": [
-          28,
-          29,
           31
         ]
       },
@@ -14283,21 +14247,17 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-large",
+        "confidence": "source-matched",
         "pages": [
-          28,
-          29,
           31
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Представительная внешняя компоновка Х4К3 по чертежу на стр. 31. В таблице серия обозначена ТМГи, в подписи чертежа — ТМГвэ; подпись прямо включает Х4К3. Применение иллюстрации основано на разделе каталога и диапазоне мощности. Точное соответствие серии и комплектации не подтверждено. Не CAD; размеры условные."
       },
       "icon": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-corrugated-large",
+        "confidence": "source-based",
         "pages": [
-          28,
-          29,
           31
         ]
       },
@@ -21531,15 +21491,15 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-accessory-relay-tr100",
+        "confidence": "source-matched",
         "pages": [
           85
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Задняя сторона показана условно; число и назначение клемм не установлены. Дисплей — неподвижная иллюстрация. Иллюстративная внешняя форма по фото на стр. 85; не CAD, не размеры и не все исполнения изделия. Скрытые поверхности условные."
       },
       "icon": {
-        "type": "tr26-icon-temperature-relay",
+        "type": "tr26-accessory-relay-tr100",
         "confidence": "source-based",
         "pages": [
           85
@@ -21571,15 +21531,15 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-accessory-probe-pt100",
+        "confidence": "source-matched",
         "pages": [
           85
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Показан датчик с кабелем из каталога, а не все исполнения pt-100. Число витков и положение кабеля условны; длина и назначение жил не заданы. Иллюстративная внешняя форма по фото на стр. 85; не CAD, не размеры и не все исполнения изделия. Скрытые поверхности условные."
       },
       "icon": {
-        "type": "tr26-icon-temperature-probe",
+        "type": "tr26-accessory-probe-pt100",
         "confidence": "source-based",
         "pages": [
           85
@@ -21611,15 +21571,15 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-accessory-damper-ek290",
+        "confidence": "source-matched",
         "pages": [
           85
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Показано только видимое на фото монтажное отверстие. Кривизна седла условная; скрытые слои и крепления не восстановлены. Иллюстративная внешняя форма по фото на стр. 85; не CAD, не размеры и не все исполнения изделия. Скрытые поверхности условные."
       },
       "icon": {
-        "type": "tr26-icon-vibration-damper",
+        "type": "tr26-accessory-damper-ek290",
         "confidence": "source-based",
         "pages": [
           85

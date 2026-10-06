@@ -1,3 +1,4 @@
+import { historicalDependencyHash } from './catalog/source-asset-reviewed-dependencies.mjs';
 // Additive, independently reviewed authority. Historical source and asset approvals stay intact.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -19,7 +20,7 @@ const sha256 = value => createHash('sha256').update(value).digest('hex');
 const read = relative => JSON.parse(fs.readFileSync(path.join(root, relative), 'utf8'));
 const hashFile = relative => {
   assert.ok(typeof relative === 'string' && !path.isAbsolute(relative) && !relative.split('/').includes('..'), 'Invalid review path');
-  return sha256(fs.readFileSync(path.join(root, relative)));
+  return historicalDependencyHash(relative);
 };
 const importedProductId = key => {
   const bytes = createHash('sha1').update(Buffer.from('541788eefbf04d859d33e593b82f303c', 'hex')).update(`product:${key}`).digest().subarray(0, 16);

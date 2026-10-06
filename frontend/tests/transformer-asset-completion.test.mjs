@@ -1,10 +1,11 @@
+import { historicalDependencyHash, sourceAssetClearancePath } from '../../scripts/catalog/source-asset-reviewed-dependencies.mjs';
+import { sourceAssetCompletionManifest } from '../lib/catalog/models/sourceAssetCompletion.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createHash } from 'node:crypto';
 import { officialProducts, transformerProducts, identityCompletionProducts } from '../lib/catalog/data.js';
 import { normalizeApiProduct } from '../lib/catalog/apiData.js';
 import { getEquipmentVisual } from '../lib/catalog/models/visualMap.js';
@@ -44,10 +45,10 @@ test('supplement reproduces 25 exact new defaults and 8 explicit alternatives wi
   assert.equal(Object.values(transformerExecutionChoicesManifest.records).reduce((sum, record) => sum + record.choiceIds.length, 0), 74);
   assert.deepEqual(transformerExecutionChoicesManifest.choices, baseChoices.choices);
   assert.equal(officialProducts.length, 843);
-  assert.equal(transformerProducts.filter(row => getEquipmentVisual(row).type).length, 260);
+  assert.equal(transformerProducts.filter(row => getEquipmentVisual(row).type && !Object.hasOwn(sourceAssetCompletionManifest.records, row.id)).length, 260);
   assert.equal(identityCompletionProducts.filter(row => getEquipmentVisual(row).type).length, 16);
   for (const [file, hash] of Object.entries(supplement.dependencies.reviewedFileHashes)) {
-    assert.equal(createHash('sha256').update(fs.readFileSync(new URL(file, root))).digest('hex'), hash, file);
+    assert.equal(historicalDependencyHash(file), hash, file);
   }
 });
 
@@ -171,14 +172,15 @@ test('independent integration amendment rejects a later single-byte edit and any
   const changedFile = 'frontend/lib/catalog/models/transformer2026Runtime.js';
   const clearanceFile = 'docs/catalog-transformers-2026/review/asset-completion/clearance.json';
   const write = (file, bytes) => { fs.mkdirSync(path.dirname(path.join(scratch, file)), { recursive: true }); fs.writeFileSync(path.join(scratch, file), bytes); };
-  for (const file of [verifier, changedFile, clearanceFile, clearance.reviewReport]) write(file, fs.readFileSync(new URL(file, root)));
+  const sourceClearance = JSON.parse(fs.readFileSync(new URL(sourceAssetClearancePath, root), 'utf8'));
+  for (const file of new Set([verifier, changedFile, clearanceFile, clearance.reviewReport, sourceAssetClearancePath, sourceClearance.reviewReport, ...Object.keys(sourceClearance.dependencies.reviewedFiles)])) write(file, fs.readFileSync(new URL(file, root)));
   try {
     const { assertReviewedTransformerDependency: verify } = await import(pathToFileURL(path.join(scratch, verifier)).href);
     const original = fs.readFileSync(path.join(scratch, changedFile));
     const historical = baseAssets.reviewedLibraryHashes[changedFile];
     verify(changedFile, historical, baseAssets);
     fs.appendFileSync(path.join(scratch, changedFile), '\n');
-    assert.throws(() => verify(changedFile, historical, baseAssets), /Changed amended integration dependency/);
+    assert.throws(() => verify(changedFile, historical, baseAssets), /Changed amended integration dependency|Changed historical source approval\/dependency/);
     write(changedFile, original);
     assert.throws(() => verify(changedFile, 'wrong-old-hash', baseAssets), /Wrong historical integration dependency/);
     for (const mutate of [
@@ -186,7 +188,7 @@ test('independent integration amendment rejects a later single-byte edit and any
       value => { value.dependencies.reviewedIntegrationAmendments[changedFile].reviewedSha256 = 'wrong'; },
     ]) {
       const changed = structuredClone(clearance); mutate(changed); write(clearanceFile, JSON.stringify(changed));
-      assert.throws(() => verify(changedFile, historical, baseAssets), /Changed approved integration dependencies/);
+      assert.throws(() => verify(changedFile, historical, baseAssets), /Changed approved integration dependencies|Changed historical source approval\/dependency/);
     }
   } finally { fs.rmSync(scratch, { recursive: true, force: true }); }
 });

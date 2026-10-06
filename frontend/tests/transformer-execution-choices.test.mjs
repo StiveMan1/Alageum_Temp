@@ -1,3 +1,4 @@
+import { transformerRuntimeManifest } from '../lib/catalog/models/transformer2026Runtime.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -150,8 +151,8 @@ test('the seven choices reuse existing meshes and icons alongside the separately
     disposeTransformer2026Geometry(model);
     assert.equal(model.children.length, 0);
   }
-  assert.equal(transformerProducts.filter(record => getEquipmentVisual(record).type).length, 260);
-  assert.equal(transformerProducts.filter(record => getEquipmentIcon(record).type).length, 266);
+  assert.equal(transformerProducts.filter(record => Object.hasOwn(transformerRuntimeManifest.geometry, record.id) && getEquipmentVisual(record).type).length, 260);
+  assert.equal(transformerProducts.filter(record => Object.hasOwn(transformerRuntimeManifest.icons, record.id) && getEquipmentIcon(record).type).length, 266);
 });
 
 test('returned choices and authority manifest cannot be mutated or extended by callers', () => {
