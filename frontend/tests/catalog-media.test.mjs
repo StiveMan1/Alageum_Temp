@@ -1,3 +1,4 @@
+import { protectionExampleRuntimeManifest } from '../lib/catalog/models/protectionExampleRuntime.js';
 import { sourceAssetCompletionManifest } from '../lib/catalog/models/sourceAssetCompletion.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -20,7 +21,7 @@ const require = createRequire(import.meta.url);
 const variant = productById('cat-bktp-modular-v001');
 const baselineMedia = product => product.image ? [{ path: product.image, kind: 'image', ...(Object.hasOwn(product, 'imageCaption') ? { alt: product.imageCaption } : {}) }] : [];
 const live = (source, media = baselineMedia(source)) => normalizeApiProduct({
-  id: sourceAssetCompletionManifest.records[source.id]?.database_id || transformerRuntime.geometry[source.id]?.database_id || transformerRuntime.icons[source.id]?.database_id || (source.id === legacyAssetCompletion.id ? legacyAssetCompletion.databaseId : null) || manifest.overrides[source.id]?.database_id || '2e39f767-a489-4e09-adee-8d4f7d782f93', public_key: source.id, slug: source.id,
+  id: protectionExampleRuntimeManifest.records[source.id]?.databaseId || sourceAssetCompletionManifest.records[source.id]?.database_id || transformerRuntime.geometry[source.id]?.database_id || transformerRuntime.icons[source.id]?.database_id || (source.id === legacyAssetCompletion.id ? legacyAssetCompletion.databaseId : null) || manifest.overrides[source.id]?.database_id || '2e39f767-a489-4e09-adee-8d4f7d782f93', public_key: source.id, slug: source.id,
   category_public_key: source.category, sku: source.sku, specs: source, provenance: source, media,
   translations: { ru: { name: source.name } },
 });
@@ -40,7 +41,10 @@ async function renderVisual(product) {
       .replace("import Link from 'next/link';", "const Link = props => <a {...props}/>;")
       .replace("import ProductIcon from './ProductIcon';", 'const ProductIcon = ({ product }) => <span data-product-icon={product.id}/>;')
       .replace("export { default as ProductIcon } from './ProductIcon';", '')
+      .replace("import sourceContextAssetProof from '@/lib/catalog/source-context/sourceContextBuildProof';", 'const sourceContextAssetProof = null;')
+      .replace("import CatalogSourceContext from './source-context/CatalogSourceContext';", 'const CatalogSourceContext = () => null;')
       .replace("import EquipmentModel from './EquipmentModel';", 'const EquipmentModel = ({ type }) => <section data-equipment-model={type}/>;')
+      .replace("'@/lib/catalog/models/protectionExampleRuntime'", JSON.stringify(new URL('../lib/catalog/models/protectionExampleRuntime.js', import.meta.url).href))
       .replace("'@/lib/catalog/models/iconMap'", JSON.stringify(new URL('../lib/catalog/models/iconMap.js', import.meta.url).href))
       .replace("'@/lib/catalog/models/visualMap'", JSON.stringify(new URL('../lib/catalog/models/visualMap.js', import.meta.url).href))
       .replace("'@/lib/catalog/sources'", JSON.stringify(new URL('../lib/catalog/sources.js', import.meta.url).href))

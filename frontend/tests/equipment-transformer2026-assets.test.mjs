@@ -111,10 +111,36 @@ test('all 67 source-based vector icons rasterize visibly within the viewBox with
   assert.ok(renderTransformer2026Icon('tr26-corrugated-small', 64, '<script>').includes('&lt;script&gt;'));
 });
 
-test('new library preserves all 238 old identities and237 mappings, with one reviewed SHR11 completion', () => {
+test('new library preserves all 238 identities and234 mappings, with one SHR11 completion and three exact protection successors', () => {
   assert.equal(officialProducts.length, 238);
   const unchanged = row => row.id !== 'cat-pr-shr11-v002';
-  assert.deepEqual(officialProducts.filter(unchanged).map(product => ({ id: product.id, visual: getEquipmentVisual(product), icon: getEquipmentIcon(product) })), oldBaseline.filter(unchanged));
+  const disclosure = 'Упрощённая иллюстрация примера из каталога. Мелкие элементы бокового вида и их пространственное расположение воспроизведены не полностью; см. исходный чертёж на стр. 69. Размеры, материалы и комплектация исполнения не утверждаются. Не CAD.';
+  const successors = {
+    'cat-ptm-tded': {
+      oldType: null, oldIcon: 'paired-protection-enclosures', type: 'source69-paired-protection-examples-icon',
+      reason: 'Парный символ двух отдельно подписанных примеров со стр. 69; не общий корпус семейства и не внешний вид табличного исполнения. Мелкие элементы боковых видов опущены.',
+    },
+    'cat-ptm-tded-v012': {
+      oldType: 'protection-cabinet', oldIcon: 'protection-cabinet', type: 'source69-ptm-u1-example',
+      reason: `${disclosure} Опущены: малый боковой прямоугольник, короткие элементы под козырьком, точная конструкция опор.`,
+    },
+    'cat-ptm-tded-v013': {
+      oldType: 'indoor-protection-enclosure', oldIcon: 'indoor-protection-enclosure', type: 'source69-tde9-u3-example',
+      reason: `${disclosure} Опущены: два верхних круглых элемента бокового вида, боковой прямоугольник, нижний боковой выступ.`,
+    },
+  };
+  const expected = oldBaseline.filter(unchanged).map(row => {
+    if (!Object.hasOwn(successors, row.id)) return row;
+    const successor = successors[row.id];
+    assert.equal(row.visual.type, successor.oldType, row.id);
+    assert.equal(row.icon.type, successor.oldIcon, row.id);
+    return { ...row,
+      visual: successor.oldType === null ? row.visual : { ...row.visual, type: successor.type, reason: successor.reason },
+      icon: { ...row.icon, type: successor.type, reason: successor.reason },
+    };
+  });
+  assert.equal(expected.filter(row => Object.hasOwn(successors, row.id)).length, 3);
+  assert.deepEqual(officialProducts.filter(unchanged).map(product => ({ id: product.id, visual: getEquipmentVisual(product), icon: getEquipmentIcon(product) })), expected);
   const completed = officialProducts.find(product => product.id === 'cat-pr-shr11-v002');
   assert.equal(getEquipmentVisual(completed).type, 'open-distribution-panel');
   assert.equal(getEquipmentIcon(completed).confidence, 'source-based');

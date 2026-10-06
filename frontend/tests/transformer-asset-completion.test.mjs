@@ -1,5 +1,6 @@
 import { historicalDependencyHash, sourceAssetClearancePath } from '../../scripts/catalog/source-asset-reviewed-dependencies.mjs';
 import { measurementColumnClearancePath } from '../../scripts/catalog/measurement-column-reviewed-dependencies.mjs';
+import { protectionContextClearancePath } from '../../scripts/catalog/protection-context-reviewed-dependencies.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -173,7 +174,14 @@ test('historical release refuses pending forward approval; approved integration 
     assert.throws(() => assertReviewedTransformerDependency('frontend/lib/catalog/models/transformer2026Runtime.js', baseAssets.reviewedLibraryHashes['frontend/lib/catalog/models/transformer2026Runtime.js'], baseAssets), /requires independent approval|ENOENT/);
     return;
   }
+  const protectionPath = new URL(protectionContextClearancePath, root);
+  const protectionClearance = fs.existsSync(protectionPath) ? JSON.parse(fs.readFileSync(protectionPath, 'utf8')) : null;
+  if (protectionClearance?.status !== 'approved-bounded-protection-context') {
+    assert.throws(() => assertReviewedTransformerDependency('frontend/lib/catalog/models/transformer2026Runtime.js', baseAssets.reviewedLibraryHashes['frontend/lib/catalog/models/transformer2026Runtime.js'], baseAssets), /requires independent approval|ENOENT/);
+    return;
+  }
   // Isolate intentional corruption from the shared checkout and parallel tests.
+  // An approved successor adds its complete current verifier/dependency closure.
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'transformer-integration-guard-'));
   const verifier = 'scripts/catalog/transformer-reviewed-dependencies.mjs';
   const changedFile = 'frontend/lib/catalog/models/transformer2026Runtime.js';
@@ -182,14 +190,15 @@ test('historical release refuses pending forward approval; approved integration 
   const sourceClearance = JSON.parse(fs.readFileSync(new URL(sourceAssetClearancePath, root), 'utf8'));
   for (const file of new Set([verifier, changedFile, clearanceFile, clearance.reviewReport, sourceAssetClearancePath, sourceClearance.reviewReport,
     ...Object.keys(sourceClearance.dependencies.reviewedFiles), measurementColumnClearancePath, successorClearance.reviewReport,
-    ...Object.keys(successorClearance.dependencies.reviewedFiles)])) write(file, fs.readFileSync(new URL(file, root)));
+    ...Object.keys(successorClearance.dependencies.reviewedFiles), protectionContextClearancePath, protectionClearance.reviewReport,
+    ...Object.keys(protectionClearance.dependencies.reviewedFiles)])) write(file, fs.readFileSync(new URL(file, root)));
   try {
     const { assertReviewedTransformerDependency: verify } = await import(pathToFileURL(path.join(scratch, verifier)).href);
     const original = fs.readFileSync(path.join(scratch, changedFile));
     const historical = baseAssets.reviewedLibraryHashes[changedFile];
     verify(changedFile, historical, baseAssets);
     fs.appendFileSync(path.join(scratch, changedFile), '\n');
-    assert.throws(() => verify(changedFile, historical, baseAssets), /Changed amended integration dependency|Changed historical source approval\/dependency/);
+    assert.throws(() => verify(changedFile, historical, baseAssets), /Changed amended integration dependency|Changed immutable source input frontend\/lib\/catalog\/models\/transformer2026Runtime\.js|Changed historical source approval\/dependency|Changed unamended PR33 dependency|Changed reviewed protection\/context file/);
     write(changedFile, original);
     assert.throws(() => verify(changedFile, 'wrong-old-hash', baseAssets), /Wrong historical integration dependency/);
     for (const mutate of [
@@ -197,7 +206,7 @@ test('historical release refuses pending forward approval; approved integration 
       value => { value.dependencies.reviewedIntegrationAmendments[changedFile].reviewedSha256 = 'wrong'; },
     ]) {
       const changed = structuredClone(clearance); mutate(changed); write(clearanceFile, JSON.stringify(changed));
-      assert.throws(() => verify(changedFile, historical, baseAssets), /Changed approved integration dependencies|Changed historical source approval\/dependency/);
+      assert.throws(() => verify(changedFile, historical, baseAssets), /Changed approved integration dependencies|Changed immutable source input docs\/catalog-transformers-2026\/review\/asset-completion\/clearance\.json|Changed historical source approval\/dependency|Changed unamended PR33 dependency|Changed reviewed protection\/context file/);
     }
   } finally { fs.rmSync(scratch, { recursive: true, force: true }); }
 });

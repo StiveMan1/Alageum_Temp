@@ -1,3 +1,5 @@
+import { resolveProtectionExampleType } from './protectionExampleTypes.js';
+import { createProtectionExampleGeometry, disposeProtectionExampleGeometry } from './protectionExampleGeometry.js';
 import { resolveMeasurementColumn2026Type } from './measurementColumn2026Types.js';
 import { createMeasurementColumn2026Geometry, disposeMeasurementColumn2026Geometry } from './measurementColumn2026Geometry.js';
 import { resolveAccessory2026Type } from './accessory2026Types.js';
@@ -14,6 +16,7 @@ import { buildSourceEquipmentGeometry } from './sourceGeometry.js';
 const colors = { body: 0xe5e7e5, panel: 0xf1f1ed, frame: 0x737e82, dark: 0x323d44, red: 0xb92735, copper: 0xb87957, insulator: 0xaaa698, screen: 0x33474c, glass: 0x778f92, warning: 0xe3ba5d };
 
 export function createEquipmentGeometry(type) {
+  if (resolveProtectionExampleType(type)) return createProtectionExampleGeometry(type);
   if (resolveMeasurementColumn2026Type(type)) return createMeasurementColumn2026Geometry(type);
   if (resolveAccessory2026Type(type)) return createAccessory2026Geometry(type);
   if (resolveTransformer2026Type(type)) return createTransformer2026Geometry(type);
@@ -285,6 +288,7 @@ export function createEquipmentGeometry(type) {
 }
 
 export function disposeEquipmentGeometry(group) {
+  if (resolveProtectionExampleType(group.userData.type)) return disposeProtectionExampleGeometry(group);
   if (resolveMeasurementColumn2026Type(group.userData.type)) return disposeMeasurementColumn2026Geometry(group);
   if (resolveAccessory2026Type(group.userData.type)) return disposeAccessory2026Geometry(group);
   if (resolveTransformer2026Type(group.userData.type)) return disposeTransformer2026Geometry(group);

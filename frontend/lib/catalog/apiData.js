@@ -11,9 +11,10 @@ export function isApiCatalog(params) {
 export const liveHref = id => `/catalog/${encodeURIComponent(id)}?source=api`;
 export const safeSourceUrl = url => typeof url === 'string' && /^https?:\/\//i.test(url) ? url : null;
 const text = value => typeof value === 'string' || typeof value === 'number' ? value : null;
+const normalizeSpecRows = value => Array.isArray(value) ? value.filter(row => row && typeof row === 'object').map(row => ({ label: String(row.label || ''), value: String(text(row.value) ?? '—'), unit: String(row.unit || ''), page: Number.isInteger(row.page) ? row.page : null })) : [];
 export function normalizeApiProduct(product) {
  const specs = product.specs || {}, provenance = product.provenance || {};
- const technicalSpecs = Array.isArray(specs.technicalSpecs) ? specs.technicalSpecs.filter(row => row && typeof row === 'object').map(row => ({ label: String(row.label || ''), value: String(text(row.value) ?? '—'), unit: String(row.unit || ''), page: Number.isInteger(row.page) ? row.page : null })) : [];
+ const technicalSpecs = normalizeSpecRows(specs.technicalSpecs);
  const sourceImage = selectApiProductImage(null, product.media, null);
  const image = selectApiProductImage(product.public_key || product.id, product.media, product.id);
  return {
@@ -23,7 +24,10 @@ export function normalizeApiProduct(product) {
   category: product.category_public_key || '', sku: product.sku, source: 'api',
   price: product.price, currency: product.currency, price_mode: product.price_mode, version: product.version, comparable: product.comparable,
   ...Object.fromEntries(['designation','execution','productKind','sourceRecordType','power','voltage','voltageUnit','cooling','installation','subtype','manufacturer','recordKind','recordType','series','familyId','familyName'].map(key => [key,text(specs[key])])),
-  technicalSpecs, configurations: Array.isArray(specs.configurations) ? specs.configurations : [],
+  // Keep variant-specific source facts for exact evidence checks and preserve
+  // their sanitized rows so summaries do not substitute a family-wide range.
+  ...(Object.hasOwn(specs, 'variantSpecs') ? { sourceVariantSpecs: specs.variantSpecs } : {}),
+  technicalSpecs, variantSpecs: normalizeSpecRows(specs.variantSpecs), configurations: Array.isArray(specs.configurations) ? specs.configurations : [],
   variantIds: Array.isArray(specs.variantIds) ? specs.variantIds.filter(value => typeof value === 'string') : [],
   notes: Array.isArray(specs.notes) ? specs.notes.filter(value => typeof value === 'string') : [],
   sourceFamilyId:text(provenance.sourceFamilyId), sourceId:text(provenance.sourceId), sourceFileId:text(provenance.sourceFileId), sourceSha256:text(provenance.sourceSha256), sourceRow:provenance.sourceRow || null,

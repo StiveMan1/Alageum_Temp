@@ -1,21 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
+import { historicalReviewedBytes } from './helpers/historical-reviewed-bytes.mjs';
 import { measurementColumnAmendmentFiles, measurementColumnRequiredFiles, measurementColumnClearancePath,
   measurementColumnBaselineCommit, measurementColumnBaselineTree, measurementColumnExactIds,
-  readMeasurementColumnBytes, verifyMeasurementColumnDependencyFiles, verifyMeasurementColumnDependencyAmendment,
+  verifyMeasurementColumnDependencyFiles, verifyMeasurementColumnDependencyAmendment,
   assertMeasurementColumnForwardDependency } from '../../scripts/catalog/measurement-column-reviewed-dependencies.mjs';
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const reviewDir = 'docs/catalog-transformers-2026/review/measurement-column-completion';
 const manifestPath = 'frontend/lib/catalog/models/measurementColumn2026CompletionManifest.json';
+const historicalCheckpoint = '5de8251ffd15d8799c8f187cf445107c295811e4';
+const historicalBytes = file => historicalReviewedBytes(historicalCheckpoint, file);
 
 // Approved statuses are synthetic in-memory fixtures only. No approval is written
 // to a checkout, and no production candidate can use this injected reader.
 function fixture() {
-  const historical = JSON.parse(readMeasurementColumnBytes('docs/catalog-transformers-2026/review/source-asset-completion/clearance.json'));
+  const historical = JSON.parse(historicalBytes('docs/catalog-transformers-2026/review/source-asset-completion/clearance.json'));
   const paths = [...new Set([...Object.keys(historical.dependencies.reviewedFiles), ...measurementColumnRequiredFiles])];
-  const files = new Map(paths.map(file => [file, readMeasurementColumnBytes(file)]));
+  // Test the historical amendment against its frozen checkpoint. Current
+  // successor bytes require their own real independent approval.
+  const files = new Map(paths.map(file => [file, historicalBytes(file)]));
   const reviewedFiles = Object.fromEntries([...files].map(([file, bytes]) => [file, digest(bytes)]));
   const amendments = Object.fromEntries(measurementColumnAmendmentFiles.map(file => [file, {
     baselineSha256: historical.dependencies.reviewedFiles[file], reviewedSha256: reviewedFiles[file],
@@ -55,7 +60,7 @@ test('candidate evidence is separate from release approval; exact independent fo
     assertMeasurementColumnForwardDependency(file, clearance.dependencies.amendments[file].baselineSha256, read);
     assert.throws(() => assertMeasurementColumnForwardDependency(file, 'wrong-prior-digest', read), /Wrong historical forward-amendment dependency/);
   }
-  assert.throws(() => assertMeasurementColumnForwardDependency('frontend/lib/catalog/models/transformer2026Shape.js', 'wrong-prior-digest', read), /Changed reviewed source-asset file/);
+  assert.throws(() => assertMeasurementColumnForwardDependency('frontend/lib/catalog/models/transformer2026Shape.js', 'wrong-prior-digest', read), /Changed unreviewed protection\/context dependency/);
 });
 
 test('forward amendment rejects missing self pins, missing amendments, wrong digests and expanded scope even with matching synthetic report hashes', () => {

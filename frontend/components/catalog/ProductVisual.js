@@ -1,6 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import CatalogSourceContext from './source-context/CatalogSourceContext';
+import sourceContextAssetProof from '@/lib/catalog/source-context/sourceContextBuildProof';
+import { getProtectionExampleEvidence } from '@/lib/catalog/models/protectionExampleRuntime';
 import { getEquipmentConstructionChoices, getEquipmentConstructionChoice } from '@/lib/catalog/models/transformerExecutionChoices';
 import { getEquipmentIcon } from '@/lib/catalog/models/iconMap';
 import { sourcePageUrl } from '@/lib/catalog/sources';
@@ -25,6 +28,7 @@ function OriginalImage({ product, media }) {
 
 export default function ProductVisual({ product }) {
   const [choiceId, setChoiceId] = useState('');
+  const protectionExample = getProtectionExampleEvidence(product);
   const choices = getEquipmentConstructionChoices(product);
   const choice = getEquipmentConstructionChoice(product, choiceId);
   const originalVisual = getEquipmentVisual(product);
@@ -38,6 +42,8 @@ export default function ProductVisual({ product }) {
     {!!choices.length && <div className="construction-choice"><label className="catalog-field"><span>Конструкция для просмотра</span><select aria-label="Конструкция для просмотра" value={choice?.id || ''} onChange={event => setChoiceId(event.target.value)}><option value="">Выберите исполнение по источнику</option>{choices.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label><p className="catalog-meta">{choice ? `Выбрано: ${choice.label}. Это иллюстрация конструкции, не готовая комплектация или артикул заказа.` : 'В источнике несколько конструкций. Для 3D выберите конкретное исполнение.'}</p></div>}
     {visual.type ? <EquipmentModel key={choice?.id || product.id} type={visual.type} previewIconType={previewIcon.type} previewIconReason={previewIcon.reason}/> : <><OriginalImage product={product} media={media}/><p className="visual-mapping-note">{media.image ? 'Показана выбранная иллюстрация. Общая 3D-схема этой конструкции ещё не подтверждена.' : 'Для этой позиции нужен чертёж производителя. Условный символ не подтверждает конструкцию изделия.'}</p></>}
     {showReviewedProvenance ? <div className="visual-provenance"><strong>{visualLabel(visual)}</strong>{visual.reason && <p>{visual.reason}</p>}{!!visual.sourcePages?.length && <div>{visual.sourcePages.map(page => <Link key={page} href={sourcePageUrl(product, page)}>стр. {page}</Link>)}</div>}</div> : <div className="visual-provenance"><strong>{media.image ? 'Конструкция конкретного исполнения по выбранной иллюстрации не подтверждена' : 'Условный символ не подтверждает конструкцию конкретного исполнения'}</strong>{visual.reason && <p>{visual.reason}</p>}{!!visual.sourcePages?.length && <div>{visual.sourcePages.map(page => <Link key={page} href={sourcePageUrl(product, page)}>стр. {page}</Link>)}</div>}</div>}
+    {protectionExample && <div className="visual-provenance" data-protection-example={product.id}>{!protectionExample.geometryType && <p>{protectionExample.reason}</p>}<Link href={protectionExample.sourcePageUrl}>Полная страница 69</Link>{' · '}<a href={protectionExample.sourcePageImage}>Полный исходный чертёж · стр. 69</a></div>}
+    <CatalogSourceContext product={product} assetEvidence={sourceContextAssetProof}/>
     {visual.type && media.image && <details className="product-original-illustration"><summary>{media.representation === 'source-scan' ? 'Страница исходного каталога' : 'Исходная иллюстрация'}</summary><OriginalImage product={product} media={media}/></details>}
   </div>;
 }

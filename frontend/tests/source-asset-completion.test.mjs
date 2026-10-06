@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { historicalReviewedBytes } from './helpers/historical-reviewed-bytes.mjs';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import { createElement } from 'react';
@@ -112,6 +113,8 @@ async function renderVisual(product) {
       .replace("import Link from 'next/link';", 'const Link = props => <a {...props}/>;')
       .replace("import ProductIcon from './ProductIcon';", 'const ProductIcon = () => <span/>;')
       .replace("export { default as ProductIcon } from './ProductIcon';", '')
+      .replace("import sourceContextAssetProof from '@/lib/catalog/source-context/sourceContextBuildProof';", 'const sourceContextAssetProof = null;')
+      .replace("import CatalogSourceContext from './source-context/CatalogSourceContext';", 'const CatalogSourceContext = () => null;')
       .replace("import EquipmentModel from './EquipmentModel';", 'const EquipmentModel = ({type, previewIconType}) => <div data-real-viewer-type={type} data-preview-type={previewIconType}/>;')
       .replace(/(['"])@\/([^'"]+)\1/g, (_, quote, relative) => JSON.stringify(new URL(`../${relative}.js`, import.meta.url).href));
     const { transform, loadBindings } = require('next/dist/build/swc'); await loadBindings();
@@ -151,7 +154,9 @@ test('release amendment rejects pending status, absent hashes, source/shape expa
     ...['Types', 'Geometry', 'Icons'].map(name => `frontend/lib/catalog/models/accessory2026${name}.js`),
     ...['immutable-dependencies', 'accessory-source-decision', 'x4k3-source-decision', 'x4k3-presentation-scope'].map(name => `docs/catalog-transformers-2026/review/source-asset-completion/${name}.json`),
     ...Object.keys(JSON.parse(readBytes('docs/catalog-transformers-2026/review/source-asset-completion/immutable-dependencies.json')))];
-  for (const file of required) files.set(file, readBytes(file));
+  // This synthetic PR32 review uses its real historical bytes, never the
+  // current successor's adapters as an invented old approval.
+  for (const file of required) files.set(file, historicalReviewedBytes('1c705309c561130d34f79a367cd51c7ee864e59c', file));
   const reviewedFiles = Object.fromEntries([...files].map(([file, bytes]) => [file, digest(bytes)]));
   const amendments = Object.fromEntries(sourceAssetAmendmentFiles.map(file => [file, { baselineSha256: baseline[file], reviewedSha256: reviewedFiles[file] }]));
   const clearance = { format: 'alageum-source-asset-completion-clearance-v1', status: 'approved-bounded-source-assets',

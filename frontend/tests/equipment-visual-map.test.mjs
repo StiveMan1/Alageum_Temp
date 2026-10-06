@@ -63,8 +63,8 @@ test('repeated constructions share visuals without collapsing product identities
 test('mixed family drawings are not blindly inherited by a named variant', () => {
   assert.equal(get('cat-ptm-tded').type, null);
   assert.equal(get('cat-ptm-tded-v003').type, null);
-  assert.equal(get('cat-ptm-tded-v012').type, 'protection-cabinet');
-  assert.equal(get('cat-ptm-tded-v013').type, 'indoor-protection-enclosure');
+  assert.equal(get('cat-ptm-tded-v012').type, 'source69-ptm-u1-example');
+  assert.equal(get('cat-ptm-tded-v013').type, 'source69-tde9-u3-example');
   assert.deepEqual(get('cat-bktp-modular-v001').sourcePages, [38]);
   assert.equal(get('cat-bktp-modular-v001').fallbackImage, '/catalog-source/page-038.webp');
   assert.deepEqual(get('cat-bktp-modular-v002').sourcePages, [39]);

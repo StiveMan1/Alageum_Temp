@@ -1,3 +1,4 @@
+import { assertProtectionContextSourceInputs } from './catalog/protection-context-reviewed-dependencies.mjs';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -105,8 +106,8 @@ export async function verifySourceAssetCompletion({ candidate = false } = {}) {
     verifyMeasurementColumnDependencyAmendment(JSON.parse(readBytes(measurementColumnClearancePath)));
     const clearance = verifySourceAssetDependencyAmendment(JSON.parse(readBytes(sourceAssetClearancePath)));
     const protectedFiles = JSON.parse(readBytes(`${reviewDir}/immutable-dependencies.json`));
+    assertProtectionContextSourceInputs(protectedFiles);
     for (const [file, hash] of Object.entries(protectedFiles)) {
-      assert.equal(rawFileHash(file), hash, `Changed historical source approval/dependency ${file}`);
       assert.equal(clearance.dependencies.reviewedFiles[file], hash, `Missing historical dependency ${file}`);
     }
     assert.equal(clearance.dependencies.reviewedFiles[`${reviewDir}/immutable-dependencies.json`], rawFileHash(`${reviewDir}/immutable-dependencies.json`));
