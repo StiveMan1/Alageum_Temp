@@ -315,6 +315,21 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
       record.stage = 'verify-native-null-public-empty-array';
       await readDraft(page, record, documentId, cleared);
       await readPublic(request, publicPage, record, cleared, base.slug);
+      // Repeat independent nonempty→empty publications without delaying the
+      // input→shortcut boundary. A previous run lost the clear at only 7.8ms.
+      // Each restoration is an explicit fixture mutation, not an automatic
+      // retry of a failed clear; any mismatch stops the scenario immediately.
+      for (let round = 1; round <= 4; round++) {
+        const restored = { ...base, body: blocks(`Final repeat ${round} body!`) };
+        await keyboardMutation(page, report, record, restored, documentId, 'publish',
+          () => bodyField(page).fill(restored.body[0].children[0].text), `repeat-${round}-restore`);
+        await readDraft(page, record, documentId, restored);
+        await readPublic(request, publicPage, record, restored, base.slug);
+        await keyboardMutation(page, report, record, cleared, documentId, 'publish',
+          () => bodyField(page).fill(''), `repeat-${round}-clear`);
+        await readDraft(page, record, documentId, cleared);
+        await readPublic(request, publicPage, record, cleared, base.slug);
+      }
     });
     await scenario(5, async record => {
       record.stage = 'cancel-navigation';
@@ -390,7 +405,7 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
       expect(report.writes.length - start).toBe(1);
     });
     expect(report.totals).toEqual({ planned: 7, attempted: 7, passed: 7, failed: 0 });
-    expect(report.writes).toHaveLength(6);
+    expect(report.writes).toHaveLength(14);
   } finally {
     if (observeRequest) page.off('request', observeRequest);
     if (observeResponse) page.off('response', observeResponse);

@@ -46,12 +46,33 @@ function assertPageSyncAcceptance(report, evidence) {
     assert.equal(scenario.outcome, "passed");
     assert.deepEqual(scenario.mismatches, []);
   }
-  assert.equal(evidence.writes?.length, 6, "Only the six explicit native fixture writes are allowed");
-  assert.deepEqual(evidence.scenarios.map(item => item.writeCount), [1, 1, 1, 1, 0, 0, 2]);
+  assert.equal(evidence.writes?.length, 14, "Only the fourteen explicit native fixture writes are allowed");
+  assert.deepEqual(evidence.scenarios.map(item => item.writeCount), [1, 1, 1, 9, 0, 0, 2]);
   assert.deepEqual(evidence.writes.map(item => [item.method, item.action, item.status]), [
     ["POST", "save", 201], ["POST", "publish", 200], ["PUT", "save", 200],
-    ["POST", "publish", 200], ["PUT", "save", 200], ["POST", "discard", 200],
+    ["POST", "publish", 200], ...Array.from({ length: 8 }, () => ["POST", "publish", 200]),
+    ["PUT", "save", 200], ["POST", "discard", 200],
   ]);
+  const clearOperations = evidence.scenarios[3].operations;
+  assert.deepEqual(clearOperations?.map(item => item.purpose), ["measured",
+    ...Array.from({ length: 4 }, (_, index) => [`repeat-${index + 1}-restore`, `repeat-${index + 1}-clear`]).flat()],
+    "Every clear and its explicit restoration must run once");
+  for (const operation of clearOperations) {
+    assert.deepEqual([operation.method, operation.kind, operation.status], ["POST", "publish", 200]);
+    assert.equal(operation.timing?.withinDebounceWindow, true);
+    assert.ok(Number.isFinite(operation.timing.inputToActionMs)
+      && operation.timing.inputToActionMs >= 0 && operation.timing.inputToActionMs < 300);
+    assert.deepEqual(operation.submitted, operation.expected);
+    for (const field of ["slug", "title", "locale_code", "body"]) {
+      assert.deepEqual(operation.response?.[field], operation.expected[field]);
+    }
+    if (operation.purpose === "measured" || operation.purpose.endsWith("-clear")) {
+      assert.equal(operation.expected.body, null, "Every clear must retain the native empty-body contract");
+    } else {
+      assert.ok(operation.expected.body?.some(block => block.children?.some(child =>
+        typeof child.text === "string" && child.text.length > 0)), "Every restoration must publish nonempty text");
+    }
+  }
 }
 
 module.exports = { SCENARIOS, extractPageSyncEvidence, assertPageSyncAcceptance };
