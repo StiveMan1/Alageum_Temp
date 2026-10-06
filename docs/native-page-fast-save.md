@@ -6,6 +6,65 @@ candidate adds the scoped input adapter described below; it does not rewrite
 Strapi vendor code, change dependency versions, or grant roles in an existing
 database.
 
+## Page deletion selection adapter, 2026-10-06
+
+The diagnostic in PR37 captured a lost clear rather than a delayed Form update
+([exact-head artifact](https://github.com/StiveMan1/Alageum_Temp/actions/runs/37519467257/artifacts/11440355655)).
+In scenario 4's second repeated clear, the DOM range was expanded at
+`deleteContentForward`, while Slate's selection was null. The later observed
+callback contained only `set_selection`; editor and Form retained the previous
+body. The shortcut followed 49.4 ms later without a matching mutation request.
+Passing clears in the same run synchronized selection before deletion, then
+recorded `remove_text` and Form `null`. Capture microtasks are not native-handler
+entry/exit observations, and instrumentation can affect scheduling.
+
+The local follow-up uses Strapi's public rich-text block registration API and
+Slate's public React context to obtain the actual editor. Only the Page `body`
+input provides the registration boundary. Composed native block refs register
+the editor's own editable host, including the fullscreen portal, with one
+counted capture listener. Native rendering, attributes, toolbar metadata and
+imperative refs are preserved. Unmounts and ref changes remove registrations;
+StrictMode effect replay suspends and restores listeners.
+
+Before a trusted, cancelable forward/backward delete, the adapter reconciles an
+expanded in-editor DOM selection with that same editor's Slate selection. It
+requires a connected, active, editable host with the matching public DOM map.
+Read-only, disabled, composing, canceled, synthetic, collapsed, outside-editor
+and unsupported events retain native behavior. Unavailable or invalid DOM
+mappings do not force a guessed range. The helper changes selection only; the
+unchanged native handler owns deletion, history and empty-body normalization.
+There is no timer, event replay, synthetic selection event, manual content write
+or application access to React fibers. Existing synchronous Page Form updates
+remain in place.
+
+Compatibility checks now also pin the content-manager registration API and the
+two Slate packages. Before build/develop/start, version and lock integrity plus
+18 content-manager files and four Slate runtime files must match. A mismatch
+fails the command and requires review; it does not silently switch editor mode.
+Installed package files and content format remain unchanged.
+
+Focused regression tests execute the exact installed CJS and ESM beforeinput
+handlers with real Slate/history/Strapi normalization. They retain the negative
+null/stale-selection reproduction and cover reconciliation, both directions,
+selected portions, marked multi-paragraph content, undo/redo and exclusions.
+DOM mapping, event dispatch and the Form sink in this fixture are controlled,
+so these tests are not native browser acceptance. Separate ReactDOM tests cover
+the actual bridge, registered native renderers, refs, portal and cleanup.
+Local `npm run check` passes all 647 backend tests, including 54 selection and
+10 bridge checks. The actual production CMS build also passes with disposable
+in-memory build keys and task-owned CLI/native caches; it starts no database.
+Independent review identified and corrected reliance on an
+unreliable `Selection.isCollapsed` flag; actual endpoint/range validation and
+native conversion remain mandatory. Shadow-root behavior is covered with
+controlled mappings, not a claim of a real shadow-DOM browser run.
+
+The original seven-scenario browser probe and its fourteen explicit native
+writes remain unchanged, including every rapid clear/restoration pair and
+strict request/reload/public-content assertion. This candidate still requires
+a fresh hosted build and native browser run before claiming the observed clear
+path is corrected. The dependency audit gates remain enforced. No production
+cutover, role grants, database migration or deployment is part of this change.
+
 ## Native clear-event diagnostic, 2026-10-06
 
 PR36 head `c83265e76c3c671e84e97ed6d8527f788abe46e8` reproduced another
