@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { expect, test } from '@playwright/test';
+import { installNativePageProbe } from './helpers/page-native-editor-probe.mjs';
 
 const cms = process.env.E2E_PAGE_CMS_BASE_URL?.replace(/\/$/, '');
 const frontend = process.env.EDITORIAL_PAGES_BASE_URL?.replace(/\/$/, '');
@@ -48,10 +49,13 @@ async function nativeLogin(page) {
   await expect(page).not.toHaveURL(/\/auth\/login/);
 }
 
-// Passive event metadata only. Never read DOM/form values, intercept events, or
-// change timers between input and the genuine keyboard/click action.
-async function startEvents(page) {
-  await page.evaluate(() => {
+// The test-only native probe is attached before input to this exact synthetic
+// Page. It observes selections, operations and the real callback without
+// changing selections, timers, clocks, or publication behavior. Observation can
+// still affect scheduling; a clean run does not establish that the race is gone.
+async function startEvents(page, slug) {
+  await page.evaluate(({ slug }) => {
+    const nativeEditor = window.__alageumNativePageProbe.attach({ slug });
     const events = [];
     const types = ['beforeinput', 'input', 'keydown', 'click', 'blur'];
     const listener = event => {
@@ -68,18 +72,48 @@ async function startEvents(page) {
       if (category && events.length < 1500) events.push({ type: event.type, category, atMs: performance.timeOrigin + performance.now() });
     };
     types.forEach(type => document.addEventListener(type, listener, { capture: true, passive: true }));
-    window.__pageSyncRegression = { events, stop: () => types.forEach(type => document.removeEventListener(type, listener, true)) };
-  });
+    window.__pageSyncRegression = { events, nativeEditor,
+      stop: () => types.forEach(type => document.removeEventListener(type, listener, true)) };
+  }, { slug });
+}
+
+async function drainEvents(page, optional = false) {
+  return page.evaluate(({ optional }) => {
+    const probe = window.__pageSyncRegression;
+    if (!probe) {
+      if (optional) return null;
+      throw new Error('Page event probe missing');
+    }
+    try {
+      let nativeEditor;
+      try { probe.stop(); }
+      finally { nativeEditor = probe.nativeEditor.stop(); }
+      return { events: probe.events, nativeEditor };
+    } finally {
+      delete window.__pageSyncRegression;
+    }
+  }, { optional });
+}
+
+async function preserveInterruptedProbe(page, record) {
+  if (!record) return;
+  try {
+    const collected = await drainEvents(page, true);
+    if (collected) record.interruptedNativeProbe = collected;
+  } catch {
+    // Preserve the original operation failure; never persist a raw browser or
+    // callback exception that could contain unrelated/private runtime data.
+    record.interruptedNativeProbeUnavailable = 'PROBE_COLLECTION_FAILED';
+  }
 }
 
 async function collectEvents(page, record, actionCategory) {
-  record.events = await page.evaluate(() => {
-    const probe = window.__pageSyncRegression;
-    if (!probe) return [];
-    probe.stop();
-    delete window.__pageSyncRegression;
-    return probe.events;
-  });
+  const collected = await drainEvents(page);
+  record.events = collected.events;
+  record.nativeEditor = collected.nativeEditor;
+  expect(record.nativeEditor?.schemaVersion, 'Native diagnostic must attach to the synthetic Page').toBe(1);
+  expect(record.nativeEditor.diagnosticOnly).toBe(true);
+  expect(record.nativeEditor.events.some(event => event.type === 'attach' && event.phase === 'setup')).toBe(true);
   const lastEdit = record.events.filter(event => event.category === 'body' && ['beforeinput', 'input'].includes(event.type)).at(-1);
   const trigger = record.events.find(event => event.category === actionCategory);
   const elapsed = lastEdit && trigger ? trigger.atMs - lastEdit.atMs : null;
@@ -158,7 +192,7 @@ async function keyboardMutation(page, report, record, expected, documentId, kind
   const operation = { kind, purpose, keyboardTarget: 'title', expected, events: [], timing: null };
   record.operations.push(operation);
   record.stage = `${purpose}-${kind}-input`;
-  await startEvents(page);
+  await startEvents(page, expected.slug);
   const start = report.writes.length;
   const method = kind === 'save' && documentId ? 'PUT' : 'POST';
   const pathname = `${collection}${documentId ? `/${documentId}` : ''}${kind === 'publish' ? '/actions/publish' : ''}`;
@@ -233,6 +267,7 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
       expect(url.protocol).toBe('http:');
       expect(url.username + url.password + url.search + url.hash).toBe('');
     }
+    await page.addInitScript(installNativePageProbe);
     await nativeLogin(page);
     const pendingWrites = new Map();
     observeRequest = nativeRequest => {
@@ -274,6 +309,7 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
         record.outcome = 'passed';
         report.totals.passed++;
       } catch {
+        await preserveInterruptedProbe(page, record);
         record.writeCount = report.writes.length - start;
         record.outcome = 'failed';
         record.mismatches.push(`${record.stage}.assertion-or-operation`);
@@ -308,8 +344,9 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
     await scenario(4, async record => {
       record.input = 'contenteditable-fill-empty';
       await keyboardMutation(page, report, record, cleared, documentId, 'publish', async () => {
-        // Explicitly clear the contenteditable. A rapid select-all/backspace
-        // sequence can exercise a separate native Slate selection race.
+        // Preserve the exact failing contenteditable-fill operation. Neither
+        // its intent nor a beforeinput event proves native deletion occurred;
+        // the diagnostic records the actual selection and callback path.
         await bodyField(page).fill('');
       });
       record.stage = 'verify-native-null-public-empty-array';
@@ -335,7 +372,7 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
       record.stage = 'cancel-navigation';
       const start = report.writes.length;
       const text = 'Unsaved text retained after Cancel.';
-      await startEvents(page);
+      await startEvents(page, base.slug);
       await typeBody(page, text);
       const dialog = await leaveDialog(page);
       await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -350,7 +387,7 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
     await scenario(6, async record => {
       record.stage = 'confirm-navigation-and-unmount';
       const start = report.writes.length;
-      await startEvents(page);
+      await startEvents(page, base.slug);
       await bodyField(page).fill('Unsaved text discarded by leaving the editor.');
       const dialog = await leaveDialog(page);
       await dialog.getByRole('button', { name: 'Confirm', exact: true }).click();
@@ -374,7 +411,7 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
       const start = report.writes.length;
       const unsaved = 'Unsaved edits survive the discard dialog Cancel.';
       record.stage = 'cancel-discard';
-      await startEvents(page);
+      await startEvents(page, base.slug);
       await bodyField(page).fill(unsaved);
       let dialog = await discardDialog(page);
       await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -383,7 +420,7 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
       await expectBody(page, blocks(unsaved));
       expect(report.writes.length - start).toBe(0);
       record.stage = 'confirm-discard';
-      await startEvents(page);
+      await startEvents(page, base.slug);
       await bodyField(page).fill('Newest unsaved edit must not return after reset.');
       dialog = await discardDialog(page);
       const pending = nativeResponse(page, `${collection}/${documentId}/actions/discard`, 'POST').then(response => response, () => null);
@@ -407,6 +444,7 @@ test('native Page: synchronous Blocks preserve keyboard edits, clear, cancellati
     expect(report.totals).toEqual({ planned: 7, attempted: 7, passed: 7, failed: 0 });
     expect(report.writes).toHaveLength(14);
   } finally {
+    await preserveInterruptedProbe(page, current);
     if (observeRequest) page.off('request', observeRequest);
     if (observeResponse) page.off('response', observeResponse);
     // Only this curated line is persisted by the parent redactor. No auth
