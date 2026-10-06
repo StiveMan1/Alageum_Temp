@@ -1,11 +1,11 @@
 {
   "format": "alageum-missing-construction-evidence-v1",
-  "explicitEntries": 259,
-  "familyGroups": 33,
+  "explicitEntries": 246,
+  "familyGroups": 31,
   "scope": "Only explicit entries with neither a source-grounded default nor reviewed selectable 3D. Family overviews and generic legacy references are excluded. Document previews and existing source-based icons remain available where supported. No CAD or hidden construction is inferred.",
   "byCohort": {
     "legacy": 43,
-    "transformers-2026": 216
+    "transformers-2026": 203
   },
   "families": [
     {
@@ -667,52 +667,6 @@
       "ids": [
         "alageum-tdc-250000-500-ae61d618",
         "alageum-tc-250000-500-71d82efb"
-      ],
-      "evidenceLimitations": [
-        "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
-      ]
-    },
-    {
-      "familyId": "tr2026-family-dry-accessories",
-      "name": "Комплектность и дополнительное оснащение сухих трансформаторов",
-      "entries": 3,
-      "cohort": "transformers-2026",
-      "sourceUrl": "https://drive.google.com/file/d/113q2las1R18OJ6g6laJ5ZN4PFPsY635f/view",
-      "sourcePages": [
-        85
-      ],
-      "ids": [
-        "alageum-2026-relay-tr100",
-        "alageum-2026-sensor-pt100",
-        "alageum-2026-damper-ek290"
-      ],
-      "evidenceLimitations": [
-        "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
-      ]
-    },
-    {
-      "familyId": "tr2026-family-tmgi-x4k3",
-      "name": "ТМГи-энергосберегающие трансформаторы с уровнем потерь Х4К3 согласно стандарта ПАО «РОССЕТИ» СТО 34.01-3.2-011-2017",
-      "entries": 10,
-      "cohort": "transformers-2026",
-      "sourceUrl": "https://drive.google.com/file/d/113q2las1R18OJ6g6laJ5ZN4PFPsY635f/view",
-      "sourcePages": [
-        28,
-        29,
-        30,
-        31
-      ],
-      "ids": [
-        "alageum-tmgi-x4k3-63",
-        "alageum-tmgi-x4k3-100",
-        "alageum-tmgi-x4k3-160",
-        "alageum-tmgi-x4k3-250",
-        "alageum-tmgi-x4k3-400",
-        "alageum-tmgi-x4k3-630",
-        "alageum-tmgi-x4k3-1000",
-        "alageum-tmgi-x4k3-1250",
-        "alageum-tmgi-x4k3-1600",
-        "alageum-tmgi-x4k3-2500"
       ],
       "evidenceLimitations": [
         "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."

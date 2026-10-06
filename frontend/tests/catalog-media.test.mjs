@@ -1,3 +1,4 @@
+import { sourceAssetCompletionManifest } from '../lib/catalog/models/sourceAssetCompletion.js';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
@@ -19,7 +20,7 @@ const require = createRequire(import.meta.url);
 const variant = productById('cat-bktp-modular-v001');
 const baselineMedia = product => product.image ? [{ path: product.image, kind: 'image', ...(Object.hasOwn(product, 'imageCaption') ? { alt: product.imageCaption } : {}) }] : [];
 const live = (source, media = baselineMedia(source)) => normalizeApiProduct({
-  id: transformerRuntime.geometry[source.id]?.database_id || transformerRuntime.icons[source.id]?.database_id || (source.id === legacyAssetCompletion.id ? legacyAssetCompletion.databaseId : null) || manifest.overrides[source.id]?.database_id || '2e39f767-a489-4e09-adee-8d4f7d782f93', public_key: source.id, slug: source.id,
+  id: sourceAssetCompletionManifest.records[source.id]?.database_id || transformerRuntime.geometry[source.id]?.database_id || transformerRuntime.icons[source.id]?.database_id || (source.id === legacyAssetCompletion.id ? legacyAssetCompletion.databaseId : null) || manifest.overrides[source.id]?.database_id || '2e39f767-a489-4e09-adee-8d4f7d782f93', public_key: source.id, slug: source.id,
   category_public_key: source.category, sku: source.sku, specs: source, provenance: source, media,
   translations: { ru: { name: source.name } },
 });

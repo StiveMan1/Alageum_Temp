@@ -1,3 +1,4 @@
+import { sourceAssetCompletionManifest } from '../lib/catalog/models/sourceAssetCompletion.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { officialProducts, transformerProducts } from '../lib/catalog/data.js';
@@ -23,8 +24,8 @@ test('all 843 records retain their source bodies and independently approved asse
   }
   assert.equal(JSON.stringify(officialProducts), before);
   assert.deepEqual(officialProducts.map(row => [row.id, getEquipmentVisual(row), getEquipmentIcon(row)]), bindings);
-  assert.equal(transformerProducts.filter(row => getEquipmentVisual(row).type).length, transformerProducts.filter(row => Object.hasOwn(transformerRuntimeManifest.geometry, row.id)).length);
-  assert.equal(transformerProducts.filter(row => getEquipmentIcon(row).type).length, transformerProducts.filter(row => Object.hasOwn(transformerRuntimeManifest.icons, row.id)).length);
+  assert.equal(transformerProducts.filter(row => getEquipmentVisual(row).type).length, transformerProducts.filter(row => Object.hasOwn(transformerRuntimeManifest.geometry, row.id) || Object.hasOwn(sourceAssetCompletionManifest.records, row.id)).length);
+  assert.equal(transformerProducts.filter(row => getEquipmentIcon(row).type).length, transformerProducts.filter(row => Object.hasOwn(transformerRuntimeManifest.icons, row.id) || Object.hasOwn(sourceAssetCompletionManifest.records, row.id)).length);
 });
 
 test('450 empty descriptions and every new family gain display evidence without adding raw fields', () => {

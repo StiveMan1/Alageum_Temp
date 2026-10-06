@@ -24,16 +24,16 @@ The exact per-record ledger is [coverage.json](./coverage.json). Counts come fro
 
 | Coverage | All 843 records | 687 explicit source entries |
 | --- | ---: | ---: |
-| Source-grounded default 3D | 448 | 392 |
+| Source-grounded default 3D | 461 | 405 |
 | Records with explicit construction choices | 36 | 36 |
 | Number of construction choices | 74 | 74 |
 | Generic default illustrations | 14 | 0 |
-| No default or selectable 3D | 345 | 259 |
-| Source-based default icons | 455 | 398 |
+| No default or selectable 3D | 332 | 246 |
+| Source-based default icons | 465 | 408 |
 | Typical default icons | 65 | 43 |
-| Source-document fallback | 323 | 246 |
+| Source-document fallback | 313 | 236 |
 
-Family overviews are not physical products requiring invented geometry. The 345 records without a direct or selectable model include 86 family overviews and 259 explicit entries. Fourteen legacy references retain clearly labelled generic illustrations. All 3D is illustrative; none is CAD or a dimensional manufacturing model.
+Family overviews are not physical products requiring invented geometry. The 332 records without a direct or selectable model include 86 family overviews and 246 explicit entries. Fourteen legacy references retain clearly labelled generic illustrations. All 3D is illustrative; none is CAD or a dimensional manufacturing model.
 
 This completion adds 25 transformer default model/icon bindings and eight choices for four additional TSL rows. Thirteen copper TMG bindings rely on the coherent copper subsection on physical pages 40–43, bounded by the next execution on page 44. This is a reviewed subsection inference, not an explicit copper figure caption. Optional rollers, fuse and instrumentation details do not become order specifications. The separate [asset review](../catalog-transformers-2026/review/asset-completion/README.md) pins source pages, record shapes, API UUIDs and exact helper dependencies.
 
@@ -41,15 +41,21 @@ The two existing NTMI references also offer separate, explicitly activated sourc
 
 One old ШР11 entry now reuses the existing open-panel model and icon after the manufacturer's dedicated page corroborated the source drawing. [Independent review](./shr11-independent-review.json) limits that mapping to `cat-pr-shr11-v002`; ПР and ПР-11 remain excluded. All other 237 legacy visual/icon mappings stay unchanged.
 
-No raster or geometry mesh was added. The package remains 248 raster assets, 21,968,700 bytes, including all 187 optimized pages of the new PDF. Missing high-voltage and execution-specific construction evidence is preserved as a gap; category-level models are not substituted. [Remaining source gaps](./remaining-source-gaps.json) group the 259 explicit entries into 33 source families: 43 legacy entries and 216 new-catalog entries. This is a lack of confirmed construction binding, not always a lack of drawings. In particular, ten X4K3 entries have drawings on pages 30–31, but their ТМГвэ captions differ from the ТМГи table names; [the documented naming conflict](./x4k3-caption-note.json) remains unapproved for binding. X3K2 is also excluded because the drawing caption names a different loss class.
+The subsequent [bounded source-asset integration review](../catalog-transformers-2026/review/source-asset-completion/independent-review.json) admits exactly thirteen additional default 3D bindings: the three pictured page-85 accessories and ten X4K3 entries. Three new accessory meshes and vector icons use the accepted source-visible exterior forms; ten X4K3 entries reuse the existing small/large corrugated exteriors. The accessory icons refine three already source-based icons, so source-based icon coverage increases by ten, not thirteen. Exact source IDs/files/hashes, record shapes, API UUIDs and original raw media guard each binding. Families, X3K2 and ТМГиН do not inherit these additions.
+
+The X4K3 previews visibly retain the ТМГи table / ТМГвэ drawing-caption discrepancy, representative-only limitation and exact page-30 or page-31 link. Their original page-28 source gallery remains unchanged. The original [caption hold](./x4k3-caption-note.json) is retained as historical evidence; the subsequent independent source and integration decisions authorize only the specifically named representative exteriors, without declaring series equivalence, dimensions or delivered accessories.
+
+The canonical source-media package remains 248 raster assets, 21,968,700 bytes, including all 187 optimized pages of the new PDF. Two small [retained contact sheets](../catalog-transformers-2026/review/source-asset-completion/retained-proof-map.json) document the accepted CPU-rendered accessory source/topology review; they are separate from hosted browser evidence. [Remaining source gaps](./remaining-source-gaps.json) now group 246 explicit entries into 31 source families: 43 legacy entries and 203 new-catalog entries. The original a8 checkpoint's 259-entry/33-family findings remain historical; they are not rewritten to describe this new runtime. A remaining binding gap does not necessarily mean the catalogue has no drawing.
 
 ## Verification and release status
 
-This is a draft catalog change, not a deployment or production-readiness claim. Local validation passed 443 frontend tests, ESLint and the 894-page production build. The final catalog browser inventory contains 100 desktop/mobile cases, including six new NTMI preview cases; their exact-head hosted result is read from the PR checks.
+This is an independently reviewed local catalog integration, not a deployment or production-readiness claim. Local validation passed all 458 frontend tests (including the 28 focused source-asset/media checks), ESLint and the 894-page production build. The browser inventory discovers 120 desktop/mobile cases, including twenty new bounded-source-asset cases and the six existing NTMI preview cases. **Hosted browser/WebGL validation of this exact integration remains pending publication.** Test discovery and CPU/source review do not establish hosted rendering success.
 
-The preceding `a0a71958` checkpoint passed all 94 catalog browser cases and all 14 functional Node jobs: 577 backend tests, 104 PostgreSQL tests, 437 frontend tests, the unchanged native CMS configuration assertions, daily/admin/RFQ flows, 54 print cases and final real-database printing. Migration, repeat import, edited/hidden-record preservation and NTMI UUID/snapshot replay passed explicitly. The native Page fast-save and input-lifecycle regressions also passed. This NTMI preview addition changes no backend, source records, default assets, dependencies or release workflow.
+The independent comparison preserves all 843 product bodies and media outputs, the 830 unaffected static/API bindings, 238 legacy identities, 122 previous geometry/name outputs, 132 previous SVG/name outputs, all aliases/source panels, and the 36/74 construction choices. Historical source approvals remain byte-identical. Nine explicit baseline-to-candidate dependency pairs cover six registry hooks and three checker adapters; a separately pinned amendment verifier rejects missing approval, unlisted file scopes and later single-byte changes.
 
-Security audits remain enforced and failed on that checkpoint: frontend 6 high; Node 29 high and 3 moderate. No dependency, release gate, deploy workflow or CMS editor implementation is changed by this completion.
+The preceding `a0a71958` checkpoint passed all 94 catalog browser cases and all 14 functional Node jobs: 577 backend tests, 104 PostgreSQL tests, 437 frontend tests, the unchanged native CMS configuration assertions, daily/admin/RFQ flows, 54 print cases and final real-database printing. Migration, repeat import, edited/hidden-record preservation and NTMI UUID/snapshot replay passed explicitly. The native Page fast-save and input-lifecycle regressions also passed. Those are historical checkpoint results. This source-asset batch changes no backend, source records, dependencies or release workflow; its own hosted browser result must be established separately.
+
+Security audits remain enforced and failed on that checkpoint: frontend 6 high; Node 29 high and 3 moderate. This batch changes no dependencies, security audit enforcement, deploy workflow or CMS editor implementation; its historical asset-verifier adapters are covered by the independent exact-byte amendment.
 
 Reproduce the source and asset checks from the repository root:
 
@@ -59,6 +65,7 @@ Reproduce the source and asset checks from the repository root:
     node scripts/approve-transformer-execution-choices.mjs docs/catalog-transformers-2026/review/execution-choice-clearance.json --check
     node scripts/approve-transformer-asset-completion.mjs docs/catalog-transformers-2026/review/asset-completion/clearance.json --check
     node scripts/check-ntmi-source-previews.mjs
+    node scripts/check-source-asset-completion.mjs
     node scripts/generate-catalog-media.mjs --check
     node scripts/audit-catalog-completion.mjs --check
     npm --prefix frontend run check

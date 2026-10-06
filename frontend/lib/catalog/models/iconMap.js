@@ -1,3 +1,4 @@
+import { getSourceAssetCompletion } from './sourceAssetCompletion.js';
 import { getReviewedTransformerAsset, isTransformer2026Record } from './transformer2026Runtime.js';
 import { equipmentVisualAudit, getEquipmentVisual } from './visualMap.js';
 import { sourceIconMapA, sourceIconVariantMapA } from './sourceIconMapA.js';
@@ -12,6 +13,8 @@ export const iconConfidenceLabel = icon => icon.confidence === 'source-based'
   : 'Условная схема типа; внешний вид исполнения не подтверждён';
 
 export function getEquipmentIcon(product = {}) {
+  const sourceCompletion = getSourceAssetCompletion(product, 'icons');
+  if (sourceCompletion) return sourceCompletion;
   const completion = getReviewedLegacyCompletion(product, 'icons');
   if (completion) return completion;
   if (isTransformer2026Record(product)) {

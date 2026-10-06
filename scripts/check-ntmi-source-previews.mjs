@@ -1,3 +1,4 @@
+import { historicalDependencyHash } from './catalog/source-asset-reviewed-dependencies.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -17,7 +18,7 @@ export const hashBytes = value => createHash('sha256').update(value).digest('hex
 export const readJson = file => JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
 export const hashFile = file => {
   assert.ok(typeof file === 'string' && !path.isAbsolute(file) && !file.split('/').includes('..'));
-  return hashBytes(fs.readFileSync(path.join(root, file)));
+  return historicalDependencyHash(file);
 };
 export const requiredPreviewFiles = Object.freeze([
   'frontend/lib/catalog/ntmi-source-preview-manifest.json',
