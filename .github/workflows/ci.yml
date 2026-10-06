@@ -239,7 +239,7 @@ jobs:
         timeout-minutes: 5
         run: npm run build
       - name: Verify new source assets and old catalog regressions on desktop and mobile
-        timeout-minutes: 12
+        timeout-minutes: 18
         shell: bash
         run: |
           npm run start -- --hostname 127.0.0.1 --port 3100 > catalog-browser.log 2>&1 &
@@ -269,7 +269,13 @@ jobs:
             frontend/catalog-browser.log
           retention-days: 7
       - name: Prepare bounded catalog diagnostics from existing evidence
+        id: catalog_diagnostics
         if: always() && steps.catalog_full_artifact.outcome == 'success'
+        env:
+          CATALOG_FULL_ARTIFACT_ID: ${{ steps.catalog_full_artifact.outputs.artifact-id }}
+          CATALOG_FULL_ARTIFACT_URL: ${{ steps.catalog_full_artifact.outputs.artifact-url }}
+          CATALOG_FULL_ARTIFACT_DIGEST: ${{ steps.catalog_full_artifact.outputs.artifact-digest }}
+          CATALOG_FULL_UPLOAD_OUTCOME: ${{ steps.catalog_full_artifact.outcome }}
         run: node scripts/prepare-catalog-diagnostics.mjs "${{ runner.temp }}/catalog-diagnostics"
       - name: Retain compact catalog report diagnostics
         if: always() && steps.catalog_full_artifact.outcome == 'success'
@@ -304,6 +310,42 @@ jobs:
         with:
           name: catalog-diagnostics-shared-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/catalog-diagnostics/shared/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
+      - name: Retain compact catalog mobile part 001
+        if: always() && steps.catalog_full_artifact.outcome == 'success' && steps.catalog_diagnostics.outputs.mobile_part_count >= 1
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-diagnostics-mobile-part-001-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-diagnostics/mobile-part-001/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
+      - name: Retain compact catalog mobile part 002
+        if: always() && steps.catalog_full_artifact.outcome == 'success' && steps.catalog_diagnostics.outputs.mobile_part_count >= 2
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-diagnostics-mobile-part-002-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-diagnostics/mobile-part-002/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
+      - name: Retain compact catalog mobile part 003
+        if: always() && steps.catalog_full_artifact.outcome == 'success' && steps.catalog_diagnostics.outputs.mobile_part_count >= 3
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-diagnostics-mobile-part-003-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-diagnostics/mobile-part-003/
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 7
+      - name: Retain compact catalog mobile part 004
+        if: always() && steps.catalog_full_artifact.outcome == 'success' && steps.catalog_diagnostics.outputs.mobile_part_count >= 4
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-diagnostics-mobile-part-004-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/catalog-diagnostics/mobile-part-004/
           if-no-files-found: error
           include-hidden-files: true
           retention-days: 7
