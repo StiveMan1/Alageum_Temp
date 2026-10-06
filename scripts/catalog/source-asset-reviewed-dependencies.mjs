@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
+import { assertMeasurementColumnForwardDependency } from './measurement-column-reviewed-dependencies.mjs';
 import baseline from '../../docs/catalog-transformers-2026/review/source-asset-completion/baseline-dependencies.json' with { type: 'json' };
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const sourceAssetClearancePath = 'docs/catalog-transformers-2026/review/source-asset-completion/clearance.json';
@@ -39,8 +40,8 @@ export function verifySourceAssetDependencyAmendment(clearance, read = readBytes
   assert.deepEqual(Object.keys(baseline).sort(), [...sourceAssetAmendmentFiles].sort(), 'Changed baseline dependency scope');
   for (const file of sourceAssetAmendmentFiles) {
     assert.equal(amendments[file].baselineSha256, baseline[file], `Wrong baseline dependency ${file}`);
-    assert.equal(amendments[file].reviewedSha256, hash(file), `Changed amended dependency ${file}`);
-    assert.equal(reviewedFiles[file], hash(file), `Missing exact amendment pin ${file}`);
+    assertMeasurementColumnForwardDependency(file, amendments[file].reviewedSha256, read);
+    assert.equal(reviewedFiles[file], amendments[file].reviewedSha256, `Missing exact amendment pin ${file}`);
   }
   for (const file of ['scripts/catalog/source-asset-reviewed-dependencies.mjs',
     'docs/catalog-transformers-2026/review/source-asset-completion/baseline-dependencies.json',
@@ -60,7 +61,7 @@ export function verifySourceAssetDependencyAmendment(clearance, read = readBytes
     assert.equal(hash(file), expected, `Changed historical source approval/dependency ${file}`);
     assert.equal(reviewedFiles[file], expected, `Missing historical source approval/dependency ${file}`);
   }
-  for (const [file, expected] of Object.entries(reviewedFiles)) assert.equal(hash(file), expected, `Changed reviewed source-asset file ${file}`);
+  for (const [file, expected] of Object.entries(reviewedFiles)) assertMeasurementColumnForwardDependency(file, expected, read);
   return clearance;
 }
 /** Return only the independently attested pre-integration hash to historical gates.
@@ -70,6 +71,6 @@ export function historicalDependencyHash(file) {
   const actual = rawFileHash(file);
   if (!sourceAssetAmendmentFiles.includes(file) || actual === baseline[file]) return actual;
   const clearance = verifySourceAssetDependencyAmendment(JSON.parse(readBytes(sourceAssetClearancePath)));
-  assert.equal(clearance.dependencies.amendments[file].reviewedSha256, actual, `Changed amended dependency ${file}`);
+  assertMeasurementColumnForwardDependency(file, clearance.dependencies.amendments[file].reviewedSha256);
   return baseline[file];
 }

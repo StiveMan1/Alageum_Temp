@@ -1,3 +1,4 @@
+import { measurementColumn2026CompletionManifest } from '../lib/catalog/models/measurementColumn2026Completion.js';
 import { sourceAssetCompletionManifest } from '../lib/catalog/models/sourceAssetCompletion.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -67,7 +68,7 @@ test('source warnings and held configuration evidence are preserved',()=>{
  assert.ok(flat.every(c=>!identity.held.some(h=>h.id===c.modelId)));
 });
 
-test('runtime geometry and icons are limited to their independent exact allowlists',async()=>{ const {transformerRuntimeManifest}=await import('../lib/catalog/models/transformer2026Runtime.js'); for(const row of rows){ assert.equal(getEquipmentVisual(row).type,sourceAssetCompletionManifest.records[row.id]?.type || transformerRuntimeManifest.geometry[row.id]?.type || null); assert.equal(getEquipmentIcon(row).type,sourceAssetCompletionManifest.records[row.id]?.type || transformerRuntimeManifest.icons[row.id]?.type || null); } });
+test('runtime geometry and icons are limited to their independent exact allowlists',async()=>{ const {transformerRuntimeManifest}=await import('../lib/catalog/models/transformer2026Runtime.js'); for(const row of rows){ assert.equal(getEquipmentVisual(row).type,measurementColumn2026CompletionManifest.records[row.id]?.type || sourceAssetCompletionManifest.records[row.id]?.type || transformerRuntimeManifest.geometry[row.id]?.type || null); assert.equal(getEquipmentIcon(row).type,measurementColumn2026CompletionManifest.records[row.id]?.type || sourceAssetCompletionManifest.records[row.id]?.type || transformerRuntimeManifest.icons[row.id]?.type || null); } });
 
 test('reviewed asset shape matches static/API wire records and rejects every identity/spec mutation',async()=>{
  const {createHash}=await import('node:crypto');

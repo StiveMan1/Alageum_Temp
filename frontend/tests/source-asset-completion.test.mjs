@@ -19,15 +19,21 @@ import { createEquipmentGeometry, disposeEquipmentGeometry } from '../lib/catalo
 import { renderEquipmentIcon } from './helpers/render-equipment-icon.mjs';
 import { verifySourceAssetScope, verifySourceAssetPreservation } from '../../scripts/check-source-asset-completion.mjs';
 import { verifySourceAssetDependencyAmendment, sourceAssetAmendmentFiles, digest, readBytes } from '../../scripts/catalog/source-asset-reviewed-dependencies.mjs';
+import { measurementColumnBaselineCommit } from '../../scripts/catalog/measurement-column-reviewed-dependencies.mjs';
 const rows = officialProducts.filter(row => Object.hasOwn(manifest.records, row.id));
 const api = record => normalizeApiProduct({ id: manifest.records[record.id].database_id, public_key: record.id, sku: null,
   category_public_key: record.category, translations: { ru: { name: record.name } }, specs: record, provenance: record,
   media: [{ path: record.image, kind: 'image', alt: record.imageCaption }],
 });
 
-test('exact source scope adds thirteen guarded bindings while preserving all old record, media and model outputs', async () => {
+test('historical thirteen-binding checkpoint and the current three-binding successor each preserve their exact scope', async () => {
   assert.deepEqual(verifySourceAssetScope(), { addedBindings: 13, accessories: 3, x4k3: 10, newProducts: 0 });
-  assert.deepEqual(await verifySourceAssetPreservation(), { productBodies: 843, unaffectedRecords: 830, legacyRecords: 238, choiceRecords: 36, choices: 74, oldModelTypes: 122, oldIconTypes: 132 });
+  const { historicalCheckpoint, forwardPreservation } = await verifySourceAssetPreservation();
+  assert.deepEqual(historicalCheckpoint, { commit: measurementColumnBaselineCommit,
+    productBodies: 843, unaffectedRecords: 830, legacyRecords: 238, choiceRecords: 36, choices: 74, oldModelTypes: 122, oldIconTypes: 132 });
+  assert.deepEqual(forwardPreservation, { productBodies: 843, unaffectedRecords: 840, legacyRecords: 238, priorSourceAssetAdmissions: 13,
+    choiceRecords: 36, choices: 74, sourceContextPreviews: 2, oldModelTypes: 125, oldIconTypes: 135,
+    sourceGroundedDefault3D: 464, sourceBasedIcons: 465, explicitConstructionGaps: 243, constructionGapFamilies: 29 });
 });
 
 test('all thirteen exact canonical and API records resolve equally without family inheritance or construction choices', () => {

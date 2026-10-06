@@ -1,11 +1,11 @@
 {
   "format": "alageum-missing-construction-evidence-v1",
-  "explicitEntries": 246,
-  "familyGroups": 31,
+  "explicitEntries": 243,
+  "familyGroups": 29,
   "scope": "Only explicit entries with neither a source-grounded default nor reviewed selectable 3D. Family overviews and generic legacy references are excluded. Document previews and existing source-based icons remain available where supported. No CAD or hidden construction is inferred.",
   "byCohort": {
     "legacy": 43,
-    "transformers-2026": 203
+    "transformers-2026": 200
   },
   "families": [
     {
@@ -711,39 +711,6 @@
         "alageum-2026-tsi-1p6-open",
         "alageum-2026-tsi-2p5-open",
         "alageum-2026-tsi-4p0-open"
-      ],
-      "evidenceLimitations": [
-        "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
-      ]
-    },
-    {
-      "familyId": "tr2026-family-znom",
-      "name": "Измерительные трансформаторы ЗНОМ",
-      "entries": 2,
-      "cohort": "transformers-2026",
-      "sourceUrl": "https://drive.google.com/file/d/113q2las1R18OJ6g6laJ5ZN4PFPsY635f/view",
-      "sourcePages": [
-        100
-      ],
-      "ids": [
-        "alageum-2026-znom35-config1",
-        "alageum-2026-znom35-config2"
-      ],
-      "evidenceLimitations": [
-        "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
-      ]
-    },
-    {
-      "familyId": "tr2026-family-zom",
-      "name": "Измерительные трансформаторы ЗОМ",
-      "entries": 1,
-      "cohort": "transformers-2026",
-      "sourceUrl": "https://drive.google.com/file/d/113q2las1R18OJ6g6laJ5ZN4PFPsY635f/view",
-      "sourcePages": [
-        99
-      ],
-      "ids": [
-        "alageum-2026-zom-1p25-35"
       ],
       "evidenceLimitations": [
         "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."

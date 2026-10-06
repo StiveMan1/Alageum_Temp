@@ -9,14 +9,14 @@
       "family-overview": 142,
       "legacy-reference": 14
     },
-    "sourceGroundedDefault3D": 461,
+    "sourceGroundedDefault3D": 464,
     "genericDefault3D": 14,
-    "noDefault3D": 368,
+    "noDefault3D": 365,
     "explicitChoiceRecords": 36,
     "explicitChoices": 74,
     "sourceContextPreviewRecords": 2,
     "sourceContextPreviews": 2,
-    "noDefaultOrChoice3D": 332,
+    "noDefaultOrChoice3D": 329,
     "icons": {
       "source-based": 465,
       "source-only": 313,
@@ -58,14 +58,14 @@
         "explicit-source-entry": 528,
         "family-overview": 77
       },
-      "sourceGroundedDefault3D": 289,
+      "sourceGroundedDefault3D": 292,
       "genericDefault3D": 0,
-      "noDefault3D": 316,
+      "noDefault3D": 313,
       "explicitChoiceRecords": 36,
       "explicitChoices": 74,
       "sourceContextPreviewRecords": 0,
       "sourceContextPreviews": 0,
-      "noDefaultOrChoice3D": 280,
+      "noDefaultOrChoice3D": 277,
       "icons": {
         "source-based": 292,
         "source-only": 313
@@ -81,14 +81,14 @@
     "roles": {
       "explicit-source-entry": 687
     },
-    "sourceGroundedDefault3D": 405,
+    "sourceGroundedDefault3D": 408,
     "genericDefault3D": 0,
-    "noDefault3D": 282,
+    "noDefault3D": 279,
     "explicitChoiceRecords": 36,
     "explicitChoices": 74,
     "sourceContextPreviewRecords": 0,
     "sourceContextPreviews": 0,
-    "noDefaultOrChoice3D": 246,
+    "noDefaultOrChoice3D": 243,
     "icons": {
       "source-based": 408,
       "source-only": 236,
@@ -22992,15 +22992,15 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-measurement-column-zom-znom-source",
+        "confidence": "source-matched",
         "pages": [
           99
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Иллюстративный внешний вид по рисунку каталога, стр. 99. Пропорции условные; назначение выводов и комплектность конкретного исполнения не подтверждены. Не CAD и не размерная модель. Мелкий крепёж, монтажные отверстия, сливной и заземляющий узлы не показаны; отдельные детали упрощены. На стр. 99 повторено расположение элементов рисунка со стр. 100 при другом табличном контексте; комплектность конкретного ЗОМ не подтверждена."
       },
       "icon": {
-        "type": "tr26-instrument-column",
+        "type": "tr26-measurement-column-zom-znom-source",
         "confidence": "source-based",
         "pages": [
           99
@@ -23075,15 +23075,15 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-measurement-column-zom-znom-source",
+        "confidence": "source-matched",
         "pages": [
           100
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Иллюстративный внешний вид по рисунку каталога, стр. 100. Пропорции условные; назначение выводов и комплектность конкретного исполнения не подтверждены. Не CAD и не размерная модель. Мелкий крепёж, монтажные отверстия, сливной и заземляющий узлы не показаны; отдельные детали упрощены. Один рисунок на стр. 100 сопровождает две строки напряжений; механические различия и одинаковая комплектность исполнений не подтверждены."
       },
       "icon": {
-        "type": "tr26-instrument-column",
+        "type": "tr26-measurement-column-zom-znom-source",
         "confidence": "source-based",
         "pages": [
           100
@@ -23115,15 +23115,15 @@
       "familyMembers": [],
       "familySourceReferences": [],
       "geometry": {
-        "type": null,
-        "confidence": "source-only",
+        "type": "tr26-measurement-column-zom-znom-source",
+        "confidence": "source-matched",
         "pages": [
           100
         ],
-        "reason": "Источник доступен постранично. Конструкция этого исполнения не подтверждена для 3D-модели."
+        "reason": "Иллюстративный внешний вид по рисунку каталога, стр. 100. Пропорции условные; назначение выводов и комплектность конкретного исполнения не подтверждены. Не CAD и не размерная модель. Мелкий крепёж, монтажные отверстия, сливной и заземляющий узлы не показаны; отдельные детали упрощены. Один рисунок на стр. 100 сопровождает две строки напряжений; механические различия и одинаковая комплектность исполнений не подтверждены."
       },
       "icon": {
-        "type": "tr26-instrument-column",
+        "type": "tr26-measurement-column-zom-znom-source",
         "confidence": "source-based",
         "pages": [
           100

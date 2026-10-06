@@ -1,5 +1,5 @@
 import { historicalDependencyHash, sourceAssetClearancePath } from '../../scripts/catalog/source-asset-reviewed-dependencies.mjs';
-import { sourceAssetCompletionManifest } from '../lib/catalog/models/sourceAssetCompletion.js';
+import { measurementColumnClearancePath } from '../../scripts/catalog/measurement-column-reviewed-dependencies.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -21,6 +21,9 @@ import baseChoices from '../lib/catalog/models/transformerExecutionChoicesManife
 
 const root = new URL('../../', import.meta.url);
 const clearance = JSON.parse(fs.readFileSync(new URL('docs/catalog-transformers-2026/review/asset-completion/clearance.json', root), 'utf8'));
+const successorPath = new URL(measurementColumnClearancePath, root);
+const successorClearance = fs.existsSync(successorPath) ? JSON.parse(fs.readFileSync(successorPath, 'utf8')) : null;
+const successorApproved = successorClearance?.status === 'approved-bounded-measurement-columns';
 const byId = new Map(officialProducts.map(row => [row.id, row]));
 const rows = clearance.records.map(entry => byId.get(entry.sourceRecordId));
 const recordApproval = id => supplement.geometry[id] || supplement.executionChoices.records[id];
@@ -31,8 +34,9 @@ const api = record => normalizeApiProduct({
   media: [{ path: record.image, kind: 'image', alt: record.imageCaption }],
 });
 
-test('supplement reproduces 25 exact new defaults and 8 explicit alternatives without rewriting historical approval', () => {
-  assert.deepEqual(buildTransformerAssetCompletion(clearance), supplement);
+test('supplement retains 25 exact defaults and 8 alternatives; historical release requires any forward amendment to be independently approved', () => {
+  if (successorApproved) assert.deepEqual(buildTransformerAssetCompletion(clearance), supplement);
+  else assert.throws(() => buildTransformerAssetCompletion(clearance), /requires independent approval|ENOENT/);
   assert.equal(Object.keys(baseAssets.geometry).length, 251);
   assert.equal(Object.keys(baseAssets.icons).length, 257);
   for (const channel of ['geometry', 'icons']) {
@@ -45,11 +49,10 @@ test('supplement reproduces 25 exact new defaults and 8 explicit alternatives wi
   assert.equal(Object.values(transformerExecutionChoicesManifest.records).reduce((sum, record) => sum + record.choiceIds.length, 0), 74);
   assert.deepEqual(transformerExecutionChoicesManifest.choices, baseChoices.choices);
   assert.equal(officialProducts.length, 843);
-  assert.equal(transformerProducts.filter(row => getEquipmentVisual(row).type && !Object.hasOwn(sourceAssetCompletionManifest.records, row.id)).length, 260);
+  assert.equal(transformerProducts.filter(row => Object.hasOwn(transformerRuntimeManifest.geometry, row.id) && getEquipmentVisual(row).type).length, 260);
   assert.equal(identityCompletionProducts.filter(row => getEquipmentVisual(row).type).length, 16);
-  for (const [file, hash] of Object.entries(supplement.dependencies.reviewedFileHashes)) {
-    assert.equal(historicalDependencyHash(file), hash, file);
-  }
+  if (successorApproved) for (const [file, hash] of Object.entries(supplement.dependencies.reviewedFileHashes)) assert.equal(historicalDependencyHash(file), hash, file);
+  else assert.throws(() => historicalDependencyHash('frontend/lib/catalog/models/visualMap.js'), /requires independent approval|ENOENT/);
 });
 
 test('copper has eight small and five large representative exteriors with the subsection inference disclosed', () => {
@@ -163,9 +166,13 @@ test('supplemental approval rejects altered dependencies, captions, scope, choic
   }
 });
 
-test('independent integration amendment rejects a later single-byte edit and any missing or mismatched amendment', async () => {
+test('historical release refuses pending forward approval; approved integration rejects later corruption and mismatched amendments', async () => {
   assert.throws(() => assertReviewedTransformerDependency('frontend/lib/catalog/models/transformer2026Geometry.js', 'unreviewed-geometry-hash', baseAssets), /Changed reviewed dependency/);
   assert.throws(() => assertReviewedTransformerDependency('frontend/lib/catalog/models/transformer2026Shape.js', 'unreviewed-shape-hash', baseAssets), /Changed reviewed dependency/);
+  if (!successorApproved) {
+    assert.throws(() => assertReviewedTransformerDependency('frontend/lib/catalog/models/transformer2026Runtime.js', baseAssets.reviewedLibraryHashes['frontend/lib/catalog/models/transformer2026Runtime.js'], baseAssets), /requires independent approval|ENOENT/);
+    return;
+  }
   // Isolate intentional corruption from the shared checkout and parallel tests.
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'transformer-integration-guard-'));
   const verifier = 'scripts/catalog/transformer-reviewed-dependencies.mjs';
@@ -173,7 +180,9 @@ test('independent integration amendment rejects a later single-byte edit and any
   const clearanceFile = 'docs/catalog-transformers-2026/review/asset-completion/clearance.json';
   const write = (file, bytes) => { fs.mkdirSync(path.dirname(path.join(scratch, file)), { recursive: true }); fs.writeFileSync(path.join(scratch, file), bytes); };
   const sourceClearance = JSON.parse(fs.readFileSync(new URL(sourceAssetClearancePath, root), 'utf8'));
-  for (const file of new Set([verifier, changedFile, clearanceFile, clearance.reviewReport, sourceAssetClearancePath, sourceClearance.reviewReport, ...Object.keys(sourceClearance.dependencies.reviewedFiles)])) write(file, fs.readFileSync(new URL(file, root)));
+  for (const file of new Set([verifier, changedFile, clearanceFile, clearance.reviewReport, sourceAssetClearancePath, sourceClearance.reviewReport,
+    ...Object.keys(sourceClearance.dependencies.reviewedFiles), measurementColumnClearancePath, successorClearance.reviewReport,
+    ...Object.keys(successorClearance.dependencies.reviewedFiles)])) write(file, fs.readFileSync(new URL(file, root)));
   try {
     const { assertReviewedTransformerDependency: verify } = await import(pathToFileURL(path.join(scratch, verifier)).href);
     const original = fs.readFileSync(path.join(scratch, changedFile));
