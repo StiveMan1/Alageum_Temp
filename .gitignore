@@ -77,3 +77,6 @@ document-metadata-evidence/
 # Disposable organization members acceptance build and evidence
 frontend/.next-member/
 member-delivery-evidence/
+
+# Separate bounded PTMM qualification browser evidence
+ptmm-qualification-evidence/

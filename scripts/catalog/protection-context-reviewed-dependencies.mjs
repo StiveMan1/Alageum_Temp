@@ -1,3 +1,4 @@
+import { ptmmPredecessors, assertPtmmQualificationDependencies } from './ptmm-qualification-reviewed-dependencies.mjs';
 import { visualPredecessors, assertVisualPresentationDependencies } from './visual-presentation-reviewed-dependencies.mjs';
 // A narrow raw-byte successor to PR33. No historical approval is rewritten and
 // this leaf never invokes historical adapters, preventing authority cycles.
@@ -110,6 +111,17 @@ export const readProtectionContextBytes = file => {
   return fs.readFileSync(path.join(root, file));
 };
 
+// Preserve every predecessor branch while admitting only the exact new pins.
+function assertCurrentProtectionDependencies(expectedFiles, read) {
+  const ptmmFiles = {}, otherFiles = {};
+  for (const [file, expected] of Object.entries(expectedFiles)) {
+    if (Object.hasOwn(ptmmPredecessors, file) && expected === ptmmPredecessors[file]) ptmmFiles[file] = expected;
+    else otherFiles[file] = expected;
+  }
+  assertPtmmQualificationDependencies(ptmmFiles, read);
+  assertBrowserAssertionDependencies(otherFiles, read);
+}
+
 /** Candidate integrity is evidence, never release approval. */
 export function verifyProtectionContextDependencyFiles(clearance, read = readProtectionContextBytes) {
   const hash = file => protectionContextDigest(read(file));
@@ -133,7 +145,7 @@ export function verifyProtectionContextDependencyFiles(clearance, read = readPro
     assert.equal(amendments[file].reviewedSha256, reviewedFiles[file], `Changed successor amendment pin ${file}`);
     assert.notEqual(amendments[file].reviewedSha256, baseline[file], `Unnecessary successor amendment ${file}`);
   }
-  assertBrowserAssertionDependencies(reviewedFiles, read);
+  assertCurrentProtectionDependencies(reviewedFiles, read);
   const prototype = JSON.parse(read(`${protectionContextReviewDir}/protection-prototype-frozen-files.json`));
   for (const entry of prototype.files) {
     const file = entry.path.endsWith('/protection-example-prototype.test.mjs') ? `${protectionContextReviewDir}/protection-prototype-test.mjs` : entry.path;
@@ -179,7 +191,7 @@ export function assertProtectionContextForwardDependencies(expectedFiles, read =
   for (const { file, expected } of changed) {
     if (!protectionContextAmendmentFiles.includes(file)) { assertVisualPresentationDependencies({ [file]: expected }, read); continue; }
     assert.equal(clearance.dependencies.amendments[file].baselineSha256, expected, `Wrong historical protection/context dependency ${file}`);
-    assertBrowserAssertionDependencies({ [file]: clearance.dependencies.amendments[file].reviewedSha256 }, read);
+    assertCurrentProtectionDependencies({ [file]: clearance.dependencies.amendments[file].reviewedSha256 }, read);
   }
 }
 export function assertProtectionContextForwardDependency(file, expected, read = readProtectionContextBytes) {
@@ -194,7 +206,7 @@ export function protectionContextHistoricalHash(file, read = readProtectionConte
   const baseline = JSON.parse(read(`${protectionContextReviewDir}/baseline-dependencies.json`));
   if (actual === baseline[file]) return actual;
   const clearance = verifyProtectionContextDependencyAmendment(JSON.parse(read(protectionContextClearancePath)), read);
-  assertBrowserAssertionDependencies({ [file]: clearance.dependencies.amendments[file].reviewedSha256 }, read);
+  assertCurrentProtectionDependencies({ [file]: clearance.dependencies.amendments[file].reviewedSha256 }, read);
   return clearance.dependencies.amendments[file].baselineSha256;
 }
 
