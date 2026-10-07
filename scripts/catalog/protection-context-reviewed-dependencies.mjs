@@ -1,3 +1,4 @@
+import { assertSecurityDependencies } from './frontend-security-reviewed-dependencies.mjs';
 import { assertCorrectionDependencies } from './ptmm-browser-correction-reviewed-dependencies.mjs';
 import { ptmmPredecessors, assertPtmmQualificationDependencies } from './ptmm-qualification-reviewed-dependencies.mjs';
 import { visualPredecessors, assertVisualPresentationDependencies } from './visual-presentation-reviewed-dependencies.mjs';
@@ -114,12 +115,14 @@ export const readProtectionContextBytes = file => {
 
 // Preserve every predecessor branch while admitting only the exact new pins.
 function assertCurrentProtectionDependencies(expectedFiles, read) {
-  const correctionFiles = {}, ptmmFiles = {}, otherFiles = {};
+  const securityFiles = {}, correctionFiles = {}, ptmmFiles = {}, otherFiles = {};
   for (const [file, expected] of Object.entries(expectedFiles)) {
-    if (file === 'frontend/components/catalog/ProductVisual.js' && expected === '99e847f8ce2476e6417866c76c377120cbb0cc3cc7787217eb22f467113be7dc') correctionFiles[file] = expected;
+    if (file === 'frontend/package-lock.json') securityFiles[file] = expected;
+    else if (file === 'frontend/components/catalog/ProductVisual.js' && expected === '99e847f8ce2476e6417866c76c377120cbb0cc3cc7787217eb22f467113be7dc') correctionFiles[file] = expected;
     else if (Object.hasOwn(ptmmPredecessors, file) && expected === ptmmPredecessors[file]) ptmmFiles[file] = expected;
     else otherFiles[file] = expected;
   }
+  assertSecurityDependencies(securityFiles, read);
   assertCorrectionDependencies(correctionFiles, read);
   assertPtmmQualificationDependencies(ptmmFiles, read);
   assertBrowserAssertionDependencies(otherFiles, read);
@@ -131,7 +134,10 @@ export function verifyProtectionContextDependencyFiles(clearance, read = readPro
   assert.equal(clearance.format, 'alageum-protection-context-clearance-v1');
   assert.equal(clearance.baselineCommit, protectionContextBaselineCommit); assert.equal(clearance.baselineTree, protectionContextBaselineTree);
   for (const [file, expected] of Object.entries(fixed)) assert.equal(hash(file), expected, `Changed frozen protection/context input ${file}`);
-  for (const [file, expected] of Object.entries(JSON.parse(read(`${protectionContextReviewDir}/fixed-dependencies.json`)))) assert.equal(hash(file), expected, `Changed fixed build/source/consumer dependency ${file}`);
+  for (const [file, expected] of Object.entries(JSON.parse(read(`${protectionContextReviewDir}/fixed-dependencies.json`)))) {
+    if (file === 'frontend/package-lock.json') assertSecurityDependencies({ [file]: expected }, read);
+    else assert.equal(hash(file), expected, `Changed fixed build/source/consumer dependency ${file}`);
+  }
   const prior = JSON.parse(read(`${priorDir}/clearance.json`)).dependencies.reviewedFiles;
   const baseline = JSON.parse(read(`${protectionContextReviewDir}/baseline-dependencies.json`));
   const { amendments, reviewedFiles } = clearance.dependencies;

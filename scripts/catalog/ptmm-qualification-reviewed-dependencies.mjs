@@ -1,3 +1,4 @@
+import { assertSecurityDependencies } from './frontend-security-reviewed-dependencies.mjs';
 import { assertCorrectionDependencies } from './ptmm-browser-correction-reviewed-dependencies.mjs';
 // Exact source/UI and browser successor to PR40. This leaf reads raw bytes only;
 // it never calls an older verifier, projects historical bytes or caches authority.
@@ -125,7 +126,10 @@ export function verifyPtmmQualificationDependencyFiles(clearance, read = readPtm
   assert.deepEqual(Object.keys(reviewed).sort(), [...ptmmRequiredFiles].sort(), 'Incomplete or overbroad PTMM dependency closure');
   const fixedBytes = read(fixedPath);
   assert.equal(ptmmDigest(fixedBytes), fixedSha256, 'Changed PTMM fixed dependency map');
-  for (const [file, expected] of Object.entries(JSON.parse(fixedBytes))) assert.equal(ptmmDigest(read(file)), expected, `Changed fixed PTMM dependency ${file}`);
+  for (const [file, expected] of Object.entries(JSON.parse(fixedBytes))) {
+    if (file === 'frontend/package-lock.json') assertSecurityDependencies({ [file]: expected }, read);
+    else assert.equal(ptmmDigest(read(file)), expected, `Changed fixed PTMM dependency ${file}`);
+  }
   for (const [file, expected] of Object.entries(ptmmSourceUiFiles)) {
     assert.equal(reviewed[file], expected, `Changed independently reviewed PTMM source/UI pin ${file}`);
     assert.equal(ptmmDigest(read(file)), expected, `Changed independently reviewed PTMM source/UI bytes ${file}`);
