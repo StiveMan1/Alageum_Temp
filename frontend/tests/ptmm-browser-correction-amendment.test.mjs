@@ -1,3 +1,4 @@
+import { readSecurityHistoricalBytes } from './helpers/frontend-security-historical-bytes.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -34,7 +35,7 @@ const fullChain = read => {
 // This approval exists only in the supplied in-memory reader. No test writes an
 // approval into the checkout or substitutes historical bytes in a normal gate.
 function fixture() {
-  const files = new Map(correctionRequiredFiles.map(file => [file, readCorrectionBytes(file)]));
+  const files = new Map(correctionRequiredFiles.map(file => [file, readSecurityHistoricalBytes(file, readCorrectionBytes)]));
   const fixturePaths = new Set([...correctionRequiredFiles, correctionClearancePath, correctionReportPath]);
   const clearance = {
     format: 'alageum-ptmm-browser-correction-clearance-v1', status: approved,

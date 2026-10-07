@@ -1,3 +1,4 @@
+import { securityPredecessors, assertSecurityDependencies } from './frontend-security-reviewed-dependencies.mjs';
 // Exact raw-byte successor to PR41. No old gates, substituted bytes or cached authority.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -596,7 +597,7 @@ export function verifyCorrectionDependencyFiles(clearance, read = readCorrection
   for (const [file, expected] of Object.entries(fixed)) {
     assert.equal(reviewed[file], expected, `Changed fixed PTMM browser correction pin ${file}`);
   }
-  for (const [file, expected] of Object.entries(reviewed)) assert.equal(correctionDigest(read(file)), expected, `Changed ${Object.hasOwn(fixed, file) ? 'fixed' : 'reviewed'} PTMM browser correction dependency ${file}`);
+  assertSecurityDependencies(reviewed, read);
   return clearance;
 }
 export function verifyCorrectionAmendment(read = readCorrectionBytes) {
@@ -620,10 +621,14 @@ export function verifyCorrectionAmendment(read = readCorrectionBytes) {
 export function assertCorrectionDependencies(expectedFiles, read = readCorrectionBytes) {
   const changed = Object.entries(expectedFiles).filter(([file, expected]) => correctionDigest(read(file)) !== expected);
   if (!changed.length) return;
-  for (const [file, expected] of changed) {
+  const current = changed.filter(([file, expected]) => Object.hasOwn(securityPredecessors, file) && expected === securityPredecessors[file]);
+  assertSecurityDependencies(Object.fromEntries(current), read);
+  const prior = changed.filter(([file, expected]) => !Object.hasOwn(securityPredecessors, file) || expected !== securityPredecessors[file]);
+  if (!prior.length) return;
+  for (const [file, expected] of prior) {
     assert.ok(Object.hasOwn(correctionPredecessors, file), `Changed unreviewed PTMM browser correction dependency ${file}`);
     assert.equal(expected, correctionPredecessors[file], `Wrong PTMM browser correction predecessor ${file}`);
   }
   const clearance = verifyCorrectionAmendment(read);
-  for (const [file] of changed) assert.equal(correctionDigest(read(file)), clearance.dependencies.reviewedFiles[file], `Changed approved PTMM browser correction bytes ${file}`);
+  assertSecurityDependencies(Object.fromEntries(prior.map(([file]) => [file, clearance.dependencies.reviewedFiles[file]])), read);
 }
