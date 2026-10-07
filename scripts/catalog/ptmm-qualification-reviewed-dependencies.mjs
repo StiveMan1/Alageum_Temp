@@ -1,5 +1,7 @@
-import { assertSecurityDependencies } from './frontend-security-reviewed-dependencies.mjs';
-import { assertCorrectionDependencies } from './ptmm-browser-correction-reviewed-dependencies.mjs';
+import { ktpbPredecessors, internalAssertKtpbDependencies } from './ktpb-source-context-reviewed-dependencies.mjs';
+import { runFreshProof, proofOperations, prove, evaluateProof } from './proof-invocation.mjs';
+import { internalAssertSecurityDependencies } from './frontend-security-reviewed-dependencies.mjs';
+import { internalAssertCorrectionDependencies } from './ptmm-browser-correction-reviewed-dependencies.mjs';
 // Exact source/UI and browser successor to PR40. This leaf reads raw bytes only;
 // it never calls an older verifier, projects historical bytes or caches authority.
 import assert from 'node:assert/strict';
@@ -119,33 +121,83 @@ export const readPtmmBytes = file => {
 
 /** Candidate integrity alone is not release approval. */
 export function verifyPtmmQualificationDependencyFiles(clearance, read = readPtmmBytes) {
-  assert.equal(clearance.format, 'alageum-ptmm-qualification-clearance-v1');
-  assert.equal(clearance.baselineCommit, ptmmBaselineCommit); assert.equal(clearance.baselineTree, ptmmBaselineTree);
-  assert.deepEqual(clearance.dependencies.predecessors, ptmmPredecessors, 'Changed PTMM predecessor scope or hashes');
-  const reviewed = clearance.dependencies.reviewedFiles;
-  assert.deepEqual(Object.keys(reviewed).sort(), [...ptmmRequiredFiles].sort(), 'Incomplete or overbroad PTMM dependency closure');
-  const fixedBytes = read(fixedPath);
-  assert.equal(ptmmDigest(fixedBytes), fixedSha256, 'Changed PTMM fixed dependency map');
-  for (const [file, expected] of Object.entries(JSON.parse(fixedBytes))) {
-    if (file === 'frontend/package-lock.json') assertSecurityDependencies({ [file]: expected }, read);
-    else assert.equal(ptmmDigest(read(file)), expected, `Changed fixed PTMM dependency ${file}`);
-  }
-  for (const [file, expected] of Object.entries(ptmmSourceUiFiles)) {
-    assert.equal(reviewed[file], expected, `Changed independently reviewed PTMM source/UI pin ${file}`);
-    assert.equal(ptmmDigest(read(file)), expected, `Changed independently reviewed PTMM source/UI bytes ${file}`);
-  }
-  assertCorrectionDependencies(reviewed, read);
-  const sourceUi = JSON.parse(read(`${ptmmReviewDir}/source-ui-review.json`));
-  assert.equal(ptmmDigest(read(`${ptmmReviewDir}/source-ui-review.json`)), sourceUiSha256);
-  assert.deepEqual(sourceUi.reviewedLogicFiles, ptmmSourceUiFiles); assert.deepEqual(sourceUi.affectedIds, ptmmAffectedIds);
-  assert.equal(sourceUi.status, 'source-ui-passed-pending-separate-gate-amendment');
-  return clearance;
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [clearance] },
+    context => internalVerifyPtmmQualificationDependencyFiles(context, clearance));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifyPtmmQualificationDependencyFiles(context, clearance) {
+  return evaluateProof(context, () => {
+    const { bytes: read, hash: proofHash, json: proofJson } = proofOperations(context);
+
+    assert.equal(clearance.format, 'alageum-ptmm-qualification-clearance-v1');
+    assert.equal(clearance.baselineCommit, ptmmBaselineCommit); assert.equal(clearance.baselineTree, ptmmBaselineTree);
+    assert.deepEqual(clearance.dependencies.predecessors, ptmmPredecessors, 'Changed PTMM predecessor scope or hashes');
+    const reviewed = clearance.dependencies.reviewedFiles;
+    assert.deepEqual(Object.keys(reviewed).sort(), [...ptmmRequiredFiles].sort(), 'Incomplete or overbroad PTMM dependency closure');
+    const fixedBytes = read(fixedPath);
+    assert.equal(ptmmDigest(fixedBytes), fixedSha256, 'Changed PTMM fixed dependency map');
+    for (const [file, expected] of Object.entries(JSON.parse(fixedBytes))) {
+      if (Object.hasOwn(ktpbPredecessors, file) && expected === ktpbPredecessors[file]) internalAssertKtpbDependencies(context, { [file]: expected });
+      else if (file === 'frontend/package-lock.json') internalAssertSecurityDependencies(context, { [file]: expected });
+      else assert.equal(proofHash(file), expected, `Changed fixed PTMM dependency ${file}`);
+    }
+    for (const [file, expected] of Object.entries(ptmmSourceUiFiles)) {
+      assert.equal(reviewed[file], expected, `Changed independently reviewed PTMM source/UI pin ${file}`);
+      assert.equal(proofHash(file), expected, `Changed independently reviewed PTMM source/UI bytes ${file}`);
+    }
+    internalAssertCorrectionDependencies(context, reviewed);
+    const sourceUi = proofJson(`${ptmmReviewDir}/source-ui-review.json`);
+    assert.equal(proofHash(`${ptmmReviewDir}/source-ui-review.json`), sourceUiSha256);
+    assert.deepEqual(sourceUi.reviewedLogicFiles, ptmmSourceUiFiles); assert.deepEqual(sourceUi.affectedIds, ptmmAffectedIds);
+    assert.equal(sourceUi.status, 'source-ui-passed-pending-separate-gate-amendment');
+    return clearance;
+  });
 }
 
 export function verifyPtmmQualificationAmendment(read = readPtmmBytes) {
-  const clearance = JSON.parse(read(ptmmClearancePath));
+  return runFreshProof({ root, omittedReader: arguments.length <= 0, read, inputs: [] },
+    context => internalVerifyPtmmQualificationAmendment(context));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifyPtmmQualificationAmendment(context) {
+  return evaluateProof(context, () => {
+
+    return prove(context, verifyPtmmQualificationAmendmentIdentity, 'approved', ptmmClearancePath, internalVerifyPtmmQualificationAmendmentCanonical);
+  });
+}
+
+// Each entry must name its exact historical byte hash. Any changed file outside
+// this bounded successor remains an error, including after a successful call.
+export function assertPtmmQualificationDependencies(expectedFiles, read = readPtmmBytes) {
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [expectedFiles] },
+    context => internalAssertPtmmQualificationDependencies(context, expectedFiles));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertPtmmQualificationDependencies(context, expectedFiles) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash } = proofOperations(context);
+    let changed = Object.entries(expectedFiles).map(([file, expected]) => ({ file, expected, actual: proofHash(file) })).filter(item => item.actual !== item.expected);
+    if (!changed.length) return;
+    // Only the exact PR43 edge may bypass the older historical branch.
+    const terminal = changed.filter(({ file, expected }) => Object.hasOwn(ktpbPredecessors, file) && expected === ktpbPredecessors[file]);
+    internalAssertKtpbDependencies(context, Object.fromEntries(terminal.map(({ file, expected }) => [file, expected])));
+    changed = changed.filter(({ file, expected }) => !Object.hasOwn(ktpbPredecessors, file) || expected !== ktpbPredecessors[file]);
+    if (!changed.length) return;
+    for (const { file, expected } of changed) {
+      assert.ok(Object.hasOwn(ptmmPredecessors, file), `Changed unreviewed PTMM dependency ${file}`);
+      assert.equal(expected, ptmmPredecessors[file], `Wrong PTMM predecessor hash ${file}`);
+    }
+    const clearance = internalVerifyPtmmQualificationAmendment(context);
+    internalAssertCorrectionDependencies(context, Object.fromEntries(changed.map(({ file }) => [file, clearance.dependencies.reviewedFiles[file]])));
+  });
+}
+
+const verifyPtmmQualificationAmendmentIdentity = Symbol('verifyPtmmQualificationAmendment');
+
+function internalVerifyPtmmQualificationAmendmentCanonical(context, clearance) {
+  const { bytes: read } = proofOperations(context);
   assert.equal(clearance.status, 'approved-bounded-ptmm-qualification', 'PTMM qualification requires independent approval');
-  verifyPtmmQualificationDependencyFiles(clearance, read);
+  internalVerifyPtmmQualificationDependencyFiles(context, clearance);
   assert.equal(clearance.reviewReport, ptmmReportPath);
   const bytes = read(ptmmReportPath);
   assert.equal(ptmmDigest(bytes), clearance.reviewReportSha256, 'Changed independent PTMM report');
@@ -163,17 +215,5 @@ export function verifyPtmmQualificationAmendment(read = readPtmmBytes) {
   assert.equal(report.qualificationJobTimeoutMinutes, 15); assert.equal(report.qualificationStepTimeoutMinutes, 6);
   assert.equal(report.geometryMaterialChanges, 0); assert.equal(report.recordChanges, 0); assert.equal(report.pageChanges, 0);
   return clearance;
-}
 
-// Each entry must name its exact historical byte hash. Any changed file outside
-// this bounded successor remains an error, including after a successful call.
-export function assertPtmmQualificationDependencies(expectedFiles, read = readPtmmBytes) {
-  const changed = Object.entries(expectedFiles).map(([file, expected]) => ({ file, expected, actual: ptmmDigest(read(file)) })).filter(item => item.actual !== item.expected);
-  if (!changed.length) return;
-  for (const { file, expected } of changed) {
-    assert.ok(Object.hasOwn(ptmmPredecessors, file), `Changed unreviewed PTMM dependency ${file}`);
-    assert.equal(expected, ptmmPredecessors[file], `Wrong PTMM predecessor hash ${file}`);
-  }
-  const clearance = verifyPtmmQualificationAmendment(read);
-  assertCorrectionDependencies(Object.fromEntries(changed.map(({ file }) => [file, clearance.dependencies.reviewedFiles[file]])), read);
 }

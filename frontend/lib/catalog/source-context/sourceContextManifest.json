@@ -157,6 +157,18 @@
       "recordShapeSha256": "36565647c03f98454cbc5a6a01907c57744d0673fa20828b241f2ac33d964f5e",
       "databaseId": "26125780-4b4c-598a-a769-12342441e8e6",
       "rawSourceMedia": "/catalog-products/cat-ptm-tded.webp"
+    },
+    "cat-ktpb-k": {
+      "contextKey": "ktpb-family",
+      "recordShapeSha256": "7d70ffb8999429a347ef69cfa2222c661a6250b86447cc5854c7a6f784ab605f",
+      "databaseId": "e86a4f18-ce3b-5529-a91f-feacb8f348fa",
+      "rawSourceMedia": "/catalog-products/cat-ktpb-k.webp"
+    },
+    "cat-ktpb-k-v002": {
+      "contextKey": "ktpb-110",
+      "recordShapeSha256": "5b2c69390d60f397258e6fef04c07880a884222cb9ae8625a3bf588a47b288da",
+      "databaseId": "d6960329-c1c6-5b02-a32f-16c6fe496a43",
+      "rawSourceMedia": "/catalog-products/cat-ktpb-k.webp"
     }
   },
   "contexts": {
@@ -204,6 +216,38 @@
         "/catalog-source/page-068.webp",
         "/catalog-source/page-069.webp",
         "/catalog-products/cat-ptm-tded.webp"
+      ]
+    },
+    "ktpb-family": {
+      "heading": "Пример 2КТПБ(К), схема 110-4Н, из каталога",
+      "intro": "На стр. 56 показаны ОРУ-110 кВ, два трансформатора и КРУ 6 кВ, совмещённое с ОПУ. Заголовок страницы содержит 35/10(6), что расходится с подписью рисунка 26 и перечнем оборудования 110 кВ.",
+      "status": "Пример относится к отдельной схеме. Его соответствие исполнениям семейства, включая 110/35/10(6), не установлено.",
+      "figureKeys": [
+        "substations-p056-figure26-2ktpb-110-4n"
+      ],
+      "sourceHref": "/catalog/source?page=56",
+      "sourceLinkLabel": "Открыть страницу 56 целиком",
+      "requiredAssets": [
+        "/catalog-source/page-054.webp",
+        "/catalog-source/page-055.webp",
+        "/catalog-source/page-056.webp",
+        "/catalog-products/cat-ktpb-k.webp"
+      ]
+    },
+    "ktpb-110": {
+      "heading": "Пример 2КТПБ(К), схема 110-4Н, из каталога",
+      "intro": "На стр. 56 показаны ОРУ-110 кВ, два трансформатора и КРУ 6 кВ, совмещённое с ОПУ. Заголовок страницы содержит 35/10(6), что расходится с подписью рисунка 26 и перечнем оборудования 110 кВ.",
+      "status": "Соответствие этого примера конструкции КТПБ(К) 110/35/10(6) не установлено. Наличие ступени 35 кВ этим чертежом не подтверждено.",
+      "figureKeys": [
+        "substations-p056-figure26-2ktpb-110-4n"
+      ],
+      "sourceHref": "/catalog/source?page=56",
+      "sourceLinkLabel": "Открыть страницу 56 целиком",
+      "requiredAssets": [
+        "/catalog-source/page-054.webp",
+        "/catalog-source/page-055.webp",
+        "/catalog-source/page-056.webp",
+        "/catalog-products/cat-ktpb-k.webp"
       ]
     }
   },
@@ -305,6 +349,33 @@
       "width": 875,
       "height": 415,
       "exemplarId": "cat-ptm-tded-v013"
+    },
+    "substations-p056-figure26-2ktpb-110-4n": {
+      "key": "substations-p056-figure26-2ktpb-110-4n",
+      "title": "Исходный чертёж 2КТПБ(К), схема 110-4Н",
+      "caption": "Полная исходная страница 56. Чертёж расположен боком: план, продольный вид А–А и поперечный вид Б. Для чтения обозначений откройте страницу целиком.",
+      "sourceLegend": [
+        "Заголовок страницы: «ПРИМЕР ОБЩЕГО ВИДА КТПБ(К) 35/10(6)».",
+        "Подпись рисунка 26: «Общий вид и габаритно-установочные размеры 2КТПБ(К), (схема 110-4Н)».",
+        "Позиции 1–6: оборудование 110 кВ; позиция 8: силовой трансформатор, 2 шт.",
+        "Позиция 10: КРУ-6кВ совмещенный с ОПУ; позиция 11: Ошиновка ОРУ-110кВ."
+      ],
+      "sourcePage": 56,
+      "sourceHref": "/catalog/source?page=56",
+      "sourceImage": "/catalog-source/page-056.webp",
+      "cropPath": "/catalog-source/page-056.webp",
+      "cropBox": [
+        0,
+        0,
+        1406,
+        1988
+      ],
+      "cropSha256": "4e6ea1db177c66bc84a8dc0031cfcee685fef53df029e28ec132cf1b681e0721",
+      "cropBytes": 114140,
+      "width": 1406,
+      "height": 1988,
+      "exemplarId": null,
+      "imageAlt": "Полная страница 56: чертёж 2КТПБ(К), схема 110-4Н, с планом и видами А–А и Б; чертёж расположен боком."
     }
   },
   "assets": {
@@ -361,11 +432,48 @@
       ],
       "sha256": "8f4b49a972e51f55121c1f052a1017399f5ba73d7e9ac6e7c320444bab97b383",
       "bytes": 9728
+    },
+    "/catalog-source/page-054.webp": {
+      "source_id": "substations",
+      "representation": "source-scan",
+      "source_pages": [
+        54
+      ],
+      "sha256": "0dff7b60c905d7def0833d8cd3888d0372ac44a03a693baca97b70a48340e012",
+      "bytes": 288238
+    },
+    "/catalog-source/page-055.webp": {
+      "source_id": "substations",
+      "representation": "source-scan",
+      "source_pages": [
+        55
+      ],
+      "sha256": "a871865df7f4a10b3642994f4c29506a44a32ee78c86116fa0880bc627c430d4",
+      "bytes": 122172
+    },
+    "/catalog-source/page-056.webp": {
+      "source_id": "substations",
+      "representation": "source-scan",
+      "source_pages": [
+        56
+      ],
+      "sha256": "4e6ea1db177c66bc84a8dc0031cfcee685fef53df029e28ec132cf1b681e0721",
+      "bytes": 114140
+    },
+    "/catalog-products/cat-ktpb-k.webp": {
+      "source_id": "substations",
+      "representation": "crop",
+      "source_pages": [
+        55
+      ],
+      "sha256": "607f86f4c884ca4da6256b62016015af188179b94725c00290f94801f786e63d",
+      "bytes": 67258
     }
   },
   "reviewDependencies": {
     "alageum-shnn-example-review/review.json": "71068b0f71709048201e6af89d9955d94e9da3f0cde2d9d58111febaa42e1541",
     "alageum-ptm-tde-example-review/review.json": "9b5dab74676891728eea53145afbcdcc5a51961a6877cc520a372fb09c546758",
-    "alageum-ptm-tded-binding-decision/decision.json": "1bdcaacbceaa05aa96a75e54a8321156241ccd1d9e82e53ce02e8ac50f25496a"
+    "alageum-ptm-tded-binding-decision/decision.json": "1bdcaacbceaa05aa96a75e54a8321156241ccd1d9e82e53ce02e8ac50f25496a",
+    "alageum-ktpb-source-example-review/source-example-ledger.json": "905589c06422d49e02088dc66896bcb3ae15649c4db97abf4091dbfd994ac897"
   }
 }

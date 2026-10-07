@@ -1,7 +1,9 @@
-import { assertSecurityDependencies } from './frontend-security-reviewed-dependencies.mjs';
-import { assertCorrectionDependencies } from './ptmm-browser-correction-reviewed-dependencies.mjs';
-import { ptmmPredecessors, assertPtmmQualificationDependencies } from './ptmm-qualification-reviewed-dependencies.mjs';
-import { visualPredecessors, assertVisualPresentationDependencies } from './visual-presentation-reviewed-dependencies.mjs';
+import { runFreshProof, proofOperations, prove, evaluateProof } from './proof-invocation.mjs';
+import { ktpbPredecessors, internalAssertKtpbDependencies, internalPreservedKtpbContextIds } from './ktpb-source-context-reviewed-dependencies.mjs';
+import { internalAssertSecurityDependencies } from './frontend-security-reviewed-dependencies.mjs';
+import { internalAssertCorrectionDependencies } from './ptmm-browser-correction-reviewed-dependencies.mjs';
+import { ptmmPredecessors, internalAssertPtmmQualificationDependencies } from './ptmm-qualification-reviewed-dependencies.mjs';
+import { visualPredecessors, internalAssertVisualPresentationDependencies } from './visual-presentation-reviewed-dependencies.mjs';
 // A narrow raw-byte successor to PR33. No historical approval is rewritten and
 // this leaf never invokes historical adapters, preventing authority cycles.
 import assert from 'node:assert/strict';
@@ -9,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { assertBrowserAssertionDependencies } from './catalog-browser-reviewed-dependencies.mjs';
+import { internalAssertBrowserAssertionDependencies } from './catalog-browser-reviewed-dependencies.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 export const protectionContextReviewDir = 'docs/catalog-transformers-2026/review/protection-context-integration';
@@ -114,118 +116,199 @@ export const readProtectionContextBytes = file => {
 };
 
 // Preserve every predecessor branch while admitting only the exact new pins.
-function assertCurrentProtectionDependencies(expectedFiles, read) {
-  const securityFiles = {}, correctionFiles = {}, ptmmFiles = {}, otherFiles = {};
-  for (const [file, expected] of Object.entries(expectedFiles)) {
-    if (file === 'frontend/package-lock.json') securityFiles[file] = expected;
-    else if (file === 'frontend/components/catalog/ProductVisual.js' && expected === '99e847f8ce2476e6417866c76c377120cbb0cc3cc7787217eb22f467113be7dc') correctionFiles[file] = expected;
-    else if (Object.hasOwn(ptmmPredecessors, file) && expected === ptmmPredecessors[file]) ptmmFiles[file] = expected;
-    else otherFiles[file] = expected;
-  }
-  assertSecurityDependencies(securityFiles, read);
-  assertCorrectionDependencies(correctionFiles, read);
-  assertPtmmQualificationDependencies(ptmmFiles, read);
-  assertBrowserAssertionDependencies(otherFiles, read);
+function internalAssertCurrentProtectionDependencies(context, expectedFiles) {
+  return evaluateProof(context, () => {
+
+    const ktpbFiles = {}, securityFiles = {}, correctionFiles = {}, ptmmFiles = {}, otherFiles = {};
+    for (const [file, expected] of Object.entries(expectedFiles)) {
+      if (Object.hasOwn(ktpbPredecessors, file) && expected === ktpbPredecessors[file]) ktpbFiles[file] = expected;
+      else if (file === 'frontend/package-lock.json') securityFiles[file] = expected;
+      else if (file === 'frontend/components/catalog/ProductVisual.js' && expected === '99e847f8ce2476e6417866c76c377120cbb0cc3cc7787217eb22f467113be7dc') correctionFiles[file] = expected;
+      else if (Object.hasOwn(ptmmPredecessors, file) && expected === ptmmPredecessors[file]) ptmmFiles[file] = expected;
+      else otherFiles[file] = expected;
+    }
+    internalAssertKtpbDependencies(context, ktpbFiles);
+    internalAssertSecurityDependencies(context, securityFiles);
+    internalAssertCorrectionDependencies(context, correctionFiles);
+    internalAssertPtmmQualificationDependencies(context, ptmmFiles);
+    internalAssertBrowserAssertionDependencies(context, otherFiles);
+  });
 }
 
 /** Candidate integrity is evidence, never release approval. */
 export function verifyProtectionContextDependencyFiles(clearance, read = readProtectionContextBytes) {
-  const hash = file => protectionContextDigest(read(file));
-  assert.equal(clearance.format, 'alageum-protection-context-clearance-v1');
-  assert.equal(clearance.baselineCommit, protectionContextBaselineCommit); assert.equal(clearance.baselineTree, protectionContextBaselineTree);
-  for (const [file, expected] of Object.entries(fixed)) assert.equal(hash(file), expected, `Changed frozen protection/context input ${file}`);
-  for (const [file, expected] of Object.entries(JSON.parse(read(`${protectionContextReviewDir}/fixed-dependencies.json`)))) {
-    if (file === 'frontend/package-lock.json') assertSecurityDependencies({ [file]: expected }, read);
-    else assert.equal(hash(file), expected, `Changed fixed build/source/consumer dependency ${file}`);
-  }
-  const prior = JSON.parse(read(`${priorDir}/clearance.json`)).dependencies.reviewedFiles;
-  const baseline = JSON.parse(read(`${protectionContextReviewDir}/baseline-dependencies.json`));
-  const { amendments, reviewedFiles } = clearance.dependencies;
-  assert.deepEqual(Object.keys(baseline).sort(), [...protectionContextAmendmentFiles].sort(), 'Changed successor baseline scope');
-  assert.deepEqual(Object.keys(amendments).sort(), [...protectionContextAmendmentFiles].sort(), 'Incomplete or overbroad protection/context amendment');
-  const required = [...new Set([...Object.keys(prior), ...protectionContextAmendmentFiles, ...protectionContextRequiredFiles])].sort();
-  assert.deepEqual(Object.keys(reviewedFiles).sort(), required, 'Incomplete or overbroad protection/context dependency scope');
-  for (const [file, expected] of Object.entries(prior)) {
-    if (Object.hasOwn(amendments, file)) assert.equal(baseline[file], expected, `Wrong historical PR33 pin ${file}`);
-    else assertVisualPresentationDependencies({ [file]: expected }, read);
-  }
-  for (const file of protectionContextAmendmentFiles) {
-    assert.equal(amendments[file].baselineSha256, baseline[file], `Wrong protection/context baseline ${file}`);
-    assert.equal(amendments[file].reviewedSha256, reviewedFiles[file], `Changed successor amendment pin ${file}`);
-    assert.notEqual(amendments[file].reviewedSha256, baseline[file], `Unnecessary successor amendment ${file}`);
-  }
-  assertCurrentProtectionDependencies(reviewedFiles, read);
-  const prototype = JSON.parse(read(`${protectionContextReviewDir}/protection-prototype-frozen-files.json`));
-  for (const entry of prototype.files) {
-    const file = entry.path.endsWith('/protection-example-prototype.test.mjs') ? `${protectionContextReviewDir}/protection-prototype-test.mjs` : entry.path;
-    assert.equal(hash(file), entry.sha256, `Changed reviewed protection prototype ${file}`);
-  }
-  const context = JSON.parse(read(`${protectionContextReviewDir}/context-prototype-frozen-files.json`));
-  assertVisualPresentationDependencies(Object.fromEntries(Object.entries(context.files).map(([file, entry]) => [file, entry.sha256])), read);
-  assert.equal(clearance.bindingsSha256, hash('frontend/lib/catalog/models/protectionExampleRuntimeManifest.json'));
-  assert.equal(clearance.contextManifestSha256, hash('frontend/lib/catalog/source-context/sourceContextManifest.json'));
-  assert.equal(clearance.baselineOutputsSha256, hash(`${protectionContextReviewDir}/baseline-outputs.json`));
-  return clearance;
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [clearance] },
+    context => internalVerifyProtectionContextDependencyFiles(context, clearance));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifyProtectionContextDependencyFiles(context, clearance) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash, json: proofJson } = proofOperations(context);
+
+    const hash = file => proofHash(file);
+    assert.equal(clearance.format, 'alageum-protection-context-clearance-v1');
+    assert.equal(clearance.baselineCommit, protectionContextBaselineCommit); assert.equal(clearance.baselineTree, protectionContextBaselineTree);
+    for (const [file, expected] of Object.entries(fixed)) assert.equal(hash(file), expected, `Changed frozen protection/context input ${file}`);
+    for (const [file, expected] of Object.entries(proofJson(`${protectionContextReviewDir}/fixed-dependencies.json`))) {
+      if (file === 'frontend/package-lock.json') internalAssertSecurityDependencies(context, { [file]: expected });
+      else assert.equal(hash(file), expected, `Changed fixed build/source/consumer dependency ${file}`);
+    }
+    const prior = proofJson(`${priorDir}/clearance.json`).dependencies.reviewedFiles;
+    const baseline = proofJson(`${protectionContextReviewDir}/baseline-dependencies.json`);
+    const { amendments, reviewedFiles } = clearance.dependencies;
+    assert.deepEqual(Object.keys(baseline).sort(), [...protectionContextAmendmentFiles].sort(), 'Changed successor baseline scope');
+    assert.deepEqual(Object.keys(amendments).sort(), [...protectionContextAmendmentFiles].sort(), 'Incomplete or overbroad protection/context amendment');
+    const required = [...new Set([...Object.keys(prior), ...protectionContextAmendmentFiles, ...protectionContextRequiredFiles])].sort();
+    assert.deepEqual(Object.keys(reviewedFiles).sort(), required, 'Incomplete or overbroad protection/context dependency scope');
+    for (const [file, expected] of Object.entries(prior)) {
+      if (Object.hasOwn(amendments, file)) assert.equal(baseline[file], expected, `Wrong historical PR33 pin ${file}`);
+      else internalAssertVisualPresentationDependencies(context, { [file]: expected });
+    }
+    for (const file of protectionContextAmendmentFiles) {
+      assert.equal(amendments[file].baselineSha256, baseline[file], `Wrong protection/context baseline ${file}`);
+      assert.equal(amendments[file].reviewedSha256, reviewedFiles[file], `Changed successor amendment pin ${file}`);
+      assert.notEqual(amendments[file].reviewedSha256, baseline[file], `Unnecessary successor amendment ${file}`);
+    }
+    internalAssertCurrentProtectionDependencies(context, reviewedFiles);
+    const prototype = proofJson(`${protectionContextReviewDir}/protection-prototype-frozen-files.json`);
+    for (const entry of prototype.files) {
+      const file = entry.path.endsWith('/protection-example-prototype.test.mjs') ? `${protectionContextReviewDir}/protection-prototype-test.mjs` : entry.path;
+      assert.equal(hash(file), entry.sha256, `Changed reviewed protection prototype ${file}`);
+    }
+    const contextPrototype = proofJson(`${protectionContextReviewDir}/context-prototype-frozen-files.json`);
+    const ktpbContextFiles = {}, historicalContextFiles = {};
+    for (const [file, entry] of Object.entries(contextPrototype.files)) {
+      if (Object.hasOwn(ktpbPredecessors, file) && entry.sha256 === ktpbPredecessors[file]) ktpbContextFiles[file] = entry.sha256;
+      else historicalContextFiles[file] = entry.sha256;
+    }
+    internalAssertKtpbDependencies(context, ktpbContextFiles);
+    internalAssertVisualPresentationDependencies(context, historicalContextFiles);
+    assert.equal(clearance.bindingsSha256, hash('frontend/lib/catalog/models/protectionExampleRuntimeManifest.json'));
+    internalAssertKtpbDependencies(context, { 'frontend/lib/catalog/source-context/sourceContextManifest.json': clearance.contextManifestSha256 });
+    assert.equal(clearance.baselineOutputsSha256, hash(`${protectionContextReviewDir}/baseline-outputs.json`));
+    return clearance;
+  });
 }
 
 export function verifyProtectionContextDependencyAmendment(clearance, read = readProtectionContextBytes) {
-  assert.equal(clearance.status, 'approved-bounded-protection-context', 'Protection/context integration still requires independent approval');
-  verifyProtectionContextDependencyFiles(clearance, read);
-  assert.equal(clearance.reviewReport, `${protectionContextReviewDir}/independent-review.json`);
-  assert.equal(protectionContextDigest(read(clearance.reviewReport)), clearance.reviewReportSha256, 'Changed independent protection/context review');
-  const review = JSON.parse(read(clearance.reviewReport));
-  assert.equal(review.format, 'alageum-protection-context-independent-review-v1'); assert.equal(review.status, clearance.status);
-  assert.equal(review.baselineCommit, protectionContextBaselineCommit); assert.equal(review.baselineTree, protectionContextBaselineTree);
-  assert.equal(review.approvedDependenciesSha256, protectionContextDigest(JSON.stringify(clearance.dependencies)));
-  assert.equal(review.approvedBindingsSha256, clearance.bindingsSha256); assert.equal(review.approvedContextManifestSha256, clearance.contextManifestSha256);
-  assert.equal(review.approvedBaselineOutputsSha256, clearance.baselineOutputsSha256);
-  assert.deepEqual(review.refinedModelIds, ['cat-ptm-tded-v012', 'cat-ptm-tded-v013']);
-  assert.deepEqual(review.refinedIconIds, ['cat-ptm-tded', 'cat-ptm-tded-v012', 'cat-ptm-tded-v013']);
-  const contextIds = Object.keys(JSON.parse(read('frontend/lib/catalog/source-context/sourceContextManifest.json')).records).sort();
-  assert.deepEqual(review.contextRecordIds, contextIds); assert.equal(contextIds.length, 24);
-  assert.deepEqual(review.counts, { productBodies: 843, legacyRecords: 238, oldModelTypes: 126, oldIconTypes: 136,
-    newModelTypes: 2, newIconTypes: 3, choiceRecords: 36, choices: 74, ntmiSourcePreviews: 2,
-    sourceGroundedDefault3D: 464, sourceBasedIcons: 465, explicitConstructionGaps: 243, constructionGapFamilies: 29,
-    sourceContextRecords: 24, newProducts: 0, confidencePromotions: 0, apiSummaryCorrections: 23, comparisonCellCorrections: 3 });
-  return clearance;
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [clearance] },
+    context => internalVerifyProtectionContextDependencyAmendment(context, clearance));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifyProtectionContextDependencyAmendment(context, clearance) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash, json: proofJson } = proofOperations(context);
+
+    assert.equal(clearance.status, 'approved-bounded-protection-context', 'Protection/context integration still requires independent approval');
+    internalVerifyProtectionContextDependencyFiles(context, clearance);
+    assert.equal(clearance.reviewReport, `${protectionContextReviewDir}/independent-review.json`);
+    assert.equal(proofHash(clearance.reviewReport), clearance.reviewReportSha256, 'Changed independent protection/context review');
+    const review = proofJson(clearance.reviewReport);
+    assert.equal(review.format, 'alageum-protection-context-independent-review-v1'); assert.equal(review.status, clearance.status);
+    assert.equal(review.baselineCommit, protectionContextBaselineCommit); assert.equal(review.baselineTree, protectionContextBaselineTree);
+    assert.equal(review.approvedDependenciesSha256, protectionContextDigest(JSON.stringify(clearance.dependencies)));
+    assert.equal(review.approvedBindingsSha256, clearance.bindingsSha256); assert.equal(review.approvedContextManifestSha256, clearance.contextManifestSha256);
+    assert.equal(review.approvedBaselineOutputsSha256, clearance.baselineOutputsSha256);
+    assert.deepEqual(review.refinedModelIds, ['cat-ptm-tded-v012', 'cat-ptm-tded-v013']);
+    assert.deepEqual(review.refinedIconIds, ['cat-ptm-tded', 'cat-ptm-tded-v012', 'cat-ptm-tded-v013']);
+    const contextIds = internalPreservedKtpbContextIds(context);
+    assert.deepEqual(review.contextRecordIds, contextIds); assert.equal(contextIds.length, 24);
+    assert.deepEqual(review.counts, { productBodies: 843, legacyRecords: 238, oldModelTypes: 126, oldIconTypes: 136,
+      newModelTypes: 2, newIconTypes: 3, choiceRecords: 36, choices: 74, ntmiSourcePreviews: 2,
+      sourceGroundedDefault3D: 464, sourceBasedIcons: 465, explicitConstructionGaps: 243, constructionGapFamilies: 29,
+      sourceContextRecords: 24, newProducts: 0, confidencePromotions: 0, apiSummaryCorrections: 23, comparisonCellCorrections: 3 });
+    return clearance;
+  });
 }
 
-// Batch one exact expected map. Current bytes are freshly hashed on every call;
-// approval is checked once for that map, with no cache or reusable proof token.
+// Batch one exact expected map without merging caller-specific obligations.
+// Only canonical complete proofs may be reused within the finalized owner.
 export function assertProtectionContextForwardDependencies(expectedFiles, read = readProtectionContextBytes) {
-  const changed = Object.entries(expectedFiles).map(([file, expected]) => ({ file, expected, actual: protectionContextDigest(read(file)) })).filter(item => item.actual !== item.expected);
-  if (!changed.length) return;
-  for (const { file } of changed) assert.ok(protectionContextAmendmentFiles.includes(file) || Object.hasOwn(visualPredecessors, file), `Changed unreviewed protection/context dependency ${file}`);
-  const clearance = verifyProtectionContextDependencyAmendment(JSON.parse(read(protectionContextClearancePath)), read);
-  for (const { file, expected } of changed) {
-    if (!protectionContextAmendmentFiles.includes(file)) { assertVisualPresentationDependencies({ [file]: expected }, read); continue; }
-    assert.equal(clearance.dependencies.amendments[file].baselineSha256, expected, `Wrong historical protection/context dependency ${file}`);
-    assertCurrentProtectionDependencies({ [file]: clearance.dependencies.amendments[file].reviewedSha256 }, read);
-  }
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [expectedFiles] },
+    context => internalAssertProtectionContextForwardDependencies(context, expectedFiles));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertProtectionContextForwardDependencies(context, expectedFiles) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash } = proofOperations(context);
+    let changed = Object.entries(expectedFiles).map(([file, expected]) => ({ file, expected, actual: proofHash(file) })).filter(item => item.actual !== item.expected);
+    if (!changed.length) return;
+    // Only the exact PR43 edge may bypass the older historical branch.
+    const terminal = changed.filter(({ file, expected }) => Object.hasOwn(ktpbPredecessors, file) && expected === ktpbPredecessors[file]);
+    internalAssertKtpbDependencies(context, Object.fromEntries(terminal.map(({ file, expected }) => [file, expected])));
+    changed = changed.filter(({ file, expected }) => !Object.hasOwn(ktpbPredecessors, file) || expected !== ktpbPredecessors[file]);
+    if (!changed.length) return;
+    for (const { file } of changed) assert.ok(protectionContextAmendmentFiles.includes(file) || Object.hasOwn(visualPredecessors, file), `Changed unreviewed protection/context dependency ${file}`);
+    const clearance = internalVerifyProtectionContextDependencyAmendmentFromDisk(context);
+    for (const { file, expected } of changed) {
+      if (!protectionContextAmendmentFiles.includes(file)) { internalAssertVisualPresentationDependencies(context, { [file]: expected }); continue; }
+      assert.equal(clearance.dependencies.amendments[file].baselineSha256, expected, `Wrong historical protection/context dependency ${file}`);
+      internalAssertCurrentProtectionDependencies(context, { [file]: clearance.dependencies.amendments[file].reviewedSha256 });
+    }
+  });
 }
 export function assertProtectionContextForwardDependency(file, expected, read = readProtectionContextBytes) {
-  return assertProtectionContextForwardDependencies({ [file]: expected }, read);
+  return runFreshProof({ root, omittedReader: arguments.length <= 2, read, inputs: [file, expected] },
+    context => internalAssertProtectionContextForwardDependency(context, file, expected));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertProtectionContextForwardDependency(context, file, expected) {
+  return evaluateProof(context, () => {
+
+    return internalAssertProtectionContextForwardDependencies(context, { [file]: expected });
+  });
 }
 
 // Historical adapters may see only this independently attested predecessor hash.
 // The real raw-byte verifier above always examines the current files themselves.
 export function protectionContextHistoricalHash(file, read = readProtectionContextBytes) {
-  const actual = protectionContextDigest(read(file));
-  if (!protectionContextAmendmentFiles.includes(file)) return actual;
-  const baseline = JSON.parse(read(`${protectionContextReviewDir}/baseline-dependencies.json`));
-  if (actual === baseline[file]) return actual;
-  const clearance = verifyProtectionContextDependencyAmendment(JSON.parse(read(protectionContextClearancePath)), read);
-  assertCurrentProtectionDependencies({ [file]: clearance.dependencies.amendments[file].reviewedSha256 }, read);
-  return clearance.dependencies.amendments[file].baselineSha256;
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [file] },
+    context => internalProtectionContextHistoricalHash(context, file));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalProtectionContextHistoricalHash(context, file) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash, json: proofJson } = proofOperations(context);
+    const actual = proofHash(file);
+    if (!protectionContextAmendmentFiles.includes(file)) return actual;
+    const baseline = proofJson(`${protectionContextReviewDir}/baseline-dependencies.json`);
+    if (actual === baseline[file]) return actual;
+    const clearance = internalVerifyProtectionContextDependencyAmendmentFromDisk(context);
+    internalAssertCurrentProtectionDependencies(context, { [file]: clearance.dependencies.amendments[file].reviewedSha256 });
+    return clearance.dependencies.amendments[file].baselineSha256;
+  });
 }
 
 // PR32 froze these presentation adapters along with its source inputs. Only these
 // two exact files have later presentation amendments; source evidence stays fixed.
 export function assertProtectionContextSourceInputs(expectedFiles, read = readProtectionContextBytes) {
-  const changed = Object.fromEntries(Object.entries(expectedFiles).filter(([file, expected]) => protectionContextDigest(read(file)) !== expected));
-  for (const file of Object.keys(changed)) assert.ok(['frontend/components/catalog/ProductVisual.js', 'frontend/lib/catalog/apiData.js'].includes(file), `Changed immutable source input ${file}`);
-  assertProtectionContextForwardDependencies(changed, read);
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [expectedFiles] },
+    context => internalAssertProtectionContextSourceInputs(context, expectedFiles));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertProtectionContextSourceInputs(context, expectedFiles) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash } = proofOperations(context);
+    const changed = Object.fromEntries(Object.entries(expectedFiles).filter(([file, expected]) => proofHash(file) !== expected));
+    for (const file of Object.keys(changed)) assert.ok(['frontend/components/catalog/ProductVisual.js', 'frontend/lib/catalog/apiData.js'].includes(file), `Changed immutable source input ${file}`);
+    internalAssertProtectionContextForwardDependencies(context, changed);
+  });
 }
 export function assertProtectionContextSourceInput(file, expected, read = readProtectionContextBytes) {
-  return assertProtectionContextSourceInputs({ [file]: expected }, read);
+  return runFreshProof({ root, omittedReader: arguments.length <= 2, read, inputs: [file, expected] },
+    context => internalAssertProtectionContextSourceInput(context, file, expected));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertProtectionContextSourceInput(context, file, expected) {
+  return evaluateProof(context, () => {
+
+    return internalAssertProtectionContextSourceInputs(context, { [file]: expected });
+  });
+}
+
+const verifyProtectionContextDependencyAmendmentIdentity = Symbol('verifyProtectionContextDependencyAmendment');
+
+function internalVerifyProtectionContextDependencyAmendmentFromDisk(context) {
+  return prove(context, verifyProtectionContextDependencyAmendmentIdentity, 'approved', protectionContextClearancePath,
+    internalVerifyProtectionContextDependencyAmendment);
 }

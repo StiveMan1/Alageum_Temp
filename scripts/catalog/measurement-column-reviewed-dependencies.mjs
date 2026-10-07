@@ -1,4 +1,6 @@
-import { assertProtectionContextForwardDependencies } from './protection-context-reviewed-dependencies.mjs';
+import { ktpbPredecessors, internalAssertKtpbDependencies } from './ktpb-source-context-reviewed-dependencies.mjs';
+import { runFreshProof, proofOperations, prove, evaluateProof } from './proof-invocation.mjs';
+import { internalAssertProtectionContextForwardDependencies } from './protection-context-reviewed-dependencies.mjs';
 // One forward amendment of PR32. This leaf verifier uses raw bytes only, so
 // historical approval adapters cannot authorize themselves through a cycle.
 import assert from 'node:assert/strict';
@@ -85,71 +87,117 @@ export const readMeasurementColumnBytes = file => {
 
 /** Candidate evidence check only. Passing this does not authorize a release. */
 export function verifyMeasurementColumnDependencyFiles(clearance, read = readMeasurementColumnBytes) {
-  const hash = file => digest(read(file));
-  assert.equal(clearance.format, 'alageum-measurement-column-completion-clearance-v1');
-  assert.equal(clearance.baselineCommit, measurementColumnBaselineCommit);
-  assert.equal(clearance.baselineTree, measurementColumnBaselineTree);
-  const historical = JSON.parse(read(`${historicalDir}/clearance.json`));
-  const originalFiles = historical.dependencies.reviewedFiles;
-  assert.equal(Object.keys(originalFiles).length, 202);
-  const { amendments, reviewedFiles } = clearance.dependencies;
-  for (const [file, expected] of Object.entries(fixedFiles)) assert.equal(reviewedFiles[file], expected, `Changed frozen measurement-column input ${file}`);
-  assert.deepEqual(Object.keys(amendments).sort(), [...measurementColumnAmendmentFiles].sort(), 'Incomplete or overbroad measurement-column amendment');
-  const required = [...new Set([...Object.keys(originalFiles), ...measurementColumnRequiredFiles])].sort();
-  assert.deepEqual(Object.keys(reviewedFiles).sort(), required, 'Incomplete or overbroad measurement-column dependency scope');
-  for (const [file, expected] of Object.entries(originalFiles)) {
-    if (measurementColumnAmendmentFiles.includes(file)) {
-      assert.equal(amendments[file].baselineSha256, expected, `Wrong PR32 dependency ${file}`);
-      assert.equal(reviewedFiles[file], amendments[file].reviewedSha256, `Missing exact measurement-column amendment pin ${file}`);
-      assert.notEqual(amendments[file].reviewedSha256, expected, `Unnecessary measurement-column amendment ${file}`);
-    } else assert.equal(reviewedFiles[file], expected, `Changed historical measurement-column dependency pin ${file}`);
-  }
-  assertProtectionContextForwardDependencies(reviewedFiles, read);
-  const prototype = JSON.parse(read(`${reviewDir}/prototype-independent-review.json`));
-  for (const entry of prototype.acceptedFiles) assert.equal(hash(entry.path), entry.sha256, `Changed accepted measurement-column prototype ${entry.path}`);
-  assert.equal(clearance.bindingsSha256, hash(manifestPath), 'Changed measurement-column bindings');
-  assert.equal(clearance.baselineOutputsSha256, hash(`${reviewDir}/baseline-outputs.json`), 'Changed PR32 output baseline');
-  const manifest = JSON.parse(read(manifestPath));
-  assert.deepEqual(Object.keys(manifest.records).sort(), [...measurementColumnExactIds].sort());
-  assert.deepEqual([...new Set(Object.values(manifest.records).map(record => record.type))], ['tr26-measurement-column-zom-znom-source']);
-  return clearance;
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [clearance] },
+    context => internalVerifyMeasurementColumnDependencyFiles(context, clearance));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifyMeasurementColumnDependencyFiles(context, clearance) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash, json: proofJson } = proofOperations(context);
+
+    const hash = file => proofHash(file);
+    assert.equal(clearance.format, 'alageum-measurement-column-completion-clearance-v1');
+    assert.equal(clearance.baselineCommit, measurementColumnBaselineCommit);
+    assert.equal(clearance.baselineTree, measurementColumnBaselineTree);
+    const historical = proofJson(`${historicalDir}/clearance.json`);
+    const originalFiles = historical.dependencies.reviewedFiles;
+    assert.equal(Object.keys(originalFiles).length, 202);
+    const { amendments, reviewedFiles } = clearance.dependencies;
+    for (const [file, expected] of Object.entries(fixedFiles)) assert.equal(reviewedFiles[file], expected, `Changed frozen measurement-column input ${file}`);
+    assert.deepEqual(Object.keys(amendments).sort(), [...measurementColumnAmendmentFiles].sort(), 'Incomplete or overbroad measurement-column amendment');
+    const required = [...new Set([...Object.keys(originalFiles), ...measurementColumnRequiredFiles])].sort();
+    assert.deepEqual(Object.keys(reviewedFiles).sort(), required, 'Incomplete or overbroad measurement-column dependency scope');
+    for (const [file, expected] of Object.entries(originalFiles)) {
+      if (measurementColumnAmendmentFiles.includes(file)) {
+        assert.equal(amendments[file].baselineSha256, expected, `Wrong PR32 dependency ${file}`);
+        assert.equal(reviewedFiles[file], amendments[file].reviewedSha256, `Missing exact measurement-column amendment pin ${file}`);
+        assert.notEqual(amendments[file].reviewedSha256, expected, `Unnecessary measurement-column amendment ${file}`);
+      } else assert.equal(reviewedFiles[file], expected, `Changed historical measurement-column dependency pin ${file}`);
+    }
+    internalAssertProtectionContextForwardDependencies(context, reviewedFiles);
+    const prototype = proofJson(`${reviewDir}/prototype-independent-review.json`);
+    for (const entry of prototype.acceptedFiles) assert.equal(hash(entry.path), entry.sha256, `Changed accepted measurement-column prototype ${entry.path}`);
+    assert.equal(clearance.bindingsSha256, hash(manifestPath), 'Changed measurement-column bindings');
+    assert.equal(clearance.baselineOutputsSha256, hash(`${reviewDir}/baseline-outputs.json`), 'Changed PR32 output baseline');
+    const manifest = proofJson(manifestPath);
+    assert.deepEqual(Object.keys(manifest.records).sort(), [...measurementColumnExactIds].sort());
+    assert.deepEqual([...new Set(Object.values(manifest.records).map(record => record.type))], ['tr26-measurement-column-zom-znom-source']);
+    return clearance;
+  });
 }
 
 /** Release authority: an exact independent successor review is mandatory. */
 export function verifyMeasurementColumnDependencyAmendment(clearance, read = readMeasurementColumnBytes) {
-  assert.equal(clearance.status, 'approved-bounded-measurement-columns', 'Measurement-column integration still requires independent approval');
-  verifyMeasurementColumnDependencyFiles(clearance, read);
-  assert.equal(clearance.reviewReport, `${reviewDir}/independent-review.json`, 'Wrong measurement-column review report');
-  assert.equal(digest(read(clearance.reviewReport)), clearance.reviewReportSha256, 'Changed independent measurement-column review');
-  const report = JSON.parse(read(clearance.reviewReport));
-  assert.equal(report.format, 'alageum-measurement-column-completion-independent-review-v1');
-  assert.equal(report.status, 'approved-bounded-measurement-columns');
-  assert.equal(report.baselineCommit, measurementColumnBaselineCommit);
-  assert.equal(report.baselineTree, measurementColumnBaselineTree);
-  assert.equal(report.approvedDependenciesSha256, digest(JSON.stringify(clearance.dependencies)), 'Changed independently approved measurement-column dependencies');
-  assert.equal(report.approvedBindingsSha256, clearance.bindingsSha256);
-  assert.equal(report.approvedBaselineOutputsSha256, clearance.baselineOutputsSha256);
-  assert.deepEqual(report.approvedRecordIds, [...measurementColumnExactIds]);
-  assert.deepEqual(report.counts, { addedBindings: 3, newModelTypes: 1, newIconTypes: 1, newProducts: 0 });
-  assert.deepEqual(report.unchangedCounts, { productBodies: 843, unaffectedRecords: 840, legacyRecords: 238,
-    choiceRecords: 36, choices: 74, sourcePreviews: 2, oldModelTypes: 125, oldIconTypes: 135 });
-  return clearance;
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [clearance] },
+    context => internalVerifyMeasurementColumnDependencyAmendment(context, clearance));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifyMeasurementColumnDependencyAmendment(context, clearance) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash, json: proofJson } = proofOperations(context);
+
+    assert.equal(clearance.status, 'approved-bounded-measurement-columns', 'Measurement-column integration still requires independent approval');
+    internalVerifyMeasurementColumnDependencyFiles(context, clearance);
+    assert.equal(clearance.reviewReport, `${reviewDir}/independent-review.json`, 'Wrong measurement-column review report');
+    assert.equal(proofHash(clearance.reviewReport), clearance.reviewReportSha256, 'Changed independent measurement-column review');
+    const report = proofJson(clearance.reviewReport);
+    assert.equal(report.format, 'alageum-measurement-column-completion-independent-review-v1');
+    assert.equal(report.status, 'approved-bounded-measurement-columns');
+    assert.equal(report.baselineCommit, measurementColumnBaselineCommit);
+    assert.equal(report.baselineTree, measurementColumnBaselineTree);
+    assert.equal(report.approvedDependenciesSha256, digest(JSON.stringify(clearance.dependencies)), 'Changed independently approved measurement-column dependencies');
+    assert.equal(report.approvedBindingsSha256, clearance.bindingsSha256);
+    assert.equal(report.approvedBaselineOutputsSha256, clearance.baselineOutputsSha256);
+    assert.deepEqual(report.approvedRecordIds, [...measurementColumnExactIds]);
+    assert.deepEqual(report.counts, { addedBindings: 3, newModelTypes: 1, newIconTypes: 1, newProducts: 0 });
+    assert.deepEqual(report.unchangedCounts, { productBodies: 843, unaffectedRecords: 840, legacyRecords: 238,
+      choiceRecords: 36, choices: 74, sourcePreviews: 2, oldModelTypes: 125, oldIconTypes: 135 });
+    return clearance;
+  });
 }
 
 /** Compare to one historical hash without changing any raw hashing semantics. */
 export function assertMeasurementColumnForwardDependencies(expectedFiles, read = readMeasurementColumnBytes) {
-  const changed = Object.entries(expectedFiles).filter(([file, expected]) => digest(read(file)) !== expected);
-  if (!changed.length) return;
-  const needsMeasurementReview = changed.some(([file]) => measurementColumnAmendmentFiles.includes(file));
-  const clearance = needsMeasurementReview ? verifyMeasurementColumnDependencyAmendment(JSON.parse(read(measurementColumnClearancePath)), read) : null;
-  const successorFiles = Object.fromEntries(changed.map(([file, expected]) => {
-    if (!measurementColumnAmendmentFiles.includes(file)) return [file, expected];
-    const amendment = clearance.dependencies.amendments[file];
-    assert.equal(amendment.baselineSha256, expected, `Wrong historical forward-amendment dependency ${file}`);
-    return [file, amendment.reviewedSha256];
-  }));
-  assertProtectionContextForwardDependencies(successorFiles, read);
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [expectedFiles] },
+    context => internalAssertMeasurementColumnForwardDependencies(context, expectedFiles));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertMeasurementColumnForwardDependencies(context, expectedFiles) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash } = proofOperations(context);
+    let changed = Object.entries(expectedFiles).filter(([file, expected]) => proofHash(file) !== expected);
+    if (!changed.length) return;
+    // Only the exact PR43 edge may bypass the older historical branch.
+    const terminal = changed.filter(([file, expected]) => Object.hasOwn(ktpbPredecessors, file) && expected === ktpbPredecessors[file]);
+    internalAssertKtpbDependencies(context, Object.fromEntries(terminal));
+    changed = changed.filter(([file, expected]) => !Object.hasOwn(ktpbPredecessors, file) || expected !== ktpbPredecessors[file]);
+    if (!changed.length) return;
+    const needsMeasurementReview = changed.some(([file]) => measurementColumnAmendmentFiles.includes(file));
+    const clearance = needsMeasurementReview ? internalVerifyMeasurementColumnDependencyAmendmentFromDisk(context) : null;
+    const successorFiles = Object.fromEntries(changed.map(([file, expected]) => {
+      if (!measurementColumnAmendmentFiles.includes(file)) return [file, expected];
+      const amendment = clearance.dependencies.amendments[file];
+      assert.equal(amendment.baselineSha256, expected, `Wrong historical forward-amendment dependency ${file}`);
+      return [file, amendment.reviewedSha256];
+    }));
+    internalAssertProtectionContextForwardDependencies(context, successorFiles);
+  });
 }
 export function assertMeasurementColumnForwardDependency(file, expected, read = readMeasurementColumnBytes) {
-  return assertMeasurementColumnForwardDependencies({ [file]: expected }, read);
+  return runFreshProof({ root, omittedReader: arguments.length <= 2, read, inputs: [file, expected] },
+    context => internalAssertMeasurementColumnForwardDependency(context, file, expected));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertMeasurementColumnForwardDependency(context, file, expected) {
+  return evaluateProof(context, () => {
+
+    return internalAssertMeasurementColumnForwardDependencies(context, { [file]: expected });
+  });
+}
+
+const verifyMeasurementColumnDependencyAmendmentIdentity = Symbol('verifyMeasurementColumnDependencyAmendment');
+
+function internalVerifyMeasurementColumnDependencyAmendmentFromDisk(context) {
+  return prove(context, verifyMeasurementColumnDependencyAmendmentIdentity, 'approved', measurementColumnClearancePath,
+    internalVerifyMeasurementColumnDependencyAmendment);
 }

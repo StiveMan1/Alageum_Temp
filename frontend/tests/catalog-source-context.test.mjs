@@ -13,7 +13,7 @@ import { sourceContextManifest as manifest, verifySourceContextManifest, createS
 const readAsset = path => readFile(new URL(`../public${path}`, import.meta.url));
 const verifier = createSourceContextAssetVerifier(readAsset);
 const evidence = await verifier.verify();
-const originals = Object.keys(manifest.records).map(productById);
+const originals = Object.keys(manifest.records).filter(id => !id.startsWith('cat-ktpb-k')).map(productById);
 const api = record => normalizeApiProduct({
   id: manifest.records[record.id].databaseId, public_key: record.id, sku: record.sku,
   category_public_key: record.category, translations: { ru: { name: record.name, description: record.description } },
@@ -21,7 +21,7 @@ const api = record => normalizeApiProduct({
 });
 const result = record => context(record, evidence);
 
-test('24 canonical static/API rows receive context; all 843 bodies and resolver results remain untouched', () => {
+test('original 24 static/API contexts persist alongside exact additions; all 843 bodies and bindings remain untouched', () => {
   assert.ok(evidence);
   const before = JSON.stringify(officialProducts);
   const bindings = officialProducts.map(p => [getEquipmentVisual(p), getEquipmentIcon(p), getEquipmentConstructionChoices(p)]);
@@ -114,9 +114,8 @@ test('manifest pins exact crop boxes, captions, sources and cross-example mappin
 });
 
 test('source byte gate rejects missing or same-size corrupted page, raw media and crop assets', async () => {
-  const paths = [...Object.keys(manifest.assets), ...Object.values(manifest.figures).map(f => f.cropPath)];
-  assert.equal(paths.length, new Set(paths).size);
-  assert.equal(paths.length, 10);
+  const paths = [...new Set([...Object.keys(manifest.assets), ...Object.values(manifest.figures).map(f => f.cropPath)])];
+  assert.equal(paths.length, 14);
   for (const target of paths) {
     for (const failure of ['missing', 'corrupt']) {
       const broken = createSourceContextAssetVerifier(async path => {
@@ -135,11 +134,11 @@ test('verification is shared across 24 rows, has no fetches, and invalidation cl
   const shared = createSourceContextAssetVerifier(path => { count++; assert.ok(path.startsWith('/catalog-')); assert.ok(!path.endsWith('.pdf')); return readAsset(path); });
   const tokens = await Promise.all(originals.map(() => shared.verify()));
   assert.ok(tokens.every(token => token === tokens[0]));
-  assert.equal(count, 10);
+  assert.equal(count, 14);
   for (const record of originals) assert.ok(context(record, tokens[0]));
   shared.invalidate();
   assert.ok(context(originals[0], JSON.parse(JSON.stringify(tokens[0])))); // Build proof is serializable, not a revocable credential.
-  assert.ok(await shared.verify()); assert.equal(count, 20);
+  assert.ok(await shared.verify()); assert.equal(count, 28);
   let release;
   const delayed = createSourceContextAssetVerifier(async path => { await new Promise(resolve => { release ??= []; release.push(resolve); }); return readAsset(path); });
   const pending = delayed.verify(); delayed.invalidate(); release.forEach(resolve => resolve());

@@ -1,5 +1,7 @@
+import { runFreshProof, proofOperations, prove, evaluateProof } from './proof-invocation.mjs';
+import { ktpbPredecessors, internalAssertKtpbDependencies } from './ktpb-source-context-reviewed-dependencies.mjs';
 // A bounded PR42 dependency successor. Reads current bytes only; no predecessor
-// verifier, historical-byte substitution, cache, environment flag or hash refresh.
+// verifier, historical-byte substitution, cross-invocation cache or hash refresh.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -38,31 +40,84 @@ export const readSecurityBytes = file => {
   return fs.readFileSync(path.join(root, file));
 };
 export function securityRequiredFiles(read = readSecurityBytes) {
-  const bytes = read(baselinePath);
-  assert.equal(securityDigest(bytes), baselineHash, 'Changed frozen PR42 security baseline');
-  return [...Object.keys(JSON.parse(bytes)), ...securityNewFiles].sort();
+  return runFreshProof({ root, omittedReader: arguments.length <= 0, read, inputs: [] },
+    context => internalSecurityRequiredFiles(context));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalSecurityRequiredFiles(context) {
+  return evaluateProof(context, () => {
+    const { bytes: read } = proofOperations(context);
+    const bytes = read(baselinePath);
+    assert.equal(securityDigest(bytes), baselineHash, 'Changed frozen PR42 security baseline');
+    return [...Object.keys(JSON.parse(bytes)), ...securityNewFiles].sort();
+  });
 }
 export function verifySecurityDependencyFiles(clearance, read = readSecurityBytes) {
-  assert.equal(clearance.format, 'alageum-frontend-security-clearance-v1');
-  assert.equal(clearance.baselineCommit, securityBaselineCommit); assert.equal(clearance.baselineTree, securityBaselineTree);
-  assert.deepEqual(clearance.dependencies.predecessors, securityPredecessors, 'Changed security predecessor scope or hashes');
-  const reviewed = clearance.dependencies.reviewedFiles;
-  assert.deepEqual(Object.keys(reviewed).sort(), securityRequiredFiles(read), 'Incomplete or overbroad security dependency closure');
-  const baseline = JSON.parse(read(baselinePath));
-  for (const [file, expected] of Object.entries(baseline)) {
-    if (Object.hasOwn(securityPredecessors, file)) {
-      assert.equal(securityPredecessors[file], expected, `Wrong PR42 security predecessor ${file}`);
-      assert.notEqual(reviewed[file], expected, `Mixed or unchanged security successor ${file}`);
-    } else assert.equal(reviewed[file], expected, `Changed immutable PR42 security pin ${file}`);
-  }
-  assert.equal(reviewed['frontend/package-lock.json'], fixedLockHash, 'Unreviewed dependency resolution');
-  for (const [file, expected] of Object.entries(reviewed)) assert.equal(securityDigest(read(file)), expected, `Changed security-reviewed bytes ${file}`);
-  return clearance;
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [clearance] },
+    context => internalVerifySecurityDependencyFiles(context, clearance));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifySecurityDependencyFiles(context, clearance) {
+  return evaluateProof(context, () => {
+    const { json: proofJson } = proofOperations(context);
+
+    assert.equal(clearance.format, 'alageum-frontend-security-clearance-v1');
+    assert.equal(clearance.baselineCommit, securityBaselineCommit); assert.equal(clearance.baselineTree, securityBaselineTree);
+    assert.deepEqual(clearance.dependencies.predecessors, securityPredecessors, 'Changed security predecessor scope or hashes');
+    const reviewed = clearance.dependencies.reviewedFiles;
+    assert.deepEqual(Object.keys(reviewed).sort(), internalSecurityRequiredFiles(context), 'Incomplete or overbroad security dependency closure');
+    const baseline = proofJson(baselinePath);
+    for (const [file, expected] of Object.entries(baseline)) {
+      if (Object.hasOwn(securityPredecessors, file)) {
+        assert.equal(securityPredecessors[file], expected, `Wrong PR42 security predecessor ${file}`);
+        assert.notEqual(reviewed[file], expected, `Mixed or unchanged security successor ${file}`);
+      } else assert.equal(reviewed[file], expected, `Changed immutable PR42 security pin ${file}`);
+    }
+    assert.equal(reviewed['frontend/package-lock.json'], fixedLockHash, 'Unreviewed dependency resolution');
+    internalAssertKtpbDependencies(context, reviewed);
+    return clearance;
+  });
 }
 export function verifySecurityAmendment(read = readSecurityBytes) {
-  const clearance = JSON.parse(read(securityClearancePath));
+  return runFreshProof({ root, omittedReader: arguments.length <= 0, read, inputs: [] },
+    context => internalVerifySecurityAmendment(context));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifySecurityAmendment(context) {
+  return evaluateProof(context, () => {
+
+    return prove(context, verifySecurityAmendmentIdentity, 'approved', securityClearancePath, internalVerifySecurityAmendmentCanonical);
+  });
+}
+export function assertSecurityDependencies(expectedFiles, read = readSecurityBytes) {
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [expectedFiles] },
+    context => internalAssertSecurityDependencies(context, expectedFiles));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertSecurityDependencies(context, expectedFiles) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash } = proofOperations(context);
+    const changed = Object.entries(expectedFiles).filter(([file, expected]) => proofHash(file) !== expected);
+    if (!changed.length) return;
+    const current = changed.filter(([file, expected]) => Object.hasOwn(ktpbPredecessors, file) && expected === ktpbPredecessors[file]);
+    internalAssertKtpbDependencies(context, Object.fromEntries(current));
+    const prior = changed.filter(([file, expected]) => !Object.hasOwn(ktpbPredecessors, file) || expected !== ktpbPredecessors[file]);
+    if (!prior.length) return;
+    for (const [file, expected] of prior) {
+      assert.ok(Object.hasOwn(securityPredecessors, file), `Changed unreviewed security dependency ${file}`);
+      assert.equal(expected, securityPredecessors[file], `Wrong frontend security predecessor ${file}`);
+    }
+    const clearance = internalVerifySecurityAmendment(context);
+    internalAssertKtpbDependencies(context, Object.fromEntries(prior.map(([file]) => [file, clearance.dependencies.reviewedFiles[file]])));
+  });
+}
+
+const verifySecurityAmendmentIdentity = Symbol('verifySecurityAmendment');
+
+function internalVerifySecurityAmendmentCanonical(context, clearance) {
+  const { bytes: read } = proofOperations(context);
   assert.equal(clearance.status, 'approved-bounded-frontend-security', 'Frontend security amendment requires independent approval');
-  verifySecurityDependencyFiles(clearance, read);
+  internalVerifySecurityDependencyFiles(context, clearance);
   assert.equal(clearance.reviewReport, securityReportPath);
   const bytes = read(securityReportPath);
   assert.equal(securityDigest(bytes), clearance.reviewReportSha256, 'Changed independent frontend security report');
@@ -74,14 +129,5 @@ export function verifySecurityAmendment(read = readSecurityBytes) {
   assert.deepEqual(report.packageUpdates, { sharp: ['0.35.4', '0.35.5'], 'source-map-js': ['1.2.1', '1.2.2'], nativeBinaryEntries: 26 });
   for (const field of ['sourceUiChanges', 'recordChanges', 'geometryMaterialChanges', 'pageChanges', 'thresholdChanges', 'workflowChanges', 'priorApprovalChanges', 'backendDependencyChanges', 'auditGateChanges']) assert.equal(report[field], 0, `Unapproved frontend security scope ${field}`);
   return clearance;
-}
-export function assertSecurityDependencies(expectedFiles, read = readSecurityBytes) {
-  const changed = Object.entries(expectedFiles).filter(([file, expected]) => securityDigest(read(file)) !== expected);
-  if (!changed.length) return;
-  for (const [file, expected] of changed) {
-    assert.ok(Object.hasOwn(securityPredecessors, file), `Changed unreviewed security dependency ${file}`);
-    assert.equal(expected, securityPredecessors[file], `Wrong frontend security predecessor ${file}`);
-  }
-  const clearance = verifySecurityAmendment(read);
-  for (const [file] of changed) assert.equal(securityDigest(read(file)), clearance.dependencies.reviewedFiles[file], `Changed approved security successor ${file}`);
+
 }

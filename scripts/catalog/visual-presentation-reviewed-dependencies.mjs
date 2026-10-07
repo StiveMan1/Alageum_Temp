@@ -1,4 +1,6 @@
-import { assertPtmmQualificationDependencies } from './ptmm-qualification-reviewed-dependencies.mjs';
+import { ktpbPredecessors, internalAssertKtpbDependencies } from './ktpb-source-context-reviewed-dependencies.mjs';
+import { runFreshProof, proofOperations, prove, evaluateProof } from './proof-invocation.mjs';
+import { internalAssertPtmmQualificationDependencies } from './ptmm-qualification-reviewed-dependencies.mjs';
 // Exact presentation-only successor to PR36. Fresh raw reads; no older gate calls.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -44,7 +46,45 @@ export const readVisualBytes = file => {
   return fs.readFileSync(path.join(root, file));
 };
 export function verifyVisualPresentationAmendment(read = readVisualBytes) {
-  const clearance = JSON.parse(read(visualClearancePath));
+  return runFreshProof({ root, omittedReader: arguments.length <= 0, read, inputs: [] },
+    context => internalVerifyVisualPresentationAmendment(context));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifyVisualPresentationAmendment(context) {
+  return evaluateProof(context, () => {
+
+    return prove(context, verifyVisualPresentationAmendmentIdentity, 'approved', visualClearancePath, internalVerifyVisualPresentationAmendmentCanonical);
+  });
+}
+// Invocation-scoped: no cached authority, virtual bytes or reusable approval token.
+export function assertVisualPresentationDependencies(expectedFiles, read = readVisualBytes) {
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [expectedFiles] },
+    context => internalAssertVisualPresentationDependencies(context, expectedFiles));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertVisualPresentationDependencies(context, expectedFiles) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash } = proofOperations(context);
+    let changed = Object.entries(expectedFiles).map(([file, expected]) => ({ file, expected, actual: proofHash(file) })).filter(item => item.actual !== item.expected);
+    if (!changed.length) return;
+    // Only the exact PR43 edge may bypass the older historical branch.
+    const terminal = changed.filter(({ file, expected }) => Object.hasOwn(ktpbPredecessors, file) && expected === ktpbPredecessors[file]);
+    internalAssertKtpbDependencies(context, Object.fromEntries(terminal.map(({ file, expected }) => [file, expected])));
+    changed = changed.filter(({ file, expected }) => !Object.hasOwn(ktpbPredecessors, file) || expected !== ktpbPredecessors[file]);
+    if (!changed.length) return;
+    for (const { file, expected } of changed) {
+      assert.ok(Object.hasOwn(visualPredecessors, file), `Changed unreviewed visual presentation dependency ${file}`);
+      assert.equal(expected, visualPredecessors[file], `Wrong visual presentation predecessor ${file}`);
+    }
+    const clearance = internalVerifyVisualPresentationAmendment(context);
+    internalAssertPtmmQualificationDependencies(context, Object.fromEntries(changed.map(({ file }) => [file, clearance.dependencies.reviewedFiles[file]])));
+  });
+}
+
+const verifyVisualPresentationAmendmentIdentity = Symbol('verifyVisualPresentationAmendment');
+
+function internalVerifyVisualPresentationAmendmentCanonical(context, clearance) {
+  const { bytes: read } = proofOperations(context);
   assert.equal(clearance.format, 'alageum-visual-presentation-clearance-v1');
   assert.equal(clearance.status, 'approved-bounded-visual-presentation', 'Visual presentation requires independent approval');
   assert.equal(clearance.baselineCommit, visualBaselineCommit); assert.equal(clearance.baselineTree, visualBaselineTree);
@@ -53,8 +93,8 @@ export function verifyVisualPresentationAmendment(read = readVisualBytes) {
   assert.deepEqual(Object.keys(reviewed).sort(), [...visualRequiredFiles].sort(), 'Incomplete or overbroad visual dependency scope');
   assert.equal(reviewed['frontend/components/catalog/models/createEquipmentViewer.js'], '46efdcd611b69deba5a3d1bb30fe4ee95c72b705ce569a140252aba918fafe27', 'Changed reviewed exposure correction');
   assert.equal(reviewed['frontend/components/catalog/source-context/CatalogSourceContext.module.css'], '0d13bcc3c0b8131c94427904aad26cd5ee45f8ac2d36a452869d8317512e4218', 'Changed reviewed viewport correction');
-  assertPtmmQualificationDependencies(fixed, read);
-  assertPtmmQualificationDependencies(reviewed, read);
+  internalAssertPtmmQualificationDependencies(context, fixed);
+  internalAssertPtmmQualificationDependencies(context, reviewed);
   assert.equal(clearance.reviewReport, visualReportPath);
   const reportBytes = read(visualReportPath);
   assert.equal(visualDigest(reportBytes), clearance.reviewReportSha256, 'Changed independent visual presentation report');
@@ -68,15 +108,5 @@ export function verifyVisualPresentationAmendment(read = readVisualBytes) {
   assert.equal(report.hostedCaseCount, 254); assert.equal(report.thresholdChanges, 0);
   assert.equal(report.geometryMaterialChanges, 0); assert.equal(report.recordChanges, 0); assert.equal(report.pageChanges, 0);
   return clearance;
-}
-// Invocation-scoped: no cached authority, virtual bytes or reusable approval token.
-export function assertVisualPresentationDependencies(expectedFiles, read = readVisualBytes) {
-  const changed = Object.entries(expectedFiles).map(([file, expected]) => ({ file, expected, actual: visualDigest(read(file)) })).filter(item => item.actual !== item.expected);
-  if (!changed.length) return;
-  for (const { file, expected } of changed) {
-    assert.ok(Object.hasOwn(visualPredecessors, file), `Changed unreviewed visual presentation dependency ${file}`);
-    assert.equal(expected, visualPredecessors[file], `Wrong visual presentation predecessor ${file}`);
-  }
-  const clearance = verifyVisualPresentationAmendment(read);
-  assertPtmmQualificationDependencies(Object.fromEntries(changed.map(({ file }) => [file, clearance.dependencies.reviewedFiles[file]])), read);
+
 }

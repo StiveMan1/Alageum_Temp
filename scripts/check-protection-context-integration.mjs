@@ -1,3 +1,4 @@
+import { verifyKtpbSourceContextPreservation } from './check-ktpb-source-context.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -108,7 +109,8 @@ export async function verifyProtectionContextPreservation() {
     }
   }
   assert.deepEqual(Object.keys(current.sourceContexts).sort(), Object.keys(sourceContextManifest.records).sort());
-  for (const [id, pair] of Object.entries(current.sourceContexts)) {
+  const { legacySourceContexts } = await verifyKtpbSourceContextPreservation(current);
+  for (const [id, pair] of Object.entries(legacySourceContexts)) {
     assert.equal(pair.static.canonicalId, id); assert.equal(pair.api.canonicalId, id);
     const row = officialProducts.find(record => record.id === id);
     assert.equal(getEquipmentVisual(row).type, null); assert.equal(getEquipmentVisual(row).confidence, 'source-only');
@@ -123,7 +125,7 @@ export async function verifyProtectionContextPreservation() {
     choices: officialProducts.reduce((count, row) => count + getEquipmentConstructionChoices(row).length, 0),
     ntmiSourcePreviews: officialProducts.filter(row => getNtmiSourcePreview(row)).length,
     explicitConstructionGaps: gaps.length, constructionGapFamilies: new Set(gaps.map(row => row.familyId)).size,
-    sourceContextRecords: Object.keys(current.sourceContexts).length, newProducts: 0, confidencePromotions: 0, apiSummaryCorrections: 23, comparisonCellCorrections: 3 };
+    sourceContextRecords: Object.keys(legacySourceContexts).length, newProducts: 0, confidencePromotions: 0, apiSummaryCorrections: 23, comparisonCellCorrections: 3 };
   assert.deepEqual(counts, { productBodies: 843, unchangedProductBindings: 840, legacyRecords: 238, oldModelTypes: 126, oldIconTypes: 136,
     newModelTypes: 2, newIconTypes: 3, sourceGroundedDefault3D: 464, sourceBasedIcons: 465, choiceRecords: 36, choices: 74,
     ntmiSourcePreviews: 2, explicitConstructionGaps: 243, constructionGapFamilies: 29, sourceContextRecords: 24, newProducts: 0, confidencePromotions: 0, apiSummaryCorrections: 23, comparisonCellCorrections: 3 });
