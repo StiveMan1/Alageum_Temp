@@ -1,3 +1,4 @@
+import { ktpbLegacyContextIds } from '../../scripts/catalog/ktpb-source-context-reviewed-dependencies.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -170,7 +171,7 @@ test('actual ProductVisual keeps each model omission and both full-source links 
 });
 
 test('actual ProductVisual passes all24 original static/API products to persistent source-only context siblings', async () => {
-  for (const id of Object.keys(sourceContextManifest.records)) for (const value of [productById(id), api(productById(id))]) {
+  for (const id of ktpbLegacyContextIds) for (const value of [productById(id), api(productById(id))]) {
     const html = await render(value), entry = sourceContextManifest.records[id];
     assert.equal((html.match(/data-source-context-for=/g) || []).length, 1);
     assert.ok(html.includes(`data-source-context-for="${id}"`)); assert.doesNotMatch(html, /data-real-viewer-type=|Конструкция для просмотра/);

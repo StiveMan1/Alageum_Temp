@@ -1,4 +1,6 @@
-import { securityPredecessors, assertSecurityDependencies } from './frontend-security-reviewed-dependencies.mjs';
+import { ktpbPredecessors, internalAssertKtpbDependencies } from './ktpb-source-context-reviewed-dependencies.mjs';
+import { runFreshProof, proofOperations, prove, evaluateProof } from './proof-invocation.mjs';
+import { securityPredecessors, internalAssertSecurityDependencies } from './frontend-security-reviewed-dependencies.mjs';
 // Exact raw-byte successor to PR41. No old gates, substituted bytes or cached authority.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -585,25 +587,77 @@ export const readCorrectionBytes = file => {
   return fs.readFileSync(path.join(root, file));
 };
 export function verifyCorrectionDependencyFiles(clearance, read = readCorrectionBytes) {
-  assert.equal(clearance.format, 'alageum-ptmm-browser-correction-clearance-v1');
-  assert.equal(clearance.baselineCommit, correctionBaselineCommit); assert.equal(clearance.baselineTree, correctionBaselineTree);
-  assert.deepEqual(clearance.dependencies.predecessors, correctionPredecessors, 'Changed PTMM browser correction predecessor scope or hashes');
-  const reviewed = clearance.dependencies.reviewedFiles;
-  assert.deepEqual(Object.keys(reviewed).sort(), [...correctionRequiredFiles].sort(), 'Incomplete or overbroad PTMM browser correction dependency closure');
-  for (const [file, prior] of Object.entries(correctionPredecessors)) assert.notEqual(reviewed[file], prior, `Unchanged or mixed PTMM browser correction predecessor ${file}`);
-  const fixedBytes = read(fixedPath);
-  assert.equal(correctionDigest(fixedBytes), fixedSha256, 'Changed PTMM browser correction fixed map');
-  const fixed = JSON.parse(fixedBytes);
-  for (const [file, expected] of Object.entries(fixed)) {
-    assert.equal(reviewed[file], expected, `Changed fixed PTMM browser correction pin ${file}`);
-  }
-  assertSecurityDependencies(reviewed, read);
-  return clearance;
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [clearance] },
+    context => internalVerifyCorrectionDependencyFiles(context, clearance));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifyCorrectionDependencyFiles(context, clearance) {
+  return evaluateProof(context, () => {
+    const { bytes: read } = proofOperations(context);
+
+    assert.equal(clearance.format, 'alageum-ptmm-browser-correction-clearance-v1');
+    assert.equal(clearance.baselineCommit, correctionBaselineCommit); assert.equal(clearance.baselineTree, correctionBaselineTree);
+    assert.deepEqual(clearance.dependencies.predecessors, correctionPredecessors, 'Changed PTMM browser correction predecessor scope or hashes');
+    const reviewed = clearance.dependencies.reviewedFiles;
+    assert.deepEqual(Object.keys(reviewed).sort(), [...correctionRequiredFiles].sort(), 'Incomplete or overbroad PTMM browser correction dependency closure');
+    for (const [file, prior] of Object.entries(correctionPredecessors)) assert.notEqual(reviewed[file], prior, `Unchanged or mixed PTMM browser correction predecessor ${file}`);
+    const fixedBytes = read(fixedPath);
+    assert.equal(correctionDigest(fixedBytes), fixedSha256, 'Changed PTMM browser correction fixed map');
+    const fixed = JSON.parse(fixedBytes);
+    for (const [file, expected] of Object.entries(fixed)) {
+      assert.equal(reviewed[file], expected, `Changed fixed PTMM browser correction pin ${file}`);
+    }
+    internalAssertSecurityDependencies(context, reviewed);
+    return clearance;
+  });
 }
 export function verifyCorrectionAmendment(read = readCorrectionBytes) {
-  const clearance = JSON.parse(read(correctionClearancePath));
+  return runFreshProof({ root, omittedReader: arguments.length <= 0, read, inputs: [] },
+    context => internalVerifyCorrectionAmendment(context));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifyCorrectionAmendment(context) {
+  return evaluateProof(context, () => {
+
+    return prove(context, verifyCorrectionAmendmentIdentity, 'approved', correctionClearancePath, internalVerifyCorrectionAmendmentCanonical);
+  });
+}
+// Only these exact published predecessor pins can be forwarded, and every
+// current dependency remains in the owning invocation’s final reread ledger.
+export function assertCorrectionDependencies(expectedFiles, read = readCorrectionBytes) {
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [expectedFiles] },
+    context => internalAssertCorrectionDependencies(context, expectedFiles));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertCorrectionDependencies(context, expectedFiles) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash } = proofOperations(context);
+    let changed = Object.entries(expectedFiles).filter(([file, expected]) => proofHash(file) !== expected);
+    if (!changed.length) return;
+    // Only the exact PR43 edge may bypass the older historical branch.
+    const terminal = changed.filter(([file, expected]) => Object.hasOwn(ktpbPredecessors, file) && expected === ktpbPredecessors[file]);
+    internalAssertKtpbDependencies(context, Object.fromEntries(terminal));
+    changed = changed.filter(([file, expected]) => !Object.hasOwn(ktpbPredecessors, file) || expected !== ktpbPredecessors[file]);
+    if (!changed.length) return;
+    const current = changed.filter(([file, expected]) => Object.hasOwn(securityPredecessors, file) && expected === securityPredecessors[file]);
+    internalAssertSecurityDependencies(context, Object.fromEntries(current));
+    const prior = changed.filter(([file, expected]) => !Object.hasOwn(securityPredecessors, file) || expected !== securityPredecessors[file]);
+    if (!prior.length) return;
+    for (const [file, expected] of prior) {
+      assert.ok(Object.hasOwn(correctionPredecessors, file), `Changed unreviewed PTMM browser correction dependency ${file}`);
+      assert.equal(expected, correctionPredecessors[file], `Wrong PTMM browser correction predecessor ${file}`);
+    }
+    const clearance = internalVerifyCorrectionAmendment(context);
+    internalAssertSecurityDependencies(context, Object.fromEntries(prior.map(([file]) => [file, clearance.dependencies.reviewedFiles[file]])));
+  });
+}
+
+const verifyCorrectionAmendmentIdentity = Symbol('verifyCorrectionAmendment');
+
+function internalVerifyCorrectionAmendmentCanonical(context, clearance) {
+  const { bytes: read } = proofOperations(context);
   assert.equal(clearance.status, 'approved-bounded-ptmm-browser-correction', 'PTMM browser correction requires independent approval');
-  verifyCorrectionDependencyFiles(clearance, read);
+  internalVerifyCorrectionDependencyFiles(context, clearance);
   assert.equal(clearance.reviewReport, correctionReportPath);
   const bytes = read(correctionReportPath);
   assert.equal(correctionDigest(bytes), clearance.reviewReportSha256, 'Changed independent PTMM browser correction report');
@@ -615,20 +669,5 @@ export function verifyCorrectionAmendment(read = readCorrectionBytes) {
   assert.equal(report.existingCatalogCases, 254); assert.equal(report.separateBrowserCases, 16);
   assert.deepEqual(report.evidence, { readability: 'non-whitespace-ranges-with-bounded-geometry', linkFallback: 'resolved-auth-null-guard', console: 'unchanged-bounded-page-events' });
   return clearance;
-}
-// Only these exact published predecessor pins can be forwarded, and every
-// current dependency is freshly read again when a changed map is verified.
-export function assertCorrectionDependencies(expectedFiles, read = readCorrectionBytes) {
-  const changed = Object.entries(expectedFiles).filter(([file, expected]) => correctionDigest(read(file)) !== expected);
-  if (!changed.length) return;
-  const current = changed.filter(([file, expected]) => Object.hasOwn(securityPredecessors, file) && expected === securityPredecessors[file]);
-  assertSecurityDependencies(Object.fromEntries(current), read);
-  const prior = changed.filter(([file, expected]) => !Object.hasOwn(securityPredecessors, file) || expected !== securityPredecessors[file]);
-  if (!prior.length) return;
-  for (const [file, expected] of prior) {
-    assert.ok(Object.hasOwn(correctionPredecessors, file), `Changed unreviewed PTMM browser correction dependency ${file}`);
-    assert.equal(expected, correctionPredecessors[file], `Wrong PTMM browser correction predecessor ${file}`);
-  }
-  const clearance = verifyCorrectionAmendment(read);
-  assertSecurityDependencies(Object.fromEntries(prior.map(([file]) => [file, clearance.dependencies.reviewedFiles[file]])), read);
+
 }

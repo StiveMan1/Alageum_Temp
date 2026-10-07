@@ -1,3 +1,4 @@
+import { ktpbRequiredFiles, ktpbClearancePath, ktpbReportPath } from '../../scripts/catalog/ktpb-source-context-reviewed-dependencies.mjs';
 import { securityRequiredFiles, securityClearancePath, securityReportPath } from '../../scripts/catalog/frontend-security-reviewed-dependencies.mjs';
 import { correctionRequiredFiles, correctionClearancePath, correctionReportPath } from '../../scripts/catalog/ptmm-browser-correction-reviewed-dependencies.mjs';
 import { ptmmRequiredFiles, ptmmClearancePath, ptmmReportPath } from '../../scripts/catalog/ptmm-qualification-reviewed-dependencies.mjs';
@@ -201,14 +202,15 @@ test('historical release refuses pending forward approval; approved integration 
     ...visualRequiredFiles, visualClearancePath, visualReportPath,
     ...ptmmRequiredFiles, ptmmClearancePath, ptmmReportPath,
     ...correctionRequiredFiles, correctionClearancePath, correctionReportPath,
-    ...securityRequiredFiles(), securityClearancePath, securityReportPath])) write(file, fs.readFileSync(new URL(file, root)));
+    ...securityRequiredFiles(), securityClearancePath, securityReportPath,
+    ...ktpbRequiredFiles(), ktpbClearancePath, ktpbReportPath])) write(file, fs.readFileSync(new URL(file, root)));
   try {
     const { assertReviewedTransformerDependency: verify } = await import(pathToFileURL(path.join(scratch, verifier)).href);
     const original = fs.readFileSync(path.join(scratch, changedFile));
     const historical = baseAssets.reviewedLibraryHashes[changedFile];
     verify(changedFile, historical, baseAssets);
     fs.appendFileSync(path.join(scratch, changedFile), '\n');
-    assert.throws(() => verify(changedFile, historical, baseAssets), /Changed amended integration dependency|Changed immutable source input frontend\/lib\/catalog\/models\/transformer2026Runtime\.js|Changed historical source approval\/dependency|Changed unamended PR33 dependency|Changed reviewed protection\/context file|Changed fixed PTMM browser correction dependency|Changed security-reviewed bytes|Changed unreviewed security dependency/);
+    assert.throws(() => verify(changedFile, historical, baseAssets), /Changed amended integration dependency|Changed immutable source input frontend\/lib\/catalog\/models\/transformer2026Runtime\.js|Changed historical source approval\/dependency|Changed unamended PR33 dependency|Changed reviewed protection\/context file|Changed fixed PTMM browser correction dependency|Changed security-reviewed bytes|Changed unreviewed security dependency|Changed KTPB-reviewed bytes|Changed unreviewed KTPB dependency/);
     write(changedFile, original);
     assert.throws(() => verify(changedFile, 'wrong-old-hash', baseAssets), /Wrong historical integration dependency/);
     for (const mutate of [
@@ -216,7 +218,7 @@ test('historical release refuses pending forward approval; approved integration 
       value => { value.dependencies.reviewedIntegrationAmendments[changedFile].reviewedSha256 = 'wrong'; },
     ]) {
       const changed = structuredClone(clearance); mutate(changed); write(clearanceFile, JSON.stringify(changed));
-      assert.throws(() => verify(changedFile, historical, baseAssets), /Changed approved integration dependencies|Changed immutable source input docs\/catalog-transformers-2026\/review\/asset-completion\/clearance\.json|Changed historical source approval\/dependency|Changed unamended PR33 dependency|Changed reviewed protection\/context file|Changed fixed PTMM browser correction dependency|Changed security-reviewed bytes|Changed unreviewed security dependency/);
+      assert.throws(() => verify(changedFile, historical, baseAssets), /Changed approved integration dependencies|Changed immutable source input docs\/catalog-transformers-2026\/review\/asset-completion\/clearance\.json|Changed historical source approval\/dependency|Changed unamended PR33 dependency|Changed reviewed protection\/context file|Changed fixed PTMM browser correction dependency|Changed security-reviewed bytes|Changed unreviewed security dependency|Changed KTPB-reviewed bytes|Changed unreviewed KTPB dependency/);
     }
   } finally { fs.rmSync(scratch, { recursive: true, force: true }); }
 });

@@ -25,7 +25,7 @@ export async function sourceContextComponent() {
 }
 const render = async (product, assetEvidence = JSON.parse(JSON.stringify(evidence))) => renderToStaticMarkup((await sourceContextComponent())({ product, assetEvidence }));
 
-test('real component renders 18 two-figure SHNN and six one-figure PTM/TDE blocks without any execution control', async () => {
+test('real component renders exact source-context blocks without any execution control', async () => {
   for (const [id, entry] of Object.entries(manifest.records)) {
     const product = productById(id), before = JSON.stringify(product), html = await render(product);
     const expected = manifest.contexts[entry.contextKey];
@@ -33,7 +33,7 @@ test('real component renders 18 two-figure SHNN and six one-figure PTM/TDE block
     assert.match(html, new RegExp(`data-source-context-for="${id}"`));
     assert.equal((html.match(/<figure\b/g) || []).length, expected.figureKeys.length);
     assert.equal((html.match(/<figcaption\b/g) || []).length, expected.figureKeys.length);
-    assert.match(html, /Конструкция этого исполнения по источнику не установлена\./);
+    assert.ok(html.includes(expected.status));
     assert.doesNotMatch(html, /<select|<button|<details|<summary|<input|role="tab|aria-selected|source-matched|source-based|CAD|onClick/);
     for (const key of expected.figureKeys) {
       const figure = manifest.figures[key];

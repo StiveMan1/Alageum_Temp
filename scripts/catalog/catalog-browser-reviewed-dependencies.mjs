@@ -1,4 +1,6 @@
-import { visualPredecessors, assertVisualPresentationDependencies } from './visual-presentation-reviewed-dependencies.mjs';
+import { ktpbPredecessors, internalAssertKtpbDependencies } from './ktpb-source-context-reviewed-dependencies.mjs';
+import { runFreshProof, proofOperations, prove, evaluateProof } from './proof-invocation.mjs';
+import { visualPredecessors, internalAssertVisualPresentationDependencies } from './visual-presentation-reviewed-dependencies.mjs';
 // Exact test-only successor to PR34. Raw bytes only; no historical verifier call.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -37,7 +39,63 @@ export const readBrowserBytes = file => {
 };
 
 export function verifyBrowserAssertionAmendment(read = readBrowserBytes) {
-  const clearance = JSON.parse(read(browserClearancePath));
+  return runFreshProof({ root, omittedReader: arguments.length <= 0, read, inputs: [] },
+    context => internalVerifyBrowserAssertionAmendment(context));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalVerifyBrowserAssertionAmendment(context) {
+  return evaluateProof(context, () => {
+
+    return prove(context, verifyBrowserAssertionAmendmentIdentity, 'approved', browserClearancePath, internalVerifyBrowserAssertionAmendmentCanonical);
+  });
+}
+
+// Every historical obligation is checked. The owning invocation rechecks all
+// consumed paths before a public result can return.
+export function assertBrowserAssertionDependencies(expectedFiles, read = readBrowserBytes) {
+  return runFreshProof({ root, omittedReader: arguments.length <= 1, read, inputs: [expectedFiles] },
+    context => internalAssertBrowserAssertionDependencies(context, expectedFiles));
+}
+// Internal evaluator only; an active invocation is mandatory and its owner finalizes.
+export function internalAssertBrowserAssertionDependencies(context, expectedFiles) {
+  return evaluateProof(context, () => {
+    const { hash: proofHash } = proofOperations(context);
+    let changed = Object.entries(expectedFiles).map(([file, expected]) => ({ file, expected, actual: proofHash(file) })).filter(item => item.actual !== item.expected);
+    if (!changed.length) return;
+    // Only the exact PR43 edge may bypass the older historical branch.
+    const terminal = changed.filter(({ file, expected }) => Object.hasOwn(ktpbPredecessors, file) && expected === ktpbPredecessors[file]);
+    internalAssertKtpbDependencies(context, Object.fromEntries(terminal.map(({ file, expected }) => [file, expected])));
+    changed = changed.filter(({ file, expected }) => !Object.hasOwn(ktpbPredecessors, file) || expected !== ktpbPredecessors[file]);
+    if (!changed.length) return;
+    const browserChanges = [], visualChanges = {};
+    for (const item of changed) {
+      const { file, expected } = item;
+      if (Object.hasOwn(browserPredecessors, file)) {
+        assert.equal(expected, browserPredecessors[file], `Wrong browser predecessor hash ${file}`);
+        browserChanges.push(item);
+      } else {
+        assert.ok(Object.hasOwn(visualPredecessors, file), `Changed unreviewed browser dependency ${file}`);
+        visualChanges[file] = expected;
+      }
+    }
+    if (browserChanges.length) {
+      const clearance = internalVerifyBrowserAssertionAmendment(context);
+      const current = {};
+      for (const { file, actual } of browserChanges) {
+        const expected = clearance.dependencies.reviewedFiles[file];
+        if (Object.hasOwn(visualPredecessors, file)) current[file] = expected;
+        else assert.equal(actual, expected, `Changed approved browser bytes ${file}`);
+      }
+      internalAssertVisualPresentationDependencies(context, current);
+    }
+    internalAssertVisualPresentationDependencies(context, visualChanges);
+  });
+}
+
+const verifyBrowserAssertionAmendmentIdentity = Symbol('verifyBrowserAssertionAmendment');
+
+function internalVerifyBrowserAssertionAmendmentCanonical(context, clearance) {
+  const { bytes: read, hash: proofHash } = proofOperations(context);
   assert.equal(clearance.format, 'alageum-catalog-browser-clearance-v1');
   assert.equal(clearance.status, 'approved-three-browser-assertions', 'Browser assertion amendment requires independent approval');
   assert.equal(clearance.baselineCommit, browserBaselineCommit); assert.equal(clearance.baselineTree, browserBaselineTree);
@@ -48,9 +106,9 @@ export function verifyBrowserAssertionAmendment(read = readBrowserBytes) {
   const forwarded = {};
   for (const [file, expected] of Object.entries({ ...historicalApprovals, ...reviewedFiles })) {
     if (Object.hasOwn(visualPredecessors, file)) forwarded[file] = expected;
-    else assert.equal(browserDigest(read(file)), expected, `Changed browser amendment dependency ${file}`);
+    else assert.equal(proofHash(file), expected, `Changed browser amendment dependency ${file}`);
   }
-  assertVisualPresentationDependencies(forwarded, read);
+  internalAssertVisualPresentationDependencies(context, forwarded);
   assert.equal(clearance.reviewReport, browserReportPath);
   const reportBytes = read(browserReportPath);
   assert.equal(browserDigest(reportBytes), clearance.reviewReportSha256, 'Changed independent browser review');
@@ -61,33 +119,5 @@ export function verifyBrowserAssertionAmendment(read = readBrowserBytes) {
   assert.deepEqual(report.corrections, browserCorrections); assert.equal(report.hostedCaseCount, 254);
   assert.equal(report.runtimeChanges, 0); assert.equal(report.pixelOrLayoutRelaxations, 0);
   return clearance;
-}
 
-// Each invocation freshly hashes every supplied byte and checks the full leaf
-// whenever one of its exact predecessor files has changed. No cache.
-export function assertBrowserAssertionDependencies(expectedFiles, read = readBrowserBytes) {
-  const changed = Object.entries(expectedFiles).map(([file, expected]) => ({ file, expected, actual: browserDigest(read(file)) })).filter(item => item.actual !== item.expected);
-  if (!changed.length) return;
-  const browserChanges = [], visualChanges = {};
-  for (const item of changed) {
-    const { file, expected } = item;
-    if (Object.hasOwn(browserPredecessors, file)) {
-      assert.equal(expected, browserPredecessors[file], `Wrong browser predecessor hash ${file}`);
-      browserChanges.push(item);
-    } else {
-      assert.ok(Object.hasOwn(visualPredecessors, file), `Changed unreviewed browser dependency ${file}`);
-      visualChanges[file] = expected;
-    }
-  }
-  if (browserChanges.length) {
-    const clearance = verifyBrowserAssertionAmendment(read);
-    const current = {};
-    for (const { file, actual } of browserChanges) {
-      const expected = clearance.dependencies.reviewedFiles[file];
-      if (Object.hasOwn(visualPredecessors, file)) current[file] = expected;
-      else assert.equal(actual, expected, `Changed approved browser bytes ${file}`);
-    }
-    assertVisualPresentationDependencies(current, read);
-  }
-  assertVisualPresentationDependencies(visualChanges, read);
 }

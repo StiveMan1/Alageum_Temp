@@ -1,3 +1,4 @@
+import { readKtpbHistoricalBytes } from './helpers/ktpb-source-context-historical-bytes.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -5,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {
   securityReviewDir, securityClearancePath, securityReportPath, securityBaselineCommit, securityBaselineTree,
-  securityPredecessors, securityRequiredFiles, securityDigest as digest, readSecurityBytes,
+  securityPredecessors, securityRequiredFiles, securityDigest as digest, readSecurityBytes as readCurrentSecurityBytes,
   verifySecurityDependencyFiles, verifySecurityAmendment, assertSecurityDependencies,
 } from '../../scripts/catalog/frontend-security-reviewed-dependencies.mjs';
 import { verifyCorrectionAmendment } from '../../scripts/catalog/ptmm-browser-correction-reviewed-dependencies.mjs';
@@ -15,6 +16,7 @@ import { verifyBrowserAssertionAmendment } from '../../scripts/catalog/catalog-b
 import { protectionContextClearancePath, verifyProtectionContextDependencyAmendment } from '../../scripts/catalog/protection-context-reviewed-dependencies.mjs';
 import { measurementColumnClearancePath, verifyMeasurementColumnDependencyAmendment } from '../../scripts/catalog/measurement-column-reviewed-dependencies.mjs';
 import { sourceAssetClearancePath, verifySourceAssetDependencyAmendment } from '../../scripts/catalog/source-asset-reviewed-dependencies.mjs';
+const readSecurityBytes = file => readKtpbHistoricalBytes(file, readCurrentSecurityBytes);
 const approved = 'approved-bounded-frontend-security', pending = 'pending-independent-review';
 const gates = [
   ['security', verifySecurityAmendment], ['correction', verifyCorrectionAmendment],
@@ -47,9 +49,9 @@ function fixture() {
   attest(); return {files, clearance, report, attest, read};
 }
 
-test('current raw bytes remain pending until independent approval and retain the complete inherited chain', () => {
+test('published PR43 security bytes preserve their approval and complete inherited chain', () => {
   const clearance = JSON.parse(readSecurityBytes(securityClearancePath));
-  verifySecurityDependencyFiles(clearance);
+  verifySecurityDependencyFiles(clearance, readSecurityBytes);
   for (const [name, verify] of gates) {
     if (clearance.status === approved) verify(readSecurityBytes);
     else { assert.equal(clearance.status,pending); assert.throws(()=>verify(readSecurityBytes), /independent approval/, name); }

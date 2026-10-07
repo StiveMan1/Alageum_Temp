@@ -3,16 +3,25 @@ import registry from '../sources-manifest.json' with { type: 'json' };
 import { getCatalogSource, sourcePageUrl } from '../sources.js';
 import { recordShapeDigest, transformerRecordShape } from '../models/transformer2026Shape.js';
 
-const reviewedManifestSha256 = 'b2a977a7588be72cfd348ddbf39632ae6277222a771a64a480b2ca85f7003d19';
+// Candidate content pin; publication still requires independent dependency approval.
+const reviewedManifestSha256 = 'ab9829f623d6d2af5f086a2f9a7b87466244dcce27602789008b74410d063527';
 const freeze = value => {
   if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); }
   return value;
 };
 export const sourceContextManifest = freeze(metadata);
-const assetDescriptors = () => [
-  ...Object.entries(metadata.assets).map(([path, asset]) => ({ path, sha256: asset.sha256, bytes: asset.bytes })),
-  ...Object.values(metadata.figures).map(figure => ({ path: figure.cropPath, sha256: figure.cropSha256, bytes: figure.cropBytes })),
-];
+const assetDescriptors = () => {
+  const assets = new Map();
+  for (const asset of [
+    ...Object.entries(metadata.assets).map(([path, asset]) => ({ path, sha256: asset.sha256, bytes: asset.bytes })),
+    ...Object.values(metadata.figures).map(figure => ({ path: figure.cropPath, sha256: figure.cropSha256, bytes: figure.cropBytes })),
+  ]) {
+    // A full-page figure reuses its registered source bytes without a new crop.
+    if (assets.has(asset.path) && JSON.stringify(assets.get(asset.path)) !== JSON.stringify(asset)) throw new Error('Conflicting source asset');
+    assets.set(asset.path, asset);
+  }
+  return [...assets.values()];
+};
 const expectedBuildProof = () => ({ format: 'catalog-source-context-build-proof-v1', manifestSha256: reviewedManifestSha256, assets: assetDescriptors() });
 
 // Reject prototype inheritance, accessors, sparse arrays and cycles before reading
@@ -67,9 +76,11 @@ function entryFor(product) {
   try {
     if (!verifySourceContextManifest() || !dataTree(product) || !product || Array.isArray(product)) return null;
     product = ownDataSnapshot(product);
-    for (const key of ['id', 'source', 'name', 'sku', 'category', 'familyId', 'recordKind', 'recordType', 'sourceUrl', 'sourceTitle', 'sourceKind', 'sourcePages', 'technicalSpecs', 'notes']) {
+    for (const key of ['id', 'source', 'name', 'sku', 'category', 'recordKind', 'recordType', 'sourceUrl', 'sourceTitle', 'sourceKind', 'sourcePages', 'technicalSpecs', 'notes']) {
       if (!Object.hasOwn(product, key)) return null;
     }
+    // This exact raw family has no parent; ID and canonical shape still bind it.
+    if (!Object.hasOwn(product, 'familyId') && product.id !== 'cat-ktpb-k') return null;
     if (!Object.hasOwn(metadata.records, product.id) || !['official', 'api'].includes(product.source)) return null;
     const entry = metadata.records[product.id];
     if (product.source === 'official') {
@@ -127,7 +138,7 @@ export function createSourceContextAssetVerifier(readAssetBytes) {
   return Object.freeze({ verify, invalidate });
 }
 
-/** Display-only source context for 24 exact records. It does not return a product,
+/** Display-only source context for exact records and an explicitly bound family overview. It does not return a product,
  * a construction choice, geometry/icon type, row climate, or confidence upgrade.
  * Pass the proof emitted by the current deployment's mandatory build gate.
  */
