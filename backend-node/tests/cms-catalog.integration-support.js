@@ -578,6 +578,9 @@ async function runCmsCatalogTests(t, app, { category, businessToken }) {
     fixtures,
     login,
   });
+  await require("./cms-upload.integration-support").runCmsUploadTests(t, app, {
+    base, editor, denied, businessToken, fixtures,
+  });
   await t.test(
     "native CMS logout invalidates actual session and blocks subsequent plugin reads/writes",
     async () => {

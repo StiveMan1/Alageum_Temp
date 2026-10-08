@@ -1,3 +1,4 @@
+import { readBackendHistoricalBytes } from './helpers/backend-security-historical-bytes.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -7,7 +8,7 @@ import { pathToFileURL } from 'node:url';
 import {
   ktpbReviewDir, ktpbClearancePath, ktpbReportPath, ktpbPerformanceReviewPath, ktpbBaselineCommit, ktpbBaselineTree,
   ktpbPerformanceImplementationFiles, ktpbPerformanceTestFiles, ktpbPerformanceObservationContract,
-  ktpbPredecessors, ktpbSourceUiFiles, ktpbRequiredFiles, ktpbDigest as digest, readKtpbBytes,
+  ktpbPredecessors, ktpbSourceUiFiles, ktpbRequiredFiles, ktpbDigest as digest, readKtpbBytes as readCurrentKtpbBytes,
   verifyKtpbDependencyFiles, verifyKtpbAmendment, assertKtpbDependencies, preservedKtpbContextIds,
 } from '../../scripts/catalog/ktpb-source-context-reviewed-dependencies.mjs';
 import { verifySecurityAmendment } from '../../scripts/catalog/frontend-security-reviewed-dependencies.mjs';
@@ -19,6 +20,9 @@ import { protectionContextClearancePath, verifyProtectionContextDependencyAmendm
 import { measurementColumnClearancePath, verifyMeasurementColumnDependencyAmendment } from '../../scripts/catalog/measurement-column-reviewed-dependencies.mjs';
 import { sourceAssetClearancePath, verifySourceAssetDependencyAmendment } from '../../scripts/catalog/source-asset-reviewed-dependencies.mjs';
 import { verifyKtpbSourceContextPreservation } from '../../scripts/check-ktpb-source-context.mjs';
+// Historical KTPB controls use exact PR44 bytes; backend successor coverage
+// verifies the current raw-byte chain in its own amendment tests.
+const readKtpbBytes = file => readBackendHistoricalBytes(file, readCurrentKtpbBytes);
 const approved = 'approved-bounded-ktpb-source-context', pending = 'pending-independent-review';
 const gates = [
   ['KTPB', verifyKtpbAmendment], ['security', verifySecurityAmendment], ['correction', verifyCorrectionAmendment],
@@ -66,9 +70,9 @@ function fixture() {
   attestPerformance(); attest(); return { files, clearance, report, performance, attestPerformance, attest, read };
 }
 
-test('candidate byte evidence is separate from approval and every real-reader inherited gate respects its pending state', () => {
+test('published PR44 KTPB bytes preserve their approval through every historical inherited gate', () => {
   const clearance = JSON.parse(readKtpbBytes(ktpbClearancePath));
-  verifyKtpbDependencyFiles(clearance);
+  verifyKtpbDependencyFiles(clearance, readKtpbBytes);
   for (const [name, verify] of gates) {
     if (clearance.status === approved) verify(readKtpbBytes);
     else { assert.equal(clearance.status, pending); assert.throws(() => verify(readKtpbBytes), /independent approval/, name); }
@@ -200,7 +204,7 @@ test('every old/new predecessor mixture fails, including a newly attested mixed 
   }
 });
 
-test('actual default disk readers reject warm same-size timestamp-restored mutations without substituting historical bytes', async () => {
+test('isolated PR44 default disk readers reject warm same-size timestamp-restored mutations without read-time substitution', async () => {
   const f = fixture(), directory = fs.mkdtempSync(path.join(os.tmpdir(), 'ktpb-default-reader-'));
   try {
     for (const [file, bytes] of f.files) { const target = path.join(directory, file); fs.mkdirSync(path.dirname(target), { recursive: true }); fs.writeFileSync(target, bytes); }
