@@ -1,3 +1,4 @@
+import { backendPredecessors, internalAssertBackendDependencies } from './backend-security-reviewed-dependencies.mjs';
 import { runFreshProof, proofOperations, prove, evaluateProof } from './proof-invocation.mjs';
 // Exact source-context successor to PR43. Current raw bytes only: no older
 // verifier, historical-byte reader, broad hash allowance or release path.
@@ -165,7 +166,7 @@ export function verifyKtpbDependencyFiles(clearance, read = readKtpbBytes) {
 // Internal evaluator only; an active invocation is mandatory and its owner finalizes.
 export function internalVerifyKtpbDependencyFiles(context, clearance) {
   return evaluateProof(context, () => {
-    const { hash: proofHash, json: proofJson } = proofOperations(context);
+    const { json: proofJson } = proofOperations(context);
 
     assert.equal(clearance.format, 'alageum-ktpb-source-context-clearance-v1');
     assert.equal(clearance.baselineCommit, ktpbBaselineCommit); assert.equal(clearance.baselineTree, ktpbBaselineTree);
@@ -179,7 +180,7 @@ export function internalVerifyKtpbDependencyFiles(context, clearance) {
       } else assert.equal(reviewed[file], expected, `Changed immutable PR43 KTPB pin ${file}`);
     }
     for (const [file, expected] of Object.entries({ ...fixedEvidence, ...ktpbSourceUiFiles })) assert.equal(reviewed[file], expected, `Changed frozen KTPB source/UI evidence ${file}`);
-    for (const [file, expected] of Object.entries(reviewed)) assert.equal(proofHash(file), expected, `Changed KTPB-reviewed bytes ${file}`);
+    internalAssertBackendDependencies(context, reviewed);
     return clearance;
   });
 }
@@ -226,12 +227,16 @@ export function internalAssertKtpbDependencies(context, expectedFiles) {
     const { hash: proofHash } = proofOperations(context);
     const changed = Object.entries(expectedFiles).filter(([file, expected]) => proofHash(file) !== expected);
     if (!changed.length) return;
-    for (const [file, expected] of changed) {
+    const current = changed.filter(([file, expected]) => Object.hasOwn(backendPredecessors, file) && expected === backendPredecessors[file]);
+    internalAssertBackendDependencies(context, Object.fromEntries(current));
+    const prior = changed.filter(([file, expected]) => !Object.hasOwn(backendPredecessors, file) || expected !== backendPredecessors[file]);
+    if (!prior.length) return;
+    for (const [file, expected] of prior) {
       assert.ok(Object.hasOwn(ktpbPredecessors, file), `Changed unreviewed KTPB dependency ${file}`);
       assert.equal(expected, ktpbPredecessors[file], `Wrong KTPB predecessor ${file}`);
     }
     const clearance = internalVerifyKtpbAmendment(context);
-    for (const [file] of changed) assert.equal(proofHash(file), clearance.dependencies.reviewedFiles[file], `Changed approved KTPB successor ${file}`);
+    internalAssertBackendDependencies(context, Object.fromEntries(prior.map(([file]) => [file, clearance.dependencies.reviewedFiles[file]])));
   });
 }
 // Historical reports keep their exact 24 identities. New records are admitted

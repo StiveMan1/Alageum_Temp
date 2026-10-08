@@ -1,3 +1,4 @@
+import { backendRequiredFiles, backendClearancePath, backendReportPath } from '../../scripts/catalog/backend-security-reviewed-dependencies.mjs';
 import { ktpbRequiredFiles, ktpbClearancePath, ktpbReportPath } from '../../scripts/catalog/ktpb-source-context-reviewed-dependencies.mjs';
 import { securityRequiredFiles, securityClearancePath, securityReportPath } from '../../scripts/catalog/frontend-security-reviewed-dependencies.mjs';
 import { correctionRequiredFiles, correctionClearancePath, correctionReportPath } from '../../scripts/catalog/ptmm-browser-correction-reviewed-dependencies.mjs';
@@ -30,7 +31,10 @@ const root = new URL('../../', import.meta.url);
 const clearance = JSON.parse(fs.readFileSync(new URL('docs/catalog-transformers-2026/review/asset-completion/clearance.json', root), 'utf8'));
 const successorPath = new URL(measurementColumnClearancePath, root);
 const successorClearance = fs.existsSync(successorPath) ? JSON.parse(fs.readFileSync(successorPath, 'utf8')) : null;
-const successorApproved = successorClearance?.status === 'approved-bounded-measurement-columns';
+const backendPath = new URL(backendClearancePath, root);
+const backendClearance = fs.existsSync(backendPath) ? JSON.parse(fs.readFileSync(backendPath, 'utf8')) : null;
+const successorApproved = successorClearance?.status === 'approved-bounded-measurement-columns'
+  && backendClearance?.status === 'approved-bounded-backend-security';
 const byId = new Map(officialProducts.map(row => [row.id, row]));
 const rows = clearance.records.map(entry => byId.get(entry.sourceRecordId));
 const recordApproval = id => supplement.geometry[id] || supplement.executionChoices.records[id];
@@ -203,14 +207,15 @@ test('historical release refuses pending forward approval; approved integration 
     ...ptmmRequiredFiles, ptmmClearancePath, ptmmReportPath,
     ...correctionRequiredFiles, correctionClearancePath, correctionReportPath,
     ...securityRequiredFiles(), securityClearancePath, securityReportPath,
-    ...ktpbRequiredFiles(), ktpbClearancePath, ktpbReportPath])) write(file, fs.readFileSync(new URL(file, root)));
+    ...ktpbRequiredFiles(), ktpbClearancePath, ktpbReportPath,
+    ...backendRequiredFiles(), backendClearancePath, backendReportPath])) write(file, fs.readFileSync(new URL(file, root)));
   try {
     const { assertReviewedTransformerDependency: verify } = await import(pathToFileURL(path.join(scratch, verifier)).href);
     const original = fs.readFileSync(path.join(scratch, changedFile));
     const historical = baseAssets.reviewedLibraryHashes[changedFile];
     verify(changedFile, historical, baseAssets);
     fs.appendFileSync(path.join(scratch, changedFile), '\n');
-    assert.throws(() => verify(changedFile, historical, baseAssets), /Changed amended integration dependency|Changed immutable source input frontend\/lib\/catalog\/models\/transformer2026Runtime\.js|Changed historical source approval\/dependency|Changed unamended PR33 dependency|Changed reviewed protection\/context file|Changed fixed PTMM browser correction dependency|Changed security-reviewed bytes|Changed unreviewed security dependency|Changed KTPB-reviewed bytes|Changed unreviewed KTPB dependency/);
+    assert.throws(() => verify(changedFile, historical, baseAssets), /Changed amended integration dependency|Changed immutable source input frontend\/lib\/catalog\/models\/transformer2026Runtime\.js|Changed historical source approval\/dependency|Changed unamended PR33 dependency|Changed reviewed protection\/context file|Changed fixed PTMM browser correction dependency|Changed security-reviewed bytes|Changed unreviewed security dependency|Changed KTPB-reviewed bytes|Changed unreviewed KTPB dependency|Changed (?:backend-reviewed bytes|unreviewed backend dependency) frontend\/lib\/catalog\/models\/transformer2026Runtime\.js/);
     write(changedFile, original);
     assert.throws(() => verify(changedFile, 'wrong-old-hash', baseAssets), /Wrong historical integration dependency/);
     for (const mutate of [
@@ -218,7 +223,7 @@ test('historical release refuses pending forward approval; approved integration 
       value => { value.dependencies.reviewedIntegrationAmendments[changedFile].reviewedSha256 = 'wrong'; },
     ]) {
       const changed = structuredClone(clearance); mutate(changed); write(clearanceFile, JSON.stringify(changed));
-      assert.throws(() => verify(changedFile, historical, baseAssets), /Changed approved integration dependencies|Changed immutable source input docs\/catalog-transformers-2026\/review\/asset-completion\/clearance\.json|Changed historical source approval\/dependency|Changed unamended PR33 dependency|Changed reviewed protection\/context file|Changed fixed PTMM browser correction dependency|Changed security-reviewed bytes|Changed unreviewed security dependency|Changed KTPB-reviewed bytes|Changed unreviewed KTPB dependency/);
+      assert.throws(() => verify(changedFile, historical, baseAssets), /Changed approved integration dependencies|Changed immutable source input docs\/catalog-transformers-2026\/review\/asset-completion\/clearance\.json|Changed historical source approval\/dependency|Changed unamended PR33 dependency|Changed reviewed protection\/context file|Changed fixed PTMM browser correction dependency|Changed security-reviewed bytes|Changed unreviewed security dependency|Changed KTPB-reviewed bytes|Changed unreviewed KTPB dependency|Changed (?:backend-reviewed bytes|unreviewed backend dependency) docs\/catalog-transformers-2026\/review\/asset-completion\/clearance\.json/);
     }
   } finally { fs.rmSync(scratch, { recursive: true, force: true }); }
 });

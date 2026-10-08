@@ -1,3 +1,4 @@
+import { backendPredecessors, internalAssertBackendDependencies } from './backend-security-reviewed-dependencies.mjs';
 import { runFreshProof, proofOperations, prove, evaluateProof } from './proof-invocation.mjs';
 import { ktpbPredecessors, internalAssertKtpbDependencies } from './ktpb-source-context-reviewed-dependencies.mjs';
 // A bounded PR42 dependency successor. Reads current bytes only; no predecessor
@@ -97,7 +98,11 @@ export function assertSecurityDependencies(expectedFiles, read = readSecurityByt
 export function internalAssertSecurityDependencies(context, expectedFiles) {
   return evaluateProof(context, () => {
     const { hash: proofHash } = proofOperations(context);
-    const changed = Object.entries(expectedFiles).filter(([file, expected]) => proofHash(file) !== expected);
+    const changedAll = Object.entries(expectedFiles).filter(([file, expected]) => proofHash(file) !== expected);
+    if (!changedAll.length) return;
+    const latest = changedAll.filter(([file, expected]) => Object.hasOwn(backendPredecessors, file) && expected === backendPredecessors[file]);
+    internalAssertBackendDependencies(context, Object.fromEntries(latest));
+    const changed = changedAll.filter(([file, expected]) => !Object.hasOwn(backendPredecessors, file) || expected !== backendPredecessors[file]);
     if (!changed.length) return;
     const current = changed.filter(([file, expected]) => Object.hasOwn(ktpbPredecessors, file) && expected === ktpbPredecessors[file]);
     internalAssertKtpbDependencies(context, Object.fromEntries(current));

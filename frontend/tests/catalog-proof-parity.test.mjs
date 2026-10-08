@@ -1,3 +1,4 @@
+import { readBackendHistoricalBytes } from './helpers/backend-security-historical-bytes.mjs';
 import test, { before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -8,11 +9,14 @@ import {
   ktpbReviewDir, ktpbClearancePath, ktpbReportPath, ktpbPerformanceReviewPath,
   ktpbBaselineCommit, ktpbBaselineTree, ktpbPerformanceImplementationFiles,
   ktpbPerformanceTestFiles, ktpbPerformanceObservationContract, ktpbPredecessors,
-  ktpbRequiredFiles, ktpbDigest as digest, readKtpbBytes,
+  ktpbRequiredFiles, ktpbDigest as digest, readKtpbBytes as readCurrentKtpbBytes,
 } from '../../scripts/catalog/ktpb-source-context-reviewed-dependencies.mjs';
 
 // Synthetic approval exists only in this isolated test filesystem. It exercises
 // optimized default readers; it is not an independent candidate/release review.
+// Historical KTPB controls use exact PR44 bytes; backend successor coverage
+// verifies the current raw-byte chain in its own amendment tests.
+const readKtpbBytes = file => readBackendHistoricalBytes(file, readCurrentKtpbBytes);
 const approved = 'approved-bounded-ktpb-source-context';
 const required = ktpbRequiredFiles();
 function fixture() {
@@ -273,7 +277,10 @@ test('json copies and serialization collisions never supply canonical proof auth
 });
 
 test('internal consumers stay bounded and every exported internal evaluator rejects forged owners', () => {
-  const allowed = new Set([...ktpbPerformanceImplementationFiles, ...ktpbPerformanceTestFiles]);
+  // The frozen PR44 performance review remains unchanged. The backend leaf
+  // alone adds a bounded internal consumer under its separate amendment.
+  const allowed = new Set([...ktpbPerformanceImplementationFiles, ...ktpbPerformanceTestFiles,
+    'scripts/catalog/backend-security-reviewed-dependencies.mjs']);
   const repo = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../..');
   const visit = relative => {
     for (const entry of fs.readdirSync(path.join(repo, relative), { withFileTypes: true })) {
